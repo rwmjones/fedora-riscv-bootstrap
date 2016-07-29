@@ -1,0 +1,191 @@
+A plan for Fedora/RISC-V
+----------------------------------------------------------------------
+by Richard W.M. Jones (rjones@redhat.com)
+
+Project home page: https://fedoraproject.org/wiki/Architectures/RISC-V
+
+
+The aim of the project
+----------------------
+
+Get Fedora running on the RISC-V architecture!  This will just be an
+initial pass, which we're calling an "experimental architecture".  It
+won't even be a secondary architecture for perhaps 1 to 3 years.
+
+About Fedora: https://getfedora.org/
+About RISC-V: https://riscv.org/
+              https://en.wikipedia.org/wiki/RISC-V
+     lowRISC: http://www.lowrisc.org/
+
+
+How do we expect people to consume Fedora/RISC-V?
+-------------------------------------------------
+
+Most users will download binaries.  Of course source will be available
+for [almost*] everything, buildable from source RPMS.
+
+Currently no hardware is available, so you either have to run RISC-V
+on an FPGA, or use QEMU emulation.
+
+For the FPGA option, you will need a Nexys 4 DDR development kit
+costing around US$341, plus an ordinary micro SD card (8+ GB), plus a
+host Fedora/x86-64 computer.
+
+  - Maximum system RAM is 128 MB (1 GB is available if you use the
+    other far more expensive FPGA development kit)
+
+  - There is a 115200 bps 8n1 serial port.
+
+  - There is no ethernet and no display.
+
+For the QEMU emulation option, see below.
+
+  - QEMU has unlimited system RAM.
+
+  - Network access is available.
+
+
+[*] Some CPU peripherals use proprietary IP.  The aim is to replace
+these with open equivalents eventually.  Building the FPGA bitstream
+will require proprietary tools, although the source itself is free
+software.
+
+
+What parts of Fedora are we aiming to build?
+--------------------------------------------
+
+The @Core packages (as RPMs), rpmbuild, gcc, and a bootable binary
+disk image.
+
+Only 64 bit RISC-V will be targeted.
+
+Once those are done, we can declare victory.
+
+
+What parts of Fedora are we *not* aiming to build?
+--------------------------------------------------
+
+Nothing outside @Core except for specific compilers and build tools.
+
+Not Anaconda.
+
+Not Koji (at least, not at first).
+
+Not Grub nor EDK2.  We will initially use the Berkeley bootloader
+(bbl), but aim for a standard bootloader later.
+
+
+Where will we build it?
+-----------------------
+
+The packages which are run on the host (x86-64) computer will be built
+in COPR (https://copr.fedorainfracloud.org/).
+
+However the majority of packages will be built on RISC-V itself.
+Since there are no RISC-V builders, and we cannot really provide them,
+initially developers will be building them on their own FPGAs / QEMUs
+and uploading them.
+
+Getting build infrastructure would be a more long-term aim.
+
+
+Bootstrapping stages
+--------------------
+[See also: https://fedoraproject.org/wiki/Architectures/AArch64/Bootstrap]
+
+* Stage 1
+
+(1a) riscv-qemu.x86_64: QEMU + RISC-V system emulation
+
+Current status: Not upstream, fork of qemu 2.5.0.
+https://github.com/riscv/riscv-qemu
+
+Note this package runs on x86-64 hosts, and is intended for people who
+want to run Fedora/RISC-V but who do not have FPGA/hardware.
+
+(1b) Nexys4 DDR FPGA
+
+Various sources, see:
+http://www.lowrisc.org/docs/untether-v0.2/fpga-demo/
+
+(1c) Berkley Bootloader (bbl)
+
+Used to boot the kernel and mount the root filesystem on FPGAs and
+QEMU.  See link above.
+
+* Stage 2
+
+(2a) GNU cross-compiler toolchain.
+
+https://github.com/lowRISC/riscv-gnu-toolchain
+
+* Stage 3
+
+(3a) kernel.riscv64: The Linux kernel, cross-compiled.
+
+Current status: Not upstream, fork of Linux 4.6.
+https://github.com/lowrisc/riscv-linux
+
+(3b) "Just enough userspace"
+
+The following packages, cross-compiled from x86-64 host to riscv64
+target filesystem.  The aim is to have a filesystem (not RPMs) that
+can be booted on RISC-V hardware or under QEMU, which will be
+sufficient to use to compile RPMs.
+
+bash.riscv64
+glibc.riscv64
+binutils.riscv64
+gcc.riscv64
+cpp.riscv64
+rpm.riscv64
+coreutils.riscv64
+filesystem.riscv64 (?)
+gawk.riscv64
+grep.riscv64
+gzip.riscv64
+sed.riscv64
+xz.riscv64
+zlib.riscv64
+
+We will also need to add the following noarch packages (these do not
+need to be compiled, they can just be copied from another Fedora
+system):
+
+basesystem.noarch
+ca-certificates.noarch
+crypto-policies.noarch
+emacs-filesystem.noarch
+fedora-release.noarch
+fedora-repos.noarch
+setup.noarch
+tzdata.noarch
+
+    ==== At this point, Fedora on RISC-V will be self-hosting ====
+
+* Stage 4
+
+(4a) kernel.riscv64: The Linux kernel, compiled as an RPM on RISC-V.
+
+(4b) Userspace RPMs
+
+(See the above list of packages, but built from SRPMs)
+
+(4c) Recreate the filesystem from RPMs.
+
+Distribute an initial bootable binary disk image which is completely
+built from RPMs (but note, not created by Anaconda).
+
+(4d) Continue compiling all other RPMs from @Core.
+
+As more packages are compiled, distribute them as RPMs and distribute
+updated bootable binary disk image.
+
+(4e) Declare victory and celebrate!
+
+
+Open issues
+-----------
+
+What architecture string to use (eg. in RPM package names)?  There are
+32, 64 and (in theory) 128 bit variants of RISC-V.  GNU uses "riscv64".
