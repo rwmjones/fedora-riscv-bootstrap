@@ -5,7 +5,7 @@
 
 Name:           riscv-qemu
 Version:        2.5.0
-Release:        0.git%{shortcommit}.1%{?dist}
+Release:        0.1.git%{shortcommit}%{?dist}
 Summary:        RISC-V fork of QEMU
 License:        GPLv2+ and LGPLv2+ and BSD
 
