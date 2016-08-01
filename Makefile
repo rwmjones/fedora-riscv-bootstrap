@@ -39,7 +39,9 @@ stage2: stage2-riscv-gnu-toolchain/riscv-gnu-toolchain-1374381e.tar.gz \
 	stage2-riscv-gnu-toolchain/gcc-6.1.0.tar.gz \
 	stage2-riscv-gnu-toolchain/glibc-2.23.tar.gz \
 	stage2-riscv-gnu-toolchain/newlib-2.2.0.tar.gz \
-	stamp-riscv-gnu-toolchain-installed
+	stamp-riscv-gnu-toolchain-installed \
+	stage2-riscv-pk/riscv-pk-927979c5.tar.gz \
+	stamp-riscv-pk-installed
 
 stage2-riscv-gnu-toolchain/riscv-gnu-toolchain-1374381e.tar.gz:
 	rm -f $@ $@-t
@@ -81,6 +83,25 @@ stamp-riscv-gnu-toolchain-installed:
 	@riscv64-unknown-elf-gcc --version || { \
 	  echo "ERROR: riscv64-unknown-elf-gcc (cross compiler) is not working."; \
 	  echo "Make sure you installed the riscv-gnu-toolchain package."; \
+	  exit 1; \
+	}
+	touch $@
+
+stage2-riscv-pk/riscv-pk-927979c5.tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t https://github.com/lowRISC/riscv-pk/archive/927979c5af6a69360b5dd61d3b17cd06ae73d1ac/riscv-pk-927979c5.tar.gz
+	mv $@-t $@
+
+stamp-riscv-pk-installed:
+	rm -f $@
+	@rpm -q riscv-pk >/dev/null || { \
+	  echo "ERROR: You must install riscv-pk:"; \
+	  echo; \
+	  echo "       dnf copr enable rjones/riscv"; \
+	  echo "       dnf install riscv-pk"; \
+	  echo; \
+	  echo "OR: you can build it yourself from the stage2-riscv-pk directory."; \
+	  echo; \
 	  exit 1; \
 	}
 	touch $@

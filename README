@@ -99,7 +99,7 @@ Bootstrapping stages
 
 Not upstream, fork of qemu 2.5.0.
 https://github.com/riscv/riscv-qemu
-Status: done http://copr-fe.cloud.fedoraproject.org/coprs/rjones/riscv-qemu/
+Status: done http://copr-fe.cloud.fedoraproject.org/coprs/rjones/riscv
 
 Note this package runs on x86-64 hosts, and is intended for people who
 want to run Fedora/RISC-V but who do not have FPGA/hardware.
@@ -114,10 +114,13 @@ http://www.lowrisc.org/docs/untether-v0.2/fpga-demo/
 (2a) GNU cross-compiler toolchain.
 
 https://github.com/lowRISC/riscv-gnu-toolchain
+Status: done http://copr-fe.cloud.fedoraproject.org/coprs/rjones/riscv
 
 (2b) Berkley Bootloader (bbl)
 
 https://github.com/lowrisc/riscv-pk.git
+Status: done http://copr-fe.cloud.fedoraproject.org/coprs/rjones/riscv
+
 Used to boot the kernel and mount the root filesystem on FPGAs and
 QEMU.
 
