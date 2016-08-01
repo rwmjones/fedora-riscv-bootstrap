@@ -3,12 +3,15 @@
 # Don't rm -rf $RPM_BUILD_ROOT at the top of install rule.
 %global __spec_install_pre %{___build_pre}
 
+# Strip breaks the libraries, don't do it.
+%global __strip /bin/true
+
 %global commit      1374381e01b30832581d65a56219388fe7d47584
 %global shortcommit 1374381e
 
 Name:           riscv-gnu-toolchain
 Version:        0
-Release:        0.1.git%{shortcommit}%{?dist}
+Release:        0.2.git%{shortcommit}%{?dist}
 Summary:        RISC-V GNU cross-toolchain, containing binutils and GCC
 License:        GPLv2+ and LGPLv2+ and BSD
 
