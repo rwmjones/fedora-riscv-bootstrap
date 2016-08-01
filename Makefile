@@ -16,7 +16,7 @@ stamp-riscv-qemu-installed:
 	@rpm -q riscv-qemu >/dev/null || { \
 	  echo "ERROR: You must install riscv-qemu:"; \
 	  echo; \
-	  echo "       dnf copr enable rjones/riscv-qemu"; \
+	  echo "       dnf copr enable rjones/riscv"; \
 	  echo "       dnf install riscv-qemu"; \
 	  echo; \
 	  echo "OR: you can build it yourself from the stage1-riscv-qemu directory."; \
