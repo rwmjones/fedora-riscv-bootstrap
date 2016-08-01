@@ -1,3 +1,5 @@
 *~
 *.tar.gz
 stamp-*
+
+/stage3-kernel/linux-*

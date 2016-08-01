@@ -108,9 +108,32 @@ stamp-riscv-pk-installed:
 
 # Stage 3
 
-stage3:
-	echo "XXX TO DO"
-	exit 1
+stage3: stage3-kernel/linux-4.6.2.tar.xz \
+	stage3-kernel/linux-4.6.2/vmlinux
+
+stage3-kernel/linux-4.6.2.tar.xz:
+	rm -f $@ $@-t
+	wget -O $@-t https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.6.2.tar.xz
+	mv $@-t $@
+
+stage3-kernel/linux-4.6.2/vmlinux:
+	rm -rf stage3-kernel/linux-4.6.2
+	cat stage3-kernel/linux-4.6.2.tar.xz | tar -x --xz -C stage3-kernel
+	cd stage3-kernel/linux-4.6.2 && \
+	git init
+	cd stage3-kernel/linux-4.6.2 && \
+	git remote add origin https://github.com/lowrisc/riscv-linux.git
+	cd stage3-kernel/linux-4.6.2 && \
+	git fetch
+	cd stage3-kernel/linux-4.6.2 && \
+	git checkout -f -t origin/debug-v0.3
+	cd stage3-kernel/linux-4.6.2 && \
+	patch -p1 < spi_sd_power_hack.patch
+	cd stage3-kernel/linux-4.6.2 && \
+	make ARCH=riscv defconfig
+	cd stage3-kernel/linux-4.6.2 && \
+	make ARCH=riscv CONFIG_CROSS_COMPILE=riscv64-unknown-elf- vmlinux
+	ls -l $@
 
 # Stage 4
 
