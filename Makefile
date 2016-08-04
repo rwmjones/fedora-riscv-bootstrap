@@ -80,9 +80,15 @@ stage2-riscv-gnu-toolchain/binutils-$(BINUTILS_VERSION).tar.gz:
 	wget -O $@-t http://mirrors.kernel.org/gnu/binutils/binutils-$(BINUTILS_VERSION).tar.gz
 	mv $@-t $@
 
+# GCC 5 no longer compiles with GCC 6 unless we patch it.
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=69959
 stage2-riscv-gnu-toolchain/gcc-$(GCC_VERSION).tar.gz:
 	rm -f $@ $@-t
 	wget -O $@-t http://mirrors.kernel.org/gnu/gcc/gcc-$(GCC_VERSION)/gcc-$(GCC_VERSION).tar.gz
+	zcat $@-t | tar xf -
+	cd gcc-$(GCC_VERSION) && patch -p0 < ../stage2-riscv-gnu-toolchain/gcc-5-fix-compilation-with-gcc-6.patch
+	tar zcf $@-t gcc-$(GCC_VERSION)
+	rm -r gcc-$(GCC_VERSION)
 	mv $@-t $@
 
 stage2-riscv-gnu-toolchain/glibc-$(GLIBC_VERSION).tar.gz:
