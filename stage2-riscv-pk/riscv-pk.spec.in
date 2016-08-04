@@ -44,7 +44,6 @@ popd
 %files
 %doc README.md LICENSE
 %{_bindir}/bbl
-%{_bindir}/dummy_payload
 %{_bindir}/pk
 %{_includedir}/riscv-pk
 %{_prefix}/lib/riscv-pk
