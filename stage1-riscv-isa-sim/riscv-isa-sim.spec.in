@@ -1,0 +1,61 @@
+%global debug_package %{nil}
+
+Name:           riscv-isa-sim
+Version:        0
+Release:        0.1.git@SHORTCOMMIT@%{?dist}
+Summary:        RISC-V emulator (Spike)
+License:        BSD
+
+URL:            https://github.com/riscv/riscv-isa-sim
+Source0:        https://github.com/riscv/%{name}/archive/@COMMIT@/%{name}-@SHORTCOMMIT@.tar.gz
+
+BuildRequires:  glibc-devel
+BuildRequires:  riscv-fesvr
+
+# Workaround for dependency generator.
+Provides:       libriscv.so()(64bit)
+Provides:       libspike_main.so()(64bit)
+Provides:       libdummy_rocc.so()(64bit)
+Provides:       libsoftfloat.so()(64bit)
+
+
+%description
+This is the RISC-V emulator (Spike).
+
+
+%prep
+%setup -q -n %{name}-@COMMIT@
+
+
+%build
+mkdir build
+pushd build
+../configure --prefix=%{_prefix} --libdir=%{_libdir}
+make
+popd
+
+
+%install
+pushd build
+make install DESTDIR=$RPM_BUILD_ROOT
+popd
+
+# Package ignores libdir, so fix that.
+mv $RPM_BUILD_ROOT%{_prefix}/lib $RPM_BUILD_ROOT%{_libdir}
+
+
+%files
+%doc README.md LICENSE
+%{_bindir}/spike
+%{_bindir}/spike-dasm
+%{_bindir}/termios-xspike
+%{_bindir}/xspike
+%{_includedir}/spike
+%{_libdir}/libdummy_rocc.so
+%{_libdir}/libriscv.so
+%{_libdir}/libsoftfloat.so
+%{_libdir}/libspike_main.so
+%{_libdir}/pkgconfig/riscv-*.pc
+
+
+%changelog

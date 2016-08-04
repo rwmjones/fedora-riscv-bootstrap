@@ -35,7 +35,7 @@ Most users will download binaries.  Of course source will be available
 for [almost*] everything, buildable from source RPMS.
 
 Currently no hardware is available, so you either have to run RISC-V
-on an FPGA, or use QEMU emulation.
+on an FPGA, or use QEMU/Spike emulation.
 
 For the FPGA option, you will need a Nexys 4 DDR development kit
 costing around US$341, plus an ordinary micro SD card (8+ GB), plus a
@@ -53,6 +53,12 @@ For the QEMU emulation option, see below.
   - QEMU has unlimited system RAM.
 
   - Network access is available.
+
+For the Spike emulation option, see below.
+
+  - Spike has unlimited system RAM.
+
+  - No network.
 
 
 [*] Some CPU peripherals use proprietary IP.  The aim is to replace
@@ -93,8 +99,8 @@ in COPR (https://copr.fedorainfracloud.org/).
 
 However the majority of packages will be built on RISC-V itself.
 Since there are no RISC-V builders, and we cannot really provide them,
-initially developers will be building them on their own FPGAs / QEMUs
-and uploading them.
+initially developers will be building them on their own FPGAs /
+emulators and uploading them.
 
 Getting build infrastructure would be a more long-term aim.
 
@@ -114,7 +120,12 @@ Status: done http://copr-fe.cloud.fedoraproject.org/coprs/rjones/riscv
 Note this package runs on x86-64 hosts, and is intended for people who
 want to run Fedora/RISC-V but who do not have FPGA/hardware.
 
-(1b) Nexys4 DDR FPGA
+(1b) riscv-isa-sim.x86_64: Spike system emulator
+
+Since QEMU is broken at the moment, we must use the slower Spike
+emulator instead.
+
+(1c) Nexys4 DDR FPGA
 
 Various sources, see:
 http://www.lowrisc.org/docs/untether-v0.2/fpga-demo/

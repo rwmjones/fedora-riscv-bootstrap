@@ -7,6 +7,10 @@
 # https://github.com/riscv/riscv-pk/issues/18#issuecomment-206115996
 RISCV_QEMU_COMMIT               = 94f5eb73091fb4fe272db3e943f173ecc0f78ffd
 RISCV_QEMU_SHORTCOMMIT          = 94f5eb73
+RISCV_FESVR_COMMIT              = 0f34d7ad311f78455a674224225f5b3056efba1d
+RISCV_FESVR_SHORTCOMMIT         = 0f34d7ad
+RISCV_ISA_SIM_COMMIT            = 3bfc00ef2a1b1f0b0472a39a866261b00f67027e
+RISCV_ISA_SIM_SHORTCOMMIT       = 3bfc00ef
 RISCV_GNU_TOOLCHAIN_COMMIT      = 728afcddcb0526a0f6560c4032da82805f054d58
 RISCV_GNU_TOOLCHAIN_SHORTCOMMIT = 728afcdd
 RISCV_PK_COMMIT                 = 85ae17aa149b9ea114bdd70cc30ea7e73813fb48
@@ -25,7 +29,13 @@ all: stage1 stage2 stage3 stage4
 
 stage1: stage1-riscv-qemu/riscv-qemu-$(RISCV_QEMU_SHORTCOMMIT).tar.gz \
 	stage1-riscv-qemu/riscv-qemu.spec \
-	stamp-riscv-qemu-installed
+	stamp-riscv-qemu-installed \
+	stage1-riscv-fesvr/riscv-fesvr-$(RISCV_FESVR_SHORTCOMMIT).tar.gz \
+	stage1-riscv-fesvr/riscv-fesvr.spec \
+	stamp-riscv-fesvr-installed \
+	stage1-riscv-isa-sim/riscv-isa-sim-$(RISCV_ISA_SIM_SHORTCOMMIT).tar.gz \
+	stage1-riscv-isa-sim/riscv-isa-sim.spec \
+	stamp-riscv-isa-sim-installed
 
 stage1-riscv-qemu/riscv-qemu-$(RISCV_QEMU_SHORTCOMMIT).tar.gz:
 	rm -f $@ $@-t
@@ -53,6 +63,56 @@ stamp-riscv-qemu-installed:
 	@qemu-system-riscv --version || { \
 	  echo "ERROR: qemu-system-riscv is not working."; \
 	  echo "Make sure you installed the riscv-qemu package."; \
+	  exit 1; \
+	}
+	touch $@
+
+stage1-riscv-fesvr/riscv-fesvr-$(RISCV_FESVR_SHORTCOMMIT).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t 'https://github.com/riscv/riscv-fesvr/archive/$(RISCV_FESVR_COMMIT)/riscv-fesvr-$(RISCV_FESVR_SHORTCOMMIT).tar.gz'
+	mv $@-t $@
+
+stage1-riscv-fesvr/riscv-fesvr.spec: stage1-riscv-fesvr/riscv-fesvr.spec.in
+	sed -e 's/@COMMIT@/$(RISCV_FESVR_COMMIT)/g' \
+	    -e 's/@SHORTCOMMIT@/$(RISCV_FESVR_SHORTCOMMIT)/g' \
+	    < $^ > $@-t
+	mv $@-t $@
+
+stamp-riscv-fesvr-installed:
+	rm -f $@
+	@rpm -q riscv-fesvr >/dev/null || { \
+	  echo "ERROR: You must install riscv-fesvr:"; \
+	  echo; \
+	  echo "       dnf copr enable rjones/riscv"; \
+	  echo "       dnf install riscv-fesvr"; \
+	  echo; \
+	  echo "OR: you can build it yourself from the stage1-riscv-fesvr directory."; \
+	  echo; \
+	  exit 1; \
+	}
+	touch $@
+
+stage1-riscv-isa-sim/riscv-isa-sim-$(RISCV_ISA_SIM_SHORTCOMMIT).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t 'https://github.com/riscv/riscv-isa-sim/archive/$(RISCV_ISA_SIM_COMMIT)/riscv-isa-sim-$(RISCV_ISA_SIM_SHORTCOMMIT).tar.gz'
+	mv $@-t $@
+
+stage1-riscv-isa-sim/riscv-isa-sim.spec: stage1-riscv-isa-sim/riscv-isa-sim.spec.in
+	sed -e 's/@COMMIT@/$(RISCV_ISA_SIM_COMMIT)/g' \
+	    -e 's/@SHORTCOMMIT@/$(RISCV_ISA_SIM_SHORTCOMMIT)/g' \
+	    < $^ > $@-t
+	mv $@-t $@
+
+stamp-riscv-isa-sim-installed:
+	rm -f $@
+	@rpm -q riscv-isa-sim >/dev/null || { \
+	  echo "ERROR: You must install riscv-isa-sim:"; \
+	  echo; \
+	  echo "       dnf copr enable rjones/riscv"; \
+	  echo "       dnf install riscv-isa-sim"; \
+	  echo; \
+	  echo "OR: you can build it yourself from the stage1-riscv-isa-sim directory."; \
+	  echo; \
 	  exit 1; \
 	}
 	touch $@

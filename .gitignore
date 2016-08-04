@@ -3,6 +3,8 @@
 stamp-*
 
 /stage1-riscv-qemu/riscv-qemu.spec
+/stage1-riscv-fesvr/riscv-fesvr.spec
+/stage1-riscv-isa-sim/riscv-isa-sim.spec
 /stage2-riscv-gnu-toolchain/riscv-gnu-toolchain.spec
 /stage2-riscv-pk/riscv-pk.spec
 /stage3-kernel/linux-*
