@@ -89,7 +89,7 @@ rm $RPM_BUILD_ROOT%{_libdir}/libcc1.la
 
 
 %files
-%doc README.md LICENSE
+%doc README.md
 %{_bindir}/riscv64-unknown-elf-*
 #%{_bindir}/riscv64-unknown-linux-gnu-*
 %{_libdir}/libcc1.so
