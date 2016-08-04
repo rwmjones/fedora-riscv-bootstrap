@@ -6,9 +6,12 @@
 # Strip breaks the libraries, don't do it.
 %global __strip /bin/true
 
+# Kill check-buildroot and check-rpaths.
+%global __arch_install_post /bin/true
+
 Name:           riscv-gnu-toolchain
 Version:        0
-Release:        0.3.git@SHORTCOMMIT@%{?dist}
+Release:        0.5.git@SHORTCOMMIT@%{?dist}
 Summary:        RISC-V GNU cross-toolchain, containing binutils and GCC
 License:        GPLv2+ and LGPLv2+ and BSD
 
@@ -52,32 +55,39 @@ includes binutils and GCC.
 
 
 %build
-%configure
+# This only works if you build in a build subdirectory.
+mkdir build
+pushd build
+../configure --prefix=%{_prefix} --libdir=%{_libdir}
 
 # The ordinary Makefile downloads upstream GNU packages.  Instead we
 # provide these as local files.  Note this is "DISTDIR" not "DESTDIR".
 export DISTDIR=%{_sourcedir}
 
-# Since the Makefile installs as it goes along, set DESTDIR too, and
-# clean the buildroot now (instead of at the top of install).
-export DESTDIR=$RPM_BUILD_ROOT
+# Since the Makefile installs as it goes along, clean the buildroot
+# now (instead of at the top of install).
 rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT
+export DESTDIR=$RPM_BUILD_ROOT
 
 # We need to use the tools we built as we go along.
-export PATH=$RPM_BUILD_ROOT%{_bindir}:$PATH
+export PATH=$RPM_BUILD_ROOT/usr/bin:$RPM_BUILD_ROOT/bin:$PATH
 
 make
 
 # The 'make linux' rule builds GCC linked against glibc (instead of
-# newlib).  However I couldn't make this work, and it's not really
-# needed anyway.
-#make linux
+# newlib).
+# Set RISCV=...?
+make linux SYSROOT=$RPM_BUILD_ROOT%{_prefix}/sysroot
+
+popd
 
 
 %install
 # Not needed since the make installs as it goes along.
+#pushd build
 #make install DESTDIR=$RPM_BUILD_ROOT
+#popd
 
 # Remove some documentation, language files
 rm -r $RPM_BUILD_ROOT%{_datadir}/info
@@ -91,17 +101,18 @@ rm $RPM_BUILD_ROOT%{_libdir}/libcc1.la
 %files
 %doc README.md
 %{_bindir}/riscv64-unknown-elf-*
-#%{_bindir}/riscv64-unknown-linux-gnu-*
+%{_bindir}/riscv64-unknown-linux-gnu-*
 %{_libdir}/libcc1.so
 %{_libdir}/libcc1.so.0
 %{_libdir}/libcc1.so.0.0.0
 %{_libexecdir}/gcc/riscv64-unknown-elf
-#%{_libexecdir}/gcc/riscv-unknown-linux-gnu
+%{_libexecdir}/gcc/riscv64-unknown-linux-gnu
 %{_prefix}/lib/gcc/riscv64-unknown-elf
-#%{_prefix}/lib/gcc/riscv64-unknown-linux-gnu
+%{_prefix}/lib/gcc/riscv64-unknown-linux-gnu
 %{_prefix}/riscv64-unknown-elf
-#%{_prefix}/riscv64-unknown-linux-gnu
+%{_prefix}/riscv64-unknown-linux-gnu
 %{_datadir}/gcc-@GCC_VERSION@
+%{_prefix}/sysroot
 
 
 %changelog
