@@ -23,6 +23,14 @@ GLIBC_VERSION    = 2.22
 GCC_VERSION      = 5.3.0
 NEWLIB_VERSION   = 2.2.0
 
+# See linux-4.1.y-riscv branch of
+# https://github.com/riscv/riscv-linux
+KERNEL_VERSION   = 4.1.26
+
+# A local copy of Linux git repo so you don't have to keep downloading
+# git commits (optional).
+LOCAL_LINUX_GIT_COPY = $(HOME)/d/linux
+
 all: stage1 stage2 stage3 stage4
 
 # Stage 1
@@ -217,30 +225,21 @@ stamp-riscv-pk-installed:
 
 # Stage 3
 
-stage3: stage3-kernel/linux-4.6.2.tar.xz \
-	stage3-kernel/linux-4.6.2/vmlinux
+stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
 
-stage3-kernel/linux-4.6.2.tar.xz:
-	rm -f $@ $@-t
-	wget -O $@-t https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.6.2.tar.xz
-	mv $@-t $@
-
-stage3-kernel/linux-4.6.2/vmlinux:
-	rm -rf stage3-kernel/linux-4.6.2
-	cat stage3-kernel/linux-4.6.2.tar.xz | tar -x --xz -C stage3-kernel
-	cd stage3-kernel/linux-4.6.2 && \
-	git init
-	cd stage3-kernel/linux-4.6.2 && \
-	git remote add origin https://github.com/lowrisc/riscv-linux.git
-	cd stage3-kernel/linux-4.6.2 && \
-	git fetch
-	cd stage3-kernel/linux-4.6.2 && \
-	git checkout -f -t origin/debug-v0.3
-	cd stage3-kernel/linux-4.6.2 && \
-	patch -p1 < spi_sd_power_hack.patch
-	cd stage3-kernel/linux-4.6.2 && \
-	make ARCH=riscv defconfig
-	cd stage3-kernel/linux-4.6.2 && \
+stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux:
+	rm -rf stage3-kernel/linux-$(KERNEL_VERSION)
+	cp -a $(LOCAL_LINUX_GIT_COPY) stage3-kernel/linux-$(KERNEL_VERSION) || { \
+	  mkdir stage3-kernel/linux-$(KERNEL_VERSION) && \
+	  cd stage3-kernel/linux-$(KERNEL_VERSION) && \
+	  git init; \
+	}
+	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
+	git remote add riscv https://github.com/riscv/riscv-linux && \
+	git fetch riscv && \
+	git checkout -f linux-4.1.y-riscv && \
+	make mrproper && \
+	make ARCH=riscv defconfig && \
 	make ARCH=riscv CONFIG_CROSS_COMPILE=riscv64-unknown-elf- vmlinux
 	ls -l $@
 
