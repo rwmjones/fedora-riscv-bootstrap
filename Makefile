@@ -31,6 +31,13 @@ KERNEL_VERSION   = 4.1.26
 # git commits (optional).
 LOCAL_LINUX_GIT_COPY = $(HOME)/d/linux
 
+# The root packages (plus their dependencies) that we want to
+# cross-compile into the stage 3 chroot.
+STAGE3_PACKAGES = gcc rpm-build
+
+# Versions of cross-compiled packages.
+BASH_VERSION    = 4.3
+
 all: stage1 stage2 stage3 stage4
 
 # Stage 1
@@ -225,7 +232,12 @@ stamp-riscv-pk-installed:
 
 # Stage 3
 
-stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
+stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
+	stage3-chroot-original/etc/fedora-release \
+	stage3-chroot/etc/fedora-release \
+	stage3-chroot/lib64/libc.so.6 \
+	stage3-chroot/bin/bash \
+	stage3-disk.img
 
 stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux:
 	rm -rf stage3-kernel/linux-$(KERNEL_VERSION)
@@ -242,6 +254,58 @@ stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux:
 	make ARCH=riscv defconfig && \
 	make ARCH=riscv CONFIG_CROSS_COMPILE=riscv64-unknown-elf- vmlinux
 	ls -l $@
+
+# Build an original (x86-64) chroot using supermin.  We then aim to
+# rebuild (using cross-compiled versions) every ELF binary in this
+# chroot.
+stage3-chroot-original/etc/fedora-release:
+	rm -rf stage3-chroot-original tmp-supermin.d
+	supermin --prepare $(STAGE3_PACKAGES) -o tmp-supermin.d
+	supermin --build -f chroot tmp-supermin.d -o stage3-chroot-original
+	rm -r tmp-supermin.d
+	@echo -n "Total files in chroot: "
+	@find stage3-chroot-original -type f | wc -l
+	@echo -n "ELF files to be rebuilt: "
+	@find stage3-chroot-original -type f | xargs file -N | grep -E '\bELF.*LSB\b' | wc -l
+
+# Copy the original chroot to the final chroot, remove all the ELF
+# files.
+stage3-chroot/etc/fedora-release: stage3-chroot-original/etc/fedora-release
+	rm -rf stage3-chroot
+	cp -a stage3-chroot-original stage3-chroot
+	find stage3-chroot -type d | xargs chmod u+w
+	find stage3-chroot -type f | xargs chmod u+w
+	find stage3-chroot -type f | xargs file -N | grep -E '\bELF.*LSB\b' | awk -F: '{print $$1}' | xargs rm -f
+	rm -f stage3-chroot/lib64/libc.so.6
+
+# Copy in compiled glibc from the riscv-gnu-toolchain sysroot.  Only
+# copy files and symlinks, leave the target directory structure
+# intact.
+stage3-chroot/lib64/libc.so.6:
+	mkdir -p stage3-chroot/usr/lib/audit
+	mkdir -p stage3-chroot/usr/lib/gconv
+	for f in `cd /usr/sysroot && find -type f -o -type l`; do \
+	    cp -d /usr/sysroot/$$f stage3-chroot/$$f; \
+	done
+	cd stage3-chroot/lib64 && for f in ../lib/*; do ln -sf $$f; done
+
+# Cross-compile bash.
+stage3-chroot/bin/bash: bash-$(BASH_VERSION).tar.gz
+	tar zxf $^
+	cd bash-$(BASH_VERSION) && \
+	./configure --host=riscv64-unknown-linux-gnu CFLAGS="--sysroot=/usr/sysroot" && \
+	make
+	cp bash-$(BASH_VERSION)/bash stage3-chroot/bin/
+
+bash-$(BASH_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t ftp://ftp.gnu.org/gnu/bash/bash-$(BASH_VERSION).tar.gz
+	mv $@-t $@
+
+# Create the stage3 disk image.
+# Note `-s +...' adds spare space to the disk image.
+stage3-disk.img: stage3-chroot
+	cd stage3-chroot && virt-make-fs . ../$@ -t ext2 -F raw -s +4G
 
 # Stage 4
 

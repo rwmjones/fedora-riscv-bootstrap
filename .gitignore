@@ -8,3 +8,8 @@ stamp-*
 /stage2-riscv-gnu-toolchain/riscv-gnu-toolchain.spec
 /stage2-riscv-pk/riscv-pk.spec
 /stage3-kernel/linux-*
+/stage3-chroot-original/
+/stage3-chroot/
+/stage3-disk.img
+
+/bash-4.3/
