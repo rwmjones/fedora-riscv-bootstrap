@@ -1,16 +1,13 @@
 %global debug_package %{nil}
 
-%global commit      927979c5af6a69360b5dd61d3b17cd06ae73d1ac
-%global shortcommit 927979c5
-
 Name:           riscv-pk
 Version:        0
-Release:        0.1.git%{shortcommit}%{?dist}
+Release:        0.2.git@SHORTCOMMIT@%{?dist}
 Summary:        RISC-V proxy kernel (pk) and boot loader (bbl)
 License:        BSD
 
 URL:            https://github.com/lowRISC/riscv-pk
-Source0:        https://github.com/riscv/%{name}/archive/%{commit}/%{name}-%{shortcommit}.tar.gz
+Source0:        https://github.com/riscv/%{name}/archive/@COMMIT@/%{name}-@SHORTCOMMIT@.tar.gz
 
 BuildRequires:  riscv-gnu-toolchain
 
@@ -21,7 +18,7 @@ includes binutils and GCC.
 
 
 %prep
-%setup -q -n %{name}-%{commit}
+%setup -q -n %{name}-@COMMIT@
 
 
 %build

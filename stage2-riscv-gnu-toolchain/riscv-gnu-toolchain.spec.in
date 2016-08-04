@@ -6,22 +6,19 @@
 # Strip breaks the libraries, don't do it.
 %global __strip /bin/true
 
-%global commit      1374381e01b30832581d65a56219388fe7d47584
-%global shortcommit 1374381e
-
 Name:           riscv-gnu-toolchain
 Version:        0
-Release:        0.2.git%{shortcommit}%{?dist}
+Release:        0.3.git@SHORTCOMMIT@%{?dist}
 Summary:        RISC-V GNU cross-toolchain, containing binutils and GCC
 License:        GPLv2+ and LGPLv2+ and BSD
 
 URL:            https://github.com/riscv/riscv-qemu
-Source0:        https://github.com/riscv/%{name}/archive/%{commit}/%{name}-%{shortcommit}.tar.gz
+Source0:        https://github.com/riscv/%{name}/archive/@COMMIT@/%{name}-@SHORTCOMMIT@.tar.gz
 
-Source1:        http://mirrors.kernel.org/gnu/binutils/binutils-2.26.tar.gz
-Source2:        http://mirrors.kernel.org/gnu/glibc/glibc-2.23.tar.gz
-Source3:        http://mirrors.kernel.org/gnu/gcc/gcc-6.1.0/gcc-6.1.0.tar.gz
-Source4:        ftp://sourceware.org/pub/newlib/newlib-2.2.0.tar.gz
+Source1:        http://mirrors.kernel.org/gnu/binutils/binutils-@BINUTILS_VERSION@.tar.gz
+Source2:        http://mirrors.kernel.org/gnu/glibc/glibc-@GLIBC_VERSION@.tar.gz
+Source3:        http://mirrors.kernel.org/gnu/gcc/gcc-@GCC_VERSION@/gcc-@GCC_VERSION@.tar.gz
+Source4:        ftp://sourceware.org/pub/newlib/newlib-@NEWLIB_VERSION@.tar.gz
 
 # XXX These BuildRequires are just culled from the GCC spec
 # and probably overestimate the real requirements.
@@ -51,7 +48,7 @@ includes binutils and GCC.
 
 
 %prep
-%setup -q -n %{name}-%{commit}
+%setup -q -n %{name}-@COMMIT@
 
 
 %build
@@ -104,7 +101,7 @@ rm $RPM_BUILD_ROOT%{_libdir}/libcc1.la
 #%{_prefix}/lib/gcc/riscv64-unknown-linux-gnu
 %{_prefix}/riscv64-unknown-elf
 #%{_prefix}/riscv64-unknown-linux-gnu
-%{_datadir}/gcc-6.1.0
+%{_datadir}/gcc-@GCC_VERSION@
 
 
 %changelog

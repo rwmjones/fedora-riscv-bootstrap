@@ -2,4 +2,7 @@
 *.tar.gz
 stamp-*
 
+/stage1-riscv-qemu/riscv-qemu.spec
+/stage2-riscv-gnu-toolchain/riscv-gnu-toolchain.spec
+/stage2-riscv-pk/riscv-pk.spec
 /stage3-kernel/linux-*

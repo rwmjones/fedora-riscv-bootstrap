@@ -1,16 +1,13 @@
 %global debug_package %{nil}
 
-%global commit      94f5eb73091fb4fe272db3e943f173ecc0f78ffd
-%global shortcommit 94f5eb73
-
 Name:           riscv-qemu
 Version:        2.5.0
-Release:        0.1.git%{shortcommit}%{?dist}
+Release:        0.1.git@SHORTCOMMIT@%{?dist}
 Summary:        RISC-V fork of QEMU
 License:        GPLv2+ and LGPLv2+ and BSD
 
 URL:            https://github.com/riscv/riscv-qemu
-Source0:        https://github.com/riscv/%{name}/archive/%{commit}/%{name}-%{shortcommit}.tar.gz
+Source0:        https://github.com/riscv/%{name}/archive/@COMMIT@/%{name}-@SHORTCOMMIT@.tar.gz
 
 # These were just copied from qemu.spec, they are probably not
 # all required.
@@ -79,7 +76,7 @@ This is the RISC-V fork of QEMU.
 
 
 %prep
-%setup -q -n %{name}-%{commit}
+%setup -q -n %{name}-@COMMIT@
 
 
 %build

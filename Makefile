@@ -1,16 +1,41 @@
 # Refer to the README file to understand how Fedora on RISC-V is
 # bootstrapped.
 
+# Note these are chosen very specifically to ensure the different
+# versions work together.  Don't blindly update to the latest
+# versions.  See also:
+# https://github.com/riscv/riscv-pk/issues/18#issuecomment-206115996
+RISCV_QEMU_COMMIT               = 94f5eb73091fb4fe272db3e943f173ecc0f78ffd
+RISCV_QEMU_SHORTCOMMIT          = 94f5eb73
+RISCV_GNU_TOOLCHAIN_COMMIT      = 728afcddcb0526a0f6560c4032da82805f054d58
+RISCV_GNU_TOOLCHAIN_SHORTCOMMIT = 728afcdd
+RISCV_PK_COMMIT                 = 85ae17aa149b9ea114bdd70cc30ea7e73813fb48
+RISCV_PK_SHORTCOMMIT            = 85ae17aa
+
+# For the correct versions, see
+# riscv-gnu-toolchain/Makefile.in *_version variables
+BINUTILS_VERSION = 2.25.1
+GLIBC_VERSION    = 2.22
+GCC_VERSION      = 5.3.0
+NEWLIB_VERSION   = 2.2.0
+
 all: stage1 stage2 stage3 stage4
 
 # Stage 1
 
-stage1: stage1-riscv-qemu/riscv-qemu-94f5eb73.tar.gz \
+stage1: stage1-riscv-qemu/riscv-qemu-$(RISCV_QEMU_SHORTCOMMIT).tar.gz \
+	stage1-riscv-qemu/riscv-qemu.spec \
 	stamp-riscv-qemu-installed
 
-stage1-riscv-qemu/riscv-qemu-94f5eb73.tar.gz:
+stage1-riscv-qemu/riscv-qemu-$(RISCV_QEMU_SHORTCOMMIT).tar.gz:
 	rm -f $@ $@-t
-	wget -O $@-t 'https://github.com/riscv/riscv-qemu/archive/94f5eb73091fb4fe272db3e943f173ecc0f78ffd/riscv-qemu-94f5eb73.tar.gz'
+	wget -O $@-t 'https://github.com/riscv/riscv-qemu/archive/$(RISCV_QEMU_COMMIT)/riscv-qemu-$(RISCV_QEMU_SHORTCOMMIT).tar.gz'
+	mv $@-t $@
+
+stage1-riscv-qemu/riscv-qemu.spec: stage1-riscv-qemu/riscv-qemu.spec.in
+	sed -e 's/@COMMIT@/$(RISCV_QEMU_COMMIT)/g' \
+	    -e 's/@SHORTCOMMIT@/$(RISCV_QEMU_SHORTCOMMIT)/g' \
+	    < $^ > $@-t
 	mv $@-t $@
 
 stamp-riscv-qemu-installed:
@@ -34,38 +59,50 @@ stamp-riscv-qemu-installed:
 
 # Stage 2
 
-stage2: stage2-riscv-gnu-toolchain/riscv-gnu-toolchain-1374381e.tar.gz \
-	stage2-riscv-gnu-toolchain/binutils-2.26.tar.gz \
-	stage2-riscv-gnu-toolchain/gcc-6.1.0.tar.gz \
-	stage2-riscv-gnu-toolchain/glibc-2.23.tar.gz \
-	stage2-riscv-gnu-toolchain/newlib-2.2.0.tar.gz \
+stage2: stage2-riscv-gnu-toolchain/riscv-gnu-toolchain-$(RISCV_GNU_TOOLCHAIN_SHORTCOMMIT).tar.gz \
+	stage2-riscv-gnu-toolchain/binutils-$(BINUTILS_VERSION).tar.gz \
+	stage2-riscv-gnu-toolchain/gcc-$(GCC_VERSION).tar.gz \
+	stage2-riscv-gnu-toolchain/glibc-$(GLIBC_VERSION).tar.gz \
+	stage2-riscv-gnu-toolchain/newlib-$(NEWLIB_VERSION).tar.gz \
+	stage2-riscv-gnu-toolchain/riscv-gnu-toolchain.spec \
 	stamp-riscv-gnu-toolchain-installed \
-	stage2-riscv-pk/riscv-pk-927979c5.tar.gz \
+	stage2-riscv-pk/riscv-pk-$(RISCV_PK_SHORTCOMMIT).tar.gz \
+	stage2-riscv-pk/riscv-pk.spec \
 	stamp-riscv-pk-installed
 
-stage2-riscv-gnu-toolchain/riscv-gnu-toolchain-1374381e.tar.gz:
+stage2-riscv-gnu-toolchain/riscv-gnu-toolchain-$(RISCV_GNU_TOOLCHAIN_SHORTCOMMIT).tar.gz:
 	rm -f $@ $@-t
-	wget -O $@-t https://github.com/lowRISC/riscv-gnu-toolchain/archive/1374381e01b30832581d65a56219388fe7d47584/riscv-gnu-toolchain-1374381e.tar.gz
+	wget -O $@-t https://github.com/lowRISC/riscv-gnu-toolchain/archive/$(RISCV_GNU_TOOLCHAIN_COMMIT)/riscv-gnu-toolchain-$(RISCV_GNU_TOOLCHAIN_SHORTCOMMIT).tar.gz
 	mv $@-t $@
 
-stage2-riscv-gnu-toolchain/binutils-2.26.tar.gz:
+stage2-riscv-gnu-toolchain/binutils-$(BINUTILS_VERSION).tar.gz:
 	rm -f $@ $@-t
-	wget -O $@-t http://mirrors.kernel.org/gnu/binutils/binutils-2.26.tar.gz
+	wget -O $@-t http://mirrors.kernel.org/gnu/binutils/binutils-$(BINUTILS_VERSION).tar.gz
 	mv $@-t $@
 
-stage2-riscv-gnu-toolchain/gcc-6.1.0.tar.gz:
+stage2-riscv-gnu-toolchain/gcc-$(GCC_VERSION).tar.gz:
 	rm -f $@ $@-t
-	wget -O $@-t http://mirrors.kernel.org/gnu/gcc/gcc-6.1.0/gcc-6.1.0.tar.gz
+	wget -O $@-t http://mirrors.kernel.org/gnu/gcc/gcc-$(GCC_VERSION)/gcc-$(GCC_VERSION).tar.gz
 	mv $@-t $@
 
-stage2-riscv-gnu-toolchain/glibc-2.23.tar.gz:
+stage2-riscv-gnu-toolchain/glibc-$(GLIBC_VERSION).tar.gz:
 	rm -f $@ $@-t
-	wget -O $@-t http://mirrors.kernel.org/gnu/glibc/glibc-2.23.tar.gz
+	wget -O $@-t http://mirrors.kernel.org/gnu/glibc/glibc-$(GLIBC_VERSION).tar.gz
 	mv $@-t $@
 
-stage2-riscv-gnu-toolchain/newlib-2.2.0.tar.gz:
+stage2-riscv-gnu-toolchain/newlib-$(NEWLIB_VERSION).tar.gz:
 	rm -f $@ $@-t
-	wget -O $@-t ftp://sourceware.org/pub/newlib/newlib-2.2.0.tar.gz
+	wget -O $@-t ftp://sourceware.org/pub/newlib/newlib-$(NEWLIB_VERSION).tar.gz
+	mv $@-t $@
+
+stage2-riscv-gnu-toolchain/riscv-gnu-toolchain.spec: stage2-riscv-gnu-toolchain/riscv-gnu-toolchain.spec.in
+	sed -e 's/@COMMIT@/$(RISCV_GNU_TOOLCHAIN_COMMIT)/g' \
+	    -e 's/@SHORTCOMMIT@/$(RISCV_GNU_TOOLCHAIN_SHORTCOMMIT)/g' \
+	    -e 's/@BINUTILS_VERSION@/$(BINUTILS_VERSION)/g' \
+	    -e 's/@GCC_VERSION@/$(GCC_VERSION)/g' \
+	    -e 's/@GLIBC_VERSION@/$(GLIBC_VERSION)/g' \
+	    -e 's/@NEWLIB_VERSION@/$(NEWLIB_VERSION)/g' \
+	    < $^ > $@-t
 	mv $@-t $@
 
 stamp-riscv-gnu-toolchain-installed:
@@ -87,9 +124,15 @@ stamp-riscv-gnu-toolchain-installed:
 	}
 	touch $@
 
-stage2-riscv-pk/riscv-pk-927979c5.tar.gz:
+stage2-riscv-pk/riscv-pk-$(RISCV_PK_SHORTCOMMIT).tar.gz:
 	rm -f $@ $@-t
-	wget -O $@-t https://github.com/lowRISC/riscv-pk/archive/927979c5af6a69360b5dd61d3b17cd06ae73d1ac/riscv-pk-927979c5.tar.gz
+	wget -O $@-t https://github.com/lowRISC/riscv-pk/archive/$(RISCV_PK_COMMIT)/riscv-pk-$(RISCV_PK_SHORTCOMMIT).tar.gz
+	mv $@-t $@
+
+stage2-riscv-pk/riscv-pk.spec: stage2-riscv-pk/riscv-pk.spec.in
+	sed -e 's/@COMMIT@/$(RISCV_PK_COMMIT)/g' \
+	    -e 's/@SHORTCOMMIT@/$(RISCV_PK_SHORTCOMMIT)/g' \
+	    < $^ > $@-t
 	mv $@-t $@
 
 stamp-riscv-pk-installed:
