@@ -252,7 +252,10 @@ stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux:
 	git checkout -f linux-4.1.y-riscv && \
 	make mrproper && \
 	make ARCH=riscv defconfig && \
-	make ARCH=riscv CONFIG_CROSS_COMPILE=riscv64-unknown-elf- vmlinux
+	make ARCH=riscv \
+	    CONFIG_CROSS_COMPILE=riscv64-unknown-elf- \
+	    CONFIG_CMDLINE="root=/dev/htifblk0 init=/bin/bash" \
+	    vmlinux
 	ls -l $@
 
 # Build an original (x86-64) chroot using supermin.  We then aim to
