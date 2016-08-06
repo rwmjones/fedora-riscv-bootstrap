@@ -237,6 +237,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/etc/fedora-release \
 	stage3-chroot/lib64/libc.so.6 \
 	stage3-chroot/bin/bash \
+	stage3-chroot/init \
 	stage3-disk.img
 
 stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux:
@@ -251,11 +252,13 @@ stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux:
 	git fetch riscv && \
 	git checkout -f linux-4.1.y-riscv && \
 	make mrproper && \
-	make ARCH=riscv defconfig && \
-	make ARCH=riscv \
-	    CONFIG_CROSS_COMPILE=riscv64-unknown-elf- \
-	    CONFIG_CMDLINE="root=/dev/htifblk0 init=/bin/bash" \
-	    vmlinux
+	make ARCH=riscv defconfig
+	echo CONFIG_CMDLINE=\"root=/dev/htifblk0 init=/init\" >> stage3-kernel/linux-$(KERNEL_VERSION)/.config
+	echo CONFIG_CROSS_COMPILE=riscv64-unknown-elf- >> stage3-kernel/linux-$(KERNEL_VERSION)/.config
+	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
+	make ARCH=riscv olddefconfig
+	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
+	make ARCH=riscv vmlinux
 	ls -l $@
 
 # Build an original (x86-64) chroot using supermin.  We then aim to
@@ -304,6 +307,10 @@ bash-$(BASH_VERSION).tar.gz:
 	rm -f $@ $@-t
 	wget -O $@-t ftp://ftp.gnu.org/gnu/bash/bash-$(BASH_VERSION).tar.gz
 	mv $@-t $@
+
+# Create an /init script.
+stage3-chroot/init: init.sh
+	install -m 0755 $^ $@
 
 # Create the stage3 disk image.
 # Note `-s +...' adds spare space to the disk image.
