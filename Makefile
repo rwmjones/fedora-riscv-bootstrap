@@ -1,6 +1,9 @@
 # Refer to the README file to understand how Fedora on RISC-V is
 # bootstrapped.
 
+# Absolute path to the current directory.
+ROOT := $(shell pwd)
+
 # Note these are chosen very specifically to ensure the different
 # versions work together.  Don't blindly update to the latest
 # versions.  See also:
@@ -38,6 +41,10 @@ STAGE3_PACKAGES = gcc rpm-build
 # Versions of cross-compiled packages.
 BASH_VERSION      = 4.3
 COREUTILS_VERSION = 8.25
+GMP_VERSION       = 6.1.1
+MPFR_VERSION      = 3.1.4
+MPC_VERSION       = 1.0.3
+GCC_X_VERSION     = 6.1.0
 
 all: stage1 stage2 stage3 stage4
 
@@ -239,6 +246,10 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/lib64/libc.so.6 \
 	stage3-chroot/bin/bash \
 	stage3-chroot/bin/ls \
+	stage3-chroot/usr/lib64/libgmp.so.10 \
+	stage3-chroot/usr/lib64/libmpfr.so.4 \
+	stage3-chroot/usr/lib64/libmpc.so.3 \
+	stage3-chroot/usr/bin/gcc \
 	stage3-chroot/init \
 	stage3-disk.img
 
@@ -301,9 +312,11 @@ stage3-chroot/lib64/libc.so.6:
 stage3-chroot/bin/bash: bash-$(BASH_VERSION).tar.gz
 	tar zxf $^
 	cd bash-$(BASH_VERSION) && \
-	./configure --host=riscv64-unknown-linux-gnu CFLAGS="--sysroot=/usr/sysroot" && \
-	make
-	cp bash-$(BASH_VERSION)/bash stage3-chroot/bin/
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	./configure --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64
+	cd bash-$(BASH_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
+	cd bash-$(BASH_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
 
 bash-$(BASH_VERSION).tar.gz:
 	rm -f $@ $@-t
@@ -319,18 +332,96 @@ stage3-chroot/bin/ls: coreutils-$(COREUTILS_VERSION).tar.xz
 	rm -rf coreutils-$(COREUTILS_VERSION)
 	tar Jxf $^
 	cd coreutils-$(COREUTILS_VERSION) && \
-	./configure --host=riscv64-unknown-linux-gnu CFLAGS="--sysroot=/usr/sysroot"
-	-cd coreutils-$(COREUTILS_VERSION) && make
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	./configure --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64
+	-cd coreutils-$(COREUTILS_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
 	cd coreutils-$(COREUTILS_VERSION)/man && \
 	for f in $(COREUTILS_PROGRAMS); do touch $$f.1; done
-	cd coreutils-$(COREUTILS_VERSION) && make
-	for f in $(COREUTILS_PROGRAMS); do \
-	    cp coreutils-$(COREUTILS_VERSION)/src/$$f stage3-chroot/bin/; \
-	done
+	cd coreutils-$(COREUTILS_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
+	cd coreutils-$(COREUTILS_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
 
 coreutils-$(COREUTILS_VERSION).tar.xz:
 	rm -f $@ $@-t
 	wget -O $@-t ftp://ftp.gnu.org/gnu/coreutils/coreutils-$(COREUTILS_VERSION).tar.xz
+	mv $@-t $@
+
+# Cross-compile GMP, MPFR and MPC (deps of GCC).
+stage3-chroot/usr/lib64/libgmp.so.10: gmp-$(GMP_VERSION).tar.lz
+	rm -rf gmp-$(GMP_VERSION)
+	tar --lzip -xf gmp-$(GMP_VERSION).tar.lz
+	cd gmp-$(GMP_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	./configure --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64
+	cd gmp-$(GMP_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
+	cd gmp-$(GMP_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
+	cd stage3-chroot/usr/lib && ln -s ../lib64/libgmp.so
+
+gmp-$(GMP_VERSION).tar.lz:
+	rm -f $@ $@-t
+	wget -O $@-t https://gmplib.org/download/gmp/gmp-$(GMP_VERSION).tar.lz
+	mv $@-t $@
+
+stage3-chroot/usr/lib64/libmpfr.so.4: mpfr-$(MPFR_VERSION).tar.gz
+	rm -rf mpfr-$(MPFR_VERSION)
+	tar -zxf mpfr-$(MPFR_VERSION).tar.gz
+	cd mpfr-$(MPFR_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	./configure --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64 \
+	    --with-gmp=$(ROOT)/stage3-chroot/usr
+	cd mpfr-$(MPFR_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
+	cd mpfr-$(MPFR_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
+	cd stage3-chroot/usr/lib && ln -s ../lib64/libmpfr.so
+
+mpfr-$(MPFR_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t http://www.mpfr.org/mpfr-current/mpfr-$(MPFR_VERSION).tar.gz
+	mv $@-t $@
+
+stage3-chroot/usr/lib64/libmpc.so.3: mpc-$(MPC_VERSION).tar.gz
+	rm -rf mpc-$(MPC_VERSION)
+	tar -zxf mpc-$(MPC_VERSION).tar.gz
+	cd mpc-$(MPC_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	./configure --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64 \
+	    --with-gmp=$(ROOT)/stage3-chroot/usr \
+	    --with-mpfr=$(ROOT)/stage3-chroot/usr
+	cd mpc-$(MPC_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
+	cd mpc-$(MPC_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
+	cd stage3-chroot/usr/lib && ln -s ../lib64/libmpc.so
+
+mpc-$(MPC_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t ftp://ftp.gnu.org/gnu/mpc/mpc-$(MPC_VERSION).tar.gz
+	mv $@-t $@
+
+# Cross-compile GCC.
+stage3-chroot/usr/bin/gcc: gcc-$(GCC_X_VERSION).tar.gz
+	rm -rf riscv-gcc-riscv-gcc-$(GCC_X_VERSION)
+	zcat $^ | tar xf -
+	mkdir riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build
+	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	../configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64 \
+	    --enable-shared \
+	    --enable-tls \
+	    --enable-languages=c,c++ \
+	    --disable-libmudflap \
+	    --disable-libssp \
+	    --disable-libquadmath \
+	    --disable-nls \
+	    --disable-multilib
+	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build && PATH=$(ROOT)/fixed-gcc:$$PATH make all-gcc
+	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build && make install-gcc DESTDIR=$(ROOT)/stage3-chroot
+
+gcc-$(GCC_X_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t https://github.com/riscv/riscv-gcc/archive/riscv-gcc-$(GCC_X_VERSION).tar.gz
 	mv $@-t $@
 
 # Create an /init script.

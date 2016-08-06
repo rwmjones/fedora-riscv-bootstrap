@@ -1,5 +1,6 @@
 *~
 *.tar.gz
+*.tar.lz
 *.tar.xz
 stamp-*
 
@@ -16,3 +17,7 @@ stamp-*
 
 /bash-4.3/
 /coreutils-8.25/
+/gmp-6.1.1/
+/mpc-1.0.3/
+/mpfr-3.1.4/
+/riscv-gcc-riscv-gcc-6.1.0/
