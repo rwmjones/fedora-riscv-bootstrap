@@ -12,6 +12,7 @@ stamp-*
 /stage3-chroot-original/
 /stage3-chroot/
 /stage3-disk.img
+/stage3-disk.img.xz
 
 /bash-4.3/
 /coreutils-8.25/

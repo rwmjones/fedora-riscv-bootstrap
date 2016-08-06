@@ -342,6 +342,13 @@ stage3-chroot/init: init.sh
 stage3-disk.img: stage3-chroot
 	cd stage3-chroot && virt-make-fs . ../$@ -t ext2 -F raw -s +4G
 
+# Upload the compressed disk image.
+upload-stage3: stage3-disk.img.xz
+	scp $^ tick:public_html/riscv/
+stage3-disk.img.xz: stage3-disk.img
+	rm -f $@
+	xz --best $^
+
 # Helper which boots stage3 disk image in spike.
 boot-stage3-in-spike: stage3-disk.img stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
 	spike +disk=stage3-disk.img \
