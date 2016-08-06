@@ -317,6 +317,17 @@ stage3-chroot/init: init.sh
 stage3-disk.img: stage3-chroot
 	cd stage3-chroot && virt-make-fs . ../$@ -t ext2 -F raw -s +4G
 
+# Helper which boots stage3 disk image in spike.
+boot-stage3-in-spike: stage3-disk.img stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
+	spike +disk=stage3-disk.img \
+	    /usr/bin/bbl stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
+
+# Helper which boots stage3 disk image in qemu.
+boot-stage3-in-qemu: stage3-disk.img stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
+	qemu-system-riscv -kernel /usr/bin/bbl \
+	    -append ./stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
+	    -drive file=stage3-disk.img,format=raw -nographic
+
 # Stage 4
 
 stage4:

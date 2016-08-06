@@ -5,16 +5,6 @@ by Richard W.M. Jones (rjones@redhat.com)
 Project home page: https://fedoraproject.org/wiki/Architectures/RISC-V
 
 
-Current status
---------------
-
-Stuck getting QEMU to work.  See:
-https://groups.google.com/a/groups.riscv.org/forum/#!topic/sw-dev/fdbhLufxezA
-
-Will likely wait until September when we may see a working QEMU that
-is compatible with the latest RISC-V software.
-
-
 The aim of the project
 ----------------------
 
