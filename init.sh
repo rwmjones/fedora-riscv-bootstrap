@@ -1,6 +1,9 @@
 #!/bin/bash -
 # Init script installed in stage3 disk image.
 
+LD_LIBRARY_PATH=/usr/lib64
+export LD_LIBRARY_PATH
+
 # Root filesystem is mounted as ro, remount it as rw.
 mount -o remount,rw /
 
