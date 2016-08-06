@@ -2,6 +2,7 @@
 *.tar.gz
 *.tar.lz
 *.tar.xz
+*.tgz
 stamp-*
 
 /stage1-riscv-qemu/riscv-qemu.spec
@@ -20,4 +21,5 @@ stamp-*
 /gmp-6.1.1/
 /mpc-1.0.3/
 /mpfr-3.1.4/
+/ncurses-6.0-20160730/
 /riscv-gcc-riscv-gcc-6.1.0/

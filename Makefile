@@ -39,6 +39,7 @@ LOCAL_LINUX_GIT_COPY = $(HOME)/d/linux
 STAGE3_PACKAGES = gcc rpm-build
 
 # Versions of cross-compiled packages.
+NCURSES_VERSION    = 6.0-20160730
 BASH_VERSION      = 4.3
 COREUTILS_VERSION = 8.25
 GMP_VERSION       = 6.1.1
@@ -244,6 +245,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot-original/etc/fedora-release \
 	stage3-chroot/etc/fedora-release \
 	stage3-chroot/lib64/libc.so.6 \
+	stage3-chroot/usr/bin/tic \
 	stage3-chroot/bin/bash \
 	stage3-chroot/bin/ls \
 	stage3-chroot/usr/lib64/libgmp.so.10 \
@@ -307,6 +309,23 @@ stage3-chroot/lib64/libc.so.6:
 	    cp -d /usr/sysroot/$$f stage3-chroot/$$f; \
 	done
 	cd stage3-chroot/lib64 && for f in ../lib/*; do ln -sf $$f; done
+
+# Cross-compile ncurses.
+stage3-chroot/usr/bin/tic: ncurses-$(NCURSES_VERSION).tgz
+	tar zxf $^
+	cd ncurses-$(NCURSES_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	./configure --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64 \
+	    --with-shared
+	cd ncurses-$(NCURSES_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
+	cd ncurses-$(NCURSES_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make install DESTDIR=$(ROOT)/stage3-chroot
+	cd $(ROOT)/stage3-chroot/usr/lib64 && ln -sf libtinfo.so.6 libtinfo.so
+
+ncurses-$(NCURSES_VERSION).tgz:
+	rm -f $@ $@-t
+	wget -O $@-t ftp://invisible-island.net/ncurses/current/ncurses-$(NCURSES_VERSION).tgz
+	mv $@-t $@
 
 # Cross-compile bash.
 stage3-chroot/bin/bash: bash-$(BASH_VERSION).tar.gz
