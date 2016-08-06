@@ -45,6 +45,7 @@ COREUTILS_VERSION  = 8.25
 GMP_VERSION        = 6.1.1
 MPFR_VERSION       = 3.1.4
 MPC_VERSION        = 1.0.3
+BINUTILS_X_VERSION = 2.26
 GCC_X_VERSION      = 6.1.0
 UTIL_LINUX_VERSION = 2.28
 
@@ -252,6 +253,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/lib64/libgmp.so.10 \
 	stage3-chroot/usr/lib64/libmpfr.so.4 \
 	stage3-chroot/usr/lib64/libmpc.so.3 \
+	stage3-chroot/usr/bin/as \
 	stage3-chroot/usr/bin/gcc \
 	stage3-chroot/usr/bin/mount \
 	stage3-chroot/init \
@@ -365,6 +367,24 @@ stage3-chroot/bin/ls: coreutils-$(COREUTILS_VERSION).tar.xz
 coreutils-$(COREUTILS_VERSION).tar.xz:
 	rm -f $@ $@-t
 	wget -O $@-t ftp://ftp.gnu.org/gnu/coreutils/coreutils-$(COREUTILS_VERSION).tar.xz
+	mv $@-t $@
+
+# Cross-compile binutils.
+stage3-chroot/usr/bin/as: binutils-$(BINUTILS_X_VERSION).tar.gz
+	rm -rf binutils-$(BINUTILS_X_VERSION)
+	zcat $^ | tar xf -
+	mkdir riscv-binutils-gdb-riscv-binutils-$(BINUTILS_X_VERSION)/build
+	cd riscv-binutils-gdb-riscv-binutils-$(BINUTILS_X_VERSION)/build && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	../configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64
+	cd riscv-binutils-gdb-riscv-binutils-$(BINUTILS_X_VERSION)/build && PATH=$(ROOT)/fixed-gcc:$$PATH make
+	cd riscv-binutils-gdb-riscv-binutils-$(BINUTILS_X_VERSION)/build && make DESTDIR=$(ROOT)/stage3-chroot install
+
+binutils-$(BINUTILS_X_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t https://github.com/riscv/riscv-binutils-gdb/archive/riscv-binutils-$(BINUTILS_X_VERSION).tar.gz
 	mv $@-t $@
 
 # Cross-compile GMP, MPFR and MPC (deps of GCC).

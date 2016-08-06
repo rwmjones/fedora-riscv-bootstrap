@@ -22,5 +22,6 @@ stamp-*
 /mpc-1.0.3/
 /mpfr-3.1.4/
 /ncurses-6.0-20160730/
+/riscv-binutils-gdb-riscv-binutils-2.26/
 /riscv-gcc-riscv-gcc-6.1.0/
 /util-linux-2.28/
