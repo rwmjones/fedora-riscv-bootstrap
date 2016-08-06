@@ -40,12 +40,13 @@ STAGE3_PACKAGES = gcc rpm-build
 
 # Versions of cross-compiled packages.
 NCURSES_VERSION    = 6.0-20160730
-BASH_VERSION      = 4.3
-COREUTILS_VERSION = 8.25
-GMP_VERSION       = 6.1.1
-MPFR_VERSION      = 3.1.4
-MPC_VERSION       = 1.0.3
-GCC_X_VERSION     = 6.1.0
+BASH_VERSION       = 4.3
+COREUTILS_VERSION  = 8.25
+GMP_VERSION        = 6.1.1
+MPFR_VERSION       = 3.1.4
+MPC_VERSION        = 1.0.3
+GCC_X_VERSION      = 6.1.0
+UTIL_LINUX_VERSION = 2.28
 
 all: stage1 stage2 stage3 stage4
 
@@ -252,6 +253,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/lib64/libmpfr.so.4 \
 	stage3-chroot/usr/lib64/libmpc.so.3 \
 	stage3-chroot/usr/bin/gcc \
+	stage3-chroot/usr/bin/mount \
 	stage3-chroot/init \
 	stage3-disk.img
 
@@ -441,6 +443,30 @@ stage3-chroot/usr/bin/gcc: gcc-$(GCC_X_VERSION).tar.gz
 gcc-$(GCC_X_VERSION).tar.gz:
 	rm -f $@ $@-t
 	wget -O $@-t https://github.com/riscv/riscv-gcc/archive/riscv-gcc-$(GCC_X_VERSION).tar.gz
+	mv $@-t $@
+
+# Cross-compile util-linux.
+# XXX Be nice to fix ncurses/tinfo support which in theory should work.
+stage3-chroot/usr/bin/mount: util-linux-$(UTIL_LINUX_VERSION).tar.xz
+	rm -rf util-linux-$(UTIL_LINUX_VERSION)
+	tar -Jxf $^
+	cd util-linux-$(UTIL_LINUX_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	./configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64 \
+	    --without-python \
+	    --without-tinfo \
+	    --without-ncurses \
+	    --without-systemd \
+	    --disable-makeinstall-chown
+	cd util-linux-$(UTIL_LINUX_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
+#	libtool fucks something up here, ignore the failure and continue.
+	-cd util-linux-$(UTIL_LINUX_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot -j1 -k V=1
+
+util-linux-$(UTIL_LINUX_VERSION).tar.xz:
+	rm -f $@ $@-t
+	wget -O $@-t ftp://ftp.kernel.org/pub/linux/utils/util-linux/v$(UTIL_LINUX_VERSION)/util-linux-$(UTIL_LINUX_VERSION).tar.xz
 	mv $@-t $@
 
 # Create an /init script.
