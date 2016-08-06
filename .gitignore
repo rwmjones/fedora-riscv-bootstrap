@@ -1,5 +1,6 @@
 *~
 *.tar.gz
+*.tar.xz
 stamp-*
 
 /stage1-riscv-qemu/riscv-qemu.spec
@@ -13,3 +14,4 @@ stamp-*
 /stage3-disk.img
 
 /bash-4.3/
+/coreutils-8.25/

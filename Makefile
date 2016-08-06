@@ -36,7 +36,8 @@ LOCAL_LINUX_GIT_COPY = $(HOME)/d/linux
 STAGE3_PACKAGES = gcc rpm-build
 
 # Versions of cross-compiled packages.
-BASH_VERSION    = 4.3
+BASH_VERSION      = 4.3
+COREUTILS_VERSION = 8.25
 
 all: stage1 stage2 stage3 stage4
 
@@ -237,6 +238,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/etc/fedora-release \
 	stage3-chroot/lib64/libc.so.6 \
 	stage3-chroot/bin/bash \
+	stage3-chroot/bin/ls \
 	stage3-chroot/init \
 	stage3-disk.img
 
@@ -306,6 +308,29 @@ stage3-chroot/bin/bash: bash-$(BASH_VERSION).tar.gz
 bash-$(BASH_VERSION).tar.gz:
 	rm -f $@ $@-t
 	wget -O $@-t ftp://ftp.gnu.org/gnu/bash/bash-$(BASH_VERSION).tar.gz
+	mv $@-t $@
+
+# Cross-compile coreutils.  Bleah, coreutils cross-compilation is
+# known-broken and upstream don't care, hence the 'touch' command.
+
+COREUTILS_PROGRAMS = arch base32 base64 basename cat chcon chgrp chmod chown chroot cksum comm cp csplit cut date dd df dir dircolors dirname du echo env expand expr factor false fmt fold ginstall groups head hostid hostname id install join kill link ln logname ls md5sum mkdir mkfifo mknod mktemp mv nice nl nohup nproc numfmt od paste pathchk pinky pr printenv printf ptx pwd readlink realpath rm rmdir runcon seq sha1sum sha224sum sha256sum sha384sum sha512sum shred shuf sleep sort split stat stdbuf stty sum sync tac tail tee test timeout touch tr true truncate tsort tty uname unexpand uniq unlink uptime users vdir wc who whoami yes
+
+stage3-chroot/bin/ls: coreutils-$(COREUTILS_VERSION).tar.xz
+	rm -rf coreutils-$(COREUTILS_VERSION)
+	tar Jxf $^
+	cd coreutils-$(COREUTILS_VERSION) && \
+	./configure --host=riscv64-unknown-linux-gnu CFLAGS="--sysroot=/usr/sysroot"
+	-cd coreutils-$(COREUTILS_VERSION) && make
+	cd coreutils-$(COREUTILS_VERSION)/man && \
+	for f in $(COREUTILS_PROGRAMS); do touch $$f.1; done
+	cd coreutils-$(COREUTILS_VERSION) && make
+	for f in $(COREUTILS_PROGRAMS); do \
+	    cp coreutils-$(COREUTILS_VERSION)/src/$$f stage3-chroot/bin/; \
+	done
+
+coreutils-$(COREUTILS_VERSION).tar.xz:
+	rm -f $@ $@-t
+	wget -O $@-t ftp://ftp.gnu.org/gnu/coreutils/coreutils-$(COREUTILS_VERSION).tar.xz
 	mv $@-t $@
 
 # Create an /init script.
