@@ -504,8 +504,7 @@ stage3-chroot/usr/bin/mount: util-linux-$(UTIL_LINUX_VERSION).tar.xz
 	    --without-systemd \
 	    --disable-makeinstall-chown
 	cd util-linux-$(UTIL_LINUX_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
-#	libtool fucks something up here, ignore the failure and continue.
-	-cd util-linux-$(UTIL_LINUX_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot -j1 -k V=1
+	cd util-linux-$(UTIL_LINUX_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make install DESTDIR=$(ROOT)/stage3-chroot
 
 util-linux-$(UTIL_LINUX_VERSION).tar.xz:
 	rm -f $@ $@-t
