@@ -54,6 +54,7 @@ ZLIB_VERSION       = 1.2.8
 # Needs to match the installed (on host) version, otherwise:
 # "Cannot use the installed version of file (xx) to cross-compile file yy"
 FILE_VERSION       = 5.25
+POPT_VERSION       = 1.16
 
 all: stage1 stage2 stage3 stage4
 
@@ -266,6 +267,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/bin/gzip \
 	stage3-chroot/usr/lib64/libz.so \
 	stage3-chroot/usr/bin/file \
+	stage3-chroot/usr/lib64/libpopt.so \
 	stage3-chroot/init \
 	stage3-disk.img
 
@@ -570,6 +572,25 @@ stage3-chroot/usr/bin/file: file-$(FILE_VERSION).tar.gz
 file-$(FILE_VERSION).tar.gz:
 	rm -f $@ $@-t
 	wget -O $@-t ftp://ftp.astron.com/pub/file/file-$(FILE_VERSION).tar.gz
+	mv $@-t $@
+
+# Cross-compile popt.
+stage3-chroot/usr/lib64/libpopt.so: popt-$(POPT_VERSION).tar.gz
+	rm -rf popt-$(POPT_VERSION)
+	tar -zxf $^
+	cd popt-$(POPT_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	LDFLAGS=-L/home/rjones/d/fedora-riscv/stage3-chroot/usr/lib64 \
+	./configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64 \
+	    --disable-static --enable-shared
+	cd popt-$(POPT_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make V=1
+	cd popt-$(POPT_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
+
+popt-$(POPT_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t http://rpm5.org/files/popt/popt-$(POPT_VERSION).tar.gz
 	mv $@-t $@
 
 # Create an /init script.
