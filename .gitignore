@@ -21,9 +21,12 @@ stamp-*
 /coreutils-8.25/
 /file-5.25/
 /gmp-6.1.1/
+/grep-2.25/
 /gzip-1.8/
+/less-481/
 /mpc-1.0.3/
 /mpfr-3.1.4/
+/nano-2.6.2/
 /ncurses-6.0-20160730/
 /popt-1.16/
 /riscv-binutils-gdb-riscv-binutils-2.26/

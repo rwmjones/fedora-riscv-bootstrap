@@ -37,7 +37,8 @@ LOCAL_LINUX_GIT_COPY = $(HOME)/d/linux
 # The root packages (plus their dependencies) that we want to
 # cross-compile into the stage 3 chroot.
 # beecrypt-devel is required to build RPM.
-STAGE3_PACKAGES = gcc rpm-build beecrypt-devel
+# Packages for usability: nano, grep, less
+STAGE3_PACKAGES = gcc rpm-build beecrypt-devel nano grep less
 
 # Versions of cross-compiled packages.
 NCURSES_VERSION    = 6.0-20160730
@@ -60,6 +61,9 @@ BEECRYPT_VERSION   = 4.2.1
 RPM_COMMIT         = 95712183458748ea6cafebac1bdd5daa097d9bee
 RPM_SHORT_COMMIT   = 9571218
 BDB_VERSION        = 4.5.20
+NANO_VERSION       = 2.6.2
+GREP_VERSION       = 2.25
+LESS_VERSION       = 481
 
 all: stage1 stage2 stage3 stage4
 
@@ -275,6 +279,9 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/lib64/libpopt.so \
 	stage3-chroot/usr/lib64/libbeecrypt.so \
 	stage3-chroot/usr/bin/rpm \
+	stage3-chroot/usr/bin/nano \
+	stage3-chroot/usr/bin/grep \
+	stage3-chroot/usr/bin/less \
 	stage3-chroot/init \
 	stage3-disk.img
 
@@ -670,6 +677,59 @@ rpm-$(RPM_SHORT_COMMIT).tar.gz:
 db-$(BDB_VERSION).tar.gz:
 	rm -f $@ $@-t
 	wget -O $@-t http://download.oracle.com/berkeley-db/db-$(BDB_VERSION).tar.gz
+	mv $@-t $@
+
+# Cross-compile GNU nano (editor).
+stage3-chroot/usr/bin/nano: nano-$(NANO_VERSION).tar.gz
+	rm -rf nano-$(NANO_VERSION)
+	tar -zxf $^
+	cd nano-$(NANO_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	LDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64 \
+	./configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64
+	cd nano-$(NANO_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
+	cd nano-$(NANO_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
+
+nano-$(NANO_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t https://www.nano-editor.org/dist/v2.6/nano-$(NANO_VERSION).tar.gz
+	mv $@-t $@
+
+# Cross-compile GNU grep.
+stage3-chroot/usr/bin/grep: grep-$(GREP_VERSION).tar.xz
+	rm -rf grep-$(GREP_VERSION)
+	tar -Jxf $^
+	cd grep-$(GREP_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	./configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64
+	cd grep-$(GREP_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
+	cd grep-$(GREP_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
+
+grep-$(GREP_VERSION).tar.xz:
+	rm -f $@ $@-t
+	wget -O $@-t https://ftp.gnu.org/gnu/grep/grep-$(GREP_VERSION).tar.xz
+	mv $@-t $@
+
+# Cross-compile less.
+stage3-chroot/usr/bin/less: less-$(LESS_VERSION).tar.gz
+	rm -rf less-$(LESS_VERSION)
+	tar -zxf $^
+	cd less-$(LESS_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	LDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64 \
+	./configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64
+	cd less-$(LESS_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
+	cd less-$(LESS_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
+
+less-$(LESS_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t http://www.greenwoodsoftware.com/less/less-$(LESS_VERSION).tar.gz
 	mv $@-t $@
 
 # Create an /init script.
