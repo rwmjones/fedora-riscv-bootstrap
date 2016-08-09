@@ -383,7 +383,7 @@ coreutils-$(COREUTILS_VERSION).tar.xz:
 
 # Cross-compile binutils.
 stage3-chroot/usr/bin/as: binutils-$(BINUTILS_X_VERSION).tar.gz
-	rm -rf binutils-$(BINUTILS_X_VERSION)
+	rm -rf riscv-binutils-gdb-riscv-binutils-$(BINUTILS_X_VERSION)
 	zcat $^ | tar xf -
 	mkdir riscv-binutils-gdb-riscv-binutils-$(BINUTILS_X_VERSION)/build
 	cd riscv-binutils-gdb-riscv-binutils-$(BINUTILS_X_VERSION)/build && \
