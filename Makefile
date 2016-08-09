@@ -457,6 +457,8 @@ stage3-chroot/usr/bin/gcc: gcc-$(GCC_X_VERSION).tar.gz
 	    --disable-libquadmath \
 	    --disable-nls \
 	    --disable-multilib
+# XXX use make all & make install here.  However building libgcc
+# fails, see 'broken-gcc.log'.
 	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build && PATH=$(ROOT)/fixed-gcc:$$PATH make all-gcc
 	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build && make install-gcc DESTDIR=$(ROOT)/stage3-chroot
 
