@@ -15,6 +15,9 @@ mkdir -p /run/lock
 
 # XXX devtmpfs
 
+# Initialize dynamic linker cache.
+ldconfig
+
 echo
 echo "Welcome to the Fedora/RISC-V stage3 disk image"
 echo "https://fedoraproject.org/wiki/Architectures/RISC-V"
