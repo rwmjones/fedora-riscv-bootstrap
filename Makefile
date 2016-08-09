@@ -48,6 +48,9 @@ MPC_VERSION        = 1.0.3
 BINUTILS_X_VERSION = 2.26
 GCC_X_VERSION      = 6.1.0
 UTIL_LINUX_VERSION = 2.28
+TAR_VERSION        = 1.29
+GZIP_VERSION       = 1.8
+ZLIB_VERSION       = 1.2.8
 
 all: stage1 stage2 stage3 stage4
 
@@ -256,6 +259,9 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/bin/as \
 	stage3-chroot/usr/bin/gcc \
 	stage3-chroot/usr/bin/mount \
+	stage3-chroot/usr/bin/tar \
+	stage3-chroot/usr/bin/gzip \
+	stage3-chroot/usr/lib64/libz.so \
 	stage3-chroot/init \
 	stage3-disk.img
 
@@ -489,6 +495,58 @@ stage3-chroot/usr/bin/mount: util-linux-$(UTIL_LINUX_VERSION).tar.xz
 util-linux-$(UTIL_LINUX_VERSION).tar.xz:
 	rm -f $@ $@-t
 	wget -O $@-t ftp://ftp.kernel.org/pub/linux/utils/util-linux/v$(UTIL_LINUX_VERSION)/util-linux-$(UTIL_LINUX_VERSION).tar.xz
+	mv $@-t $@
+
+# Cross-compile GNU tar.
+stage3-chroot/usr/bin/tar: tar-$(TAR_VERSION).tar.xz
+	rm -rf tar-$(TAR_VERSION)
+	tar -Jxf $^
+	cd tar-$(TAR_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	./configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64
+	cd tar-$(TAR_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
+	cd tar-$(TAR_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
+
+tar-$(TAR_VERSION).tar.xz:
+	rm -f $@ $@-t
+	wget -O $@-t https://ftp.gnu.org/gnu/tar/tar-$(TAR_VERSION).tar.xz
+	mv $@-t $@
+
+# Cross-compile GNU gzip.
+stage3-chroot/usr/bin/gzip: gzip-$(GZIP_VERSION).tar.gz
+	rm -rf gzip-$(GZIP_VERSION)
+	tar -zxf $^
+	cd gzip-$(GZIP_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	./configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64
+	cd gzip-$(GZIP_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
+	cd gzip-$(GZIP_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
+
+gzip-$(GZIP_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t https://ftp.gnu.org/gnu/gzip/gzip-$(GZIP_VERSION).tar.gz
+	mv $@-t $@
+
+# Cross-compile zlib.
+stage3-chroot/usr/lib64/libz.so: zlib-$(ZLIB_VERSION).tar.gz
+	rm -rf zlib-$(ZLIB_VERSION)
+	tar -zxf $^
+	cd zlib-$(ZLIB_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	CC=riscv64-unknown-linux-gnu-gcc \
+	CFLAGS="-I/home/rjones/d/fedora-riscv/stage3-chroot/usr/include -L/home/rjones/d/fedora-riscv/stage3-chroot/usr/lib" \
+	./configure \
+	    --prefix=/usr --libdir=/usr/lib64
+	cd zlib-$(ZLIB_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make shared
+	cd zlib-$(ZLIB_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
+
+zlib-$(ZLIB_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t http://zlib.net/zlib-$(ZLIB_VERSION).tar.gz
 	mv $@-t $@
 
 # Create an /init script.
