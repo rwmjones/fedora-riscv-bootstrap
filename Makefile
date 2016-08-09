@@ -64,6 +64,8 @@ BDB_VERSION        = 4.5.20
 NANO_VERSION       = 2.6.2
 GREP_VERSION       = 2.25
 LESS_VERSION       = 481
+STRACE_COMMIT      = f320e1897832fd07a62e18ed288e75d8e79f4c5b
+STRACE_SHORT_COMMIT = f320e189
 
 all: stage1 stage2 stage3 stage4
 
@@ -282,6 +284,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/bin/nano \
 	stage3-chroot/usr/bin/grep \
 	stage3-chroot/usr/bin/less \
+	stage3-chroot/usr/bin/strace \
 	stage3-chroot/init \
 	stage3-disk.img
 
@@ -728,6 +731,25 @@ stage3-chroot/usr/bin/less: less-$(LESS_VERSION).tar.gz
 less-$(LESS_VERSION).tar.gz:
 	rm -f $@ $@-t
 	wget -O $@-t http://www.greenwoodsoftware.com/less/less-$(LESS_VERSION).tar.gz
+	mv $@-t $@
+
+# Cross-compile strace.
+stage3-chroot/usr/bin/strace: strace-$(STRACE_SHORT_COMMIT).tar.gz
+	rm -rf strace-$(STRACE_SHORT_COMMIT)
+	tar -zxf $^
+	cd riscv-strace-$(STRACE_COMMIT) && patch -p1 < ../0001-Update-riscv_regs-for-ptrace.h-from-Linux-4.1.x.patch
+	cd riscv-strace-$(STRACE_COMMIT) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	LDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64 \
+	./configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64
+	cd riscv-strace-$(STRACE_COMMIT) && PATH=$(ROOT)/fixed-gcc:$$PATH make
+	cd riscv-strace-$(STRACE_COMMIT) && make install DESTDIR=$(ROOT)/stage3-chroot
+
+strace-$(STRACE_SHORT_COMMIT).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t 'https://github.com/riscv/riscv-strace/archive/$(STRACE_COMMIT)/riscv-strace-$(STRACE_SHORTCOMMIT).tar.gz'
 	mv $@-t $@
 
 # Create an /init script.

@@ -31,6 +31,7 @@ stamp-*
 /popt-1.16/
 /riscv-binutils-gdb-riscv-binutils-2.26/
 /riscv-gcc-riscv-gcc-6.1.0/
+/riscv-strace-f320e1897832fd07a62e18ed288e75d8e79f4c5b/
 /rpm-9571218/
 /tar-1.29/
 /util-linux-2.28/
