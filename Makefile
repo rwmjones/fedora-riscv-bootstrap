@@ -427,6 +427,7 @@ stage3-chroot/usr/lib64/libmpfr.so.4: mpfr-$(MPFR_VERSION).tar.gz
 	cd mpfr-$(MPFR_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
 	cd mpfr-$(MPFR_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
 	cd stage3-chroot/usr/lib && ln -s ../lib64/libmpfr.so
+	rm -f stage3-chroot/usr/lib64/*.la
 
 mpfr-$(MPFR_VERSION).tar.gz:
 	rm -f $@ $@-t
@@ -445,6 +446,7 @@ stage3-chroot/usr/lib64/libmpc.so.3: mpc-$(MPC_VERSION).tar.gz
 	cd mpc-$(MPC_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
 	cd mpc-$(MPC_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
 	cd stage3-chroot/usr/lib && ln -s ../lib64/libmpc.so
+	rm -f stage3-chroot/usr/lib64/*.la
 
 mpc-$(MPC_VERSION).tar.gz:
 	rm -f $@ $@-t
@@ -568,6 +570,7 @@ stage3-chroot/usr/bin/file: file-$(FILE_VERSION).tar.gz
 	    --disable-static --enable-shared
 	cd file-$(FILE_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make V=1
 	cd file-$(FILE_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
+	rm -f stage3-chroot/usr/lib64/*.la
 
 file-$(FILE_VERSION).tar.gz:
 	rm -f $@ $@-t
@@ -587,6 +590,7 @@ stage3-chroot/usr/lib64/libpopt.so: popt-$(POPT_VERSION).tar.gz
 	    --disable-static --enable-shared
 	cd popt-$(POPT_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make V=1
 	cd popt-$(POPT_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
+	rm -f stage3-chroot/usr/lib64/*.la
 
 popt-$(POPT_VERSION).tar.gz:
 	rm -f $@ $@-t
