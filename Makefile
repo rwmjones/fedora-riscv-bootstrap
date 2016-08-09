@@ -663,8 +663,6 @@ stage3-chroot/usr/bin/rpm: rpm-$(RPM_SHORT_COMMIT).tar.gz db-$(BDB_VERSION).tar.
 	    --without-external-db \
 	    --enable-ndb \
 	    --disable-plugins
-	cd rpm-$(RPM_SHORT_COMMIT) && \
-	sed -i 's|^sys_lib_dlsearch_path_spec="/lib64|sys_lib_dlsearch_path_spec="$(ROOT)/stage3-chroot/usr/lib64 /lib64|g' libtool
 	cd rpm-$(RPM_SHORT_COMMIT) && PATH=$(ROOT)/fixed-gcc:$$PATH make V=1
 	cd rpm-$(RPM_SHORT_COMMIT) && PATH=$(ROOT)/fixed-gcc:$$PATH make install DESTDIR=$(ROOT)/stage3-chroot
 	rm -f stage3-chroot/usr/lib64/*.la
