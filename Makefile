@@ -505,6 +505,7 @@ stage3-chroot/usr/bin/mount: util-linux-$(UTIL_LINUX_VERSION).tar.xz
 	    --disable-makeinstall-chown
 	cd util-linux-$(UTIL_LINUX_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
 	cd util-linux-$(UTIL_LINUX_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make install DESTDIR=$(ROOT)/stage3-chroot
+	rm -f stage3-chroot/usr/lib64/*.la
 
 util-linux-$(UTIL_LINUX_VERSION).tar.xz:
 	rm -f $@ $@-t
