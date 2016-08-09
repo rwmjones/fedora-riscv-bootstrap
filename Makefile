@@ -340,10 +340,11 @@ stage3-chroot/usr/bin/tic: ncurses-$(NCURSES_VERSION).tgz
 	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	./configure --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64 \
-	    --with-shared
+	    --with-shared \
+	    --with-termlib=tinfo \
+	    --enable-widec
 	cd ncurses-$(NCURSES_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
 	cd ncurses-$(NCURSES_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make install DESTDIR=$(ROOT)/stage3-chroot
-	cd $(ROOT)/stage3-chroot/usr/lib64 && ln -sf libtinfo.so.6 libtinfo.so
 
 ncurses-$(NCURSES_VERSION).tgz:
 	rm -f $@ $@-t
@@ -489,18 +490,16 @@ gcc-$(GCC_X_VERSION).tar.gz:
 	mv $@-t $@
 
 # Cross-compile util-linux.
-# XXX Be nice to fix ncurses/tinfo support which in theory should work.
 stage3-chroot/usr/bin/mount: util-linux-$(UTIL_LINUX_VERSION).tar.xz
 	rm -rf util-linux-$(UTIL_LINUX_VERSION)
 	tar -Jxf $^
 	cd util-linux-$(UTIL_LINUX_VERSION) && \
 	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	LDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64 \
 	./configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64 \
 	    --without-python \
-	    --without-tinfo \
-	    --without-ncurses \
 	    --without-systemd \
 	    --disable-makeinstall-chown \
 	    --enable-static-programs=mount
