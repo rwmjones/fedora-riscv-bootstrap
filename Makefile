@@ -544,7 +544,7 @@ stage3-chroot/usr/lib64/libz.so: zlib-$(ZLIB_VERSION).tar.gz
 	cd zlib-$(ZLIB_VERSION) && \
 	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	CC=riscv64-unknown-linux-gnu-gcc \
-	CFLAGS="-I/home/rjones/d/fedora-riscv/stage3-chroot/usr/include -L/home/rjones/d/fedora-riscv/stage3-chroot/usr/lib" \
+	CFLAGS="-I$(ROOT)/stage3-chroot/usr/include -L$(ROOT)/stage3-chroot/usr/lib" \
 	./configure \
 	    --prefix=/usr --libdir=/usr/lib64
 	cd zlib-$(ZLIB_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make shared
@@ -561,7 +561,7 @@ stage3-chroot/usr/bin/file: file-$(FILE_VERSION).tar.gz
 	tar -zxf $^
 	cd file-$(FILE_VERSION) && \
 	PATH=$(ROOT)/fixed-gcc:$$PATH \
-	LDFLAGS=-L/home/rjones/d/fedora-riscv/stage3-chroot/usr/lib64 \
+	LDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64 \
 	./configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64 \
@@ -580,7 +580,7 @@ stage3-chroot/usr/lib64/libpopt.so: popt-$(POPT_VERSION).tar.gz
 	tar -zxf $^
 	cd popt-$(POPT_VERSION) && \
 	PATH=$(ROOT)/fixed-gcc:$$PATH \
-	LDFLAGS=-L/home/rjones/d/fedora-riscv/stage3-chroot/usr/lib64 \
+	LDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64 \
 	./configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64 \
