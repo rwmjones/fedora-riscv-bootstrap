@@ -1,3 +1,12 @@
+From d6940aecfc237d215c3c067c16b386885ecd9ca8 Mon Sep 17 00:00:00 2001
+From: "Richard W.M. Jones" <rjones@redhat.com>
+Date: Tue, 9 Aug 2016 18:21:57 +0100
+Subject: [PATCH 1/2] HACKS TO GET RPM TO CROSS-COMPILE
+
+---
+ configure.ac | 28 ++++++++++++++++------------
+ 1 file changed, 16 insertions(+), 12 deletions(-)
+
 diff --git a/configure.ac b/configure.ac
 index e2d5ec3..3f94742 100644
 --- a/configure.ac
@@ -51,3 +60,6 @@ index e2d5ec3..3f94742 100644
  
  #=================
  # Process --with/without-external-db
+-- 
+2.7.4
+

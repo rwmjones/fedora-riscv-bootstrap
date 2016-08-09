@@ -639,7 +639,8 @@ stage3-chroot/usr/bin/rpm: rpm-$(RPM_SHORT_COMMIT).tar.gz db-$(BDB_VERSION).tar.
 	tar -zxf rpm-$(RPM_SHORT_COMMIT).tar.gz
 	tar -zxf db-$(BDB_VERSION).tar.gz -C rpm-$(RPM_SHORT_COMMIT)
 	cd rpm-$(RPM_SHORT_COMMIT) && ln -s db-$(BDB_VERSION) db
-	cd rpm-$(RPM_SHORT_COMMIT) && patch -p1 < ../rpm-hacks.patch
+	cd rpm-$(RPM_SHORT_COMMIT) && patch -p1 < ../0001-HACKS-TO-GET-RPM-TO-CROSS-COMPILE.patch
+	cd rpm-$(RPM_SHORT_COMMIT) && patch -p1 < ../0002-RISCV-64-bit-riscv64-support.patch
 	cd rpm-$(RPM_SHORT_COMMIT) && autoreconf -i
 	cd rpm-$(RPM_SHORT_COMMIT) && \
 	PATH=$(ROOT)/fixed-gcc:$$PATH \

@@ -1,0 +1,94 @@
+From d34904540ecaabbcbfff8e99dc4c831b39f4ea32 Mon Sep 17 00:00:00 2001
+From: "Richard W.M. Jones" <rjones@redhat.com>
+Date: Tue, 9 Aug 2016 18:25:24 +0100
+Subject: [PATCH 2/2] RISCV 64-bit (riscv64) support.
+
+Based on Mark Salter's aarch64 support patch (commit 8e1ca16c58).
+
+Signed-off-by: Richard W.M. Jones <rjones@redhat.com>
+---
+ installplatform |  6 ++++++
+ rpmrc.in        | 15 +++++++++++++++
+ 2 files changed, 21 insertions(+)
+
+diff --git a/installplatform b/installplatform
+index ebade42..12339fc 100755
+--- a/installplatform
++++ b/installplatform
+@@ -174,6 +174,12 @@ for ARCH in noarch `grep ^arch_canon $RPMRC | cut -d: -f2`; do
+ 	CANONARCH=m68k
+ 	CANONCOLOR=0
+ 	;;
++    riscv64)
++	ISANAME=riscv
++	ISABITS=64
++	CANONARCH=riscv64
++	CANONCOLOR=3
++	;;
+     noarch)
+ 	CANONARCH=noarch
+ 	CANONCOLOR=0
+diff --git a/rpmrc.in b/rpmrc.in
+index e888b0f..5b9b71d 100644
+--- a/rpmrc.in
++++ b/rpmrc.in
+@@ -99,6 +99,8 @@ optflags: sh4a -O2 -g -mieee
+ 
+ optflags: aarch64 -O2 -g
+ 
++optflags: riscv64 -O2 -g
++
+ #############################################################
+ # Architecture colors
+ 
+@@ -147,6 +149,8 @@ archcolor: sh4 1
+ 
+ archcolor: aarch64 2
+ 
++archcolor: riscv64 2
++
+ #############################################################
+ # Canonical arch names and numbers
+ 
+@@ -243,6 +247,8 @@ arch_canon:	mipsr6el: mipsr6el	20
+ arch_canon:	mips64r6: mips64r6	21
+ arch_canon:	mips64r6el: mips64r6el	21
+ 
++arch_canon:	riscv64: riscv64	22
++
+ #############################################################
+ # Canonical OS names and numbers
+ 
+@@ -368,6 +374,9 @@ buildarchtranslate: sh4a: sh4
+ 
+ buildarchtranslate: aarch64: aarch64
+ 
++buildarchtranslate: riscv: riscv64
++buildarchtranslate: riscv64: riscv64
++
+ #############################################################
+ # Architecture compatibility
+ 
+@@ -473,6 +482,9 @@ arch_compat: sh4a: sh4
+ 
+ arch_compat: aarch64: noarch
+ 
++arch_compat: riscv: noarch
++arch_compat: riscv64: noarch
++
+ os_compat:   IRIX64: IRIX
+ os_compat: solaris2.7: solaris2.3 solaris2.4 solaris2.5 solaris2.6
+ os_compat: solaris2.6: solaris2.3 solaris2.4 solaris2.5
+@@ -506,6 +518,9 @@ buildarch_compat: ia64: noarch
+ 
+ buildarch_compat: aarch64: noarch
+ 
++buildarch_compat: riscv: noarch
++buildarch_compat: riscv64: noarch
++
+ buildarch_compat: athlon: i686
+ buildarch_compat: geode: i586
+ buildarch_compat: pentium4: pentium3
+-- 
+2.7.4
+
