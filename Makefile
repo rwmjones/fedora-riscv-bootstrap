@@ -36,7 +36,8 @@ LOCAL_LINUX_GIT_COPY = $(HOME)/d/linux
 
 # The root packages (plus their dependencies) that we want to
 # cross-compile into the stage 3 chroot.
-STAGE3_PACKAGES = gcc rpm-build
+# beecrypt-devel is required to build RPM.
+STAGE3_PACKAGES = gcc rpm-build beecrypt-devel
 
 # Versions of cross-compiled packages.
 NCURSES_VERSION    = 6.0-20160730
@@ -55,6 +56,10 @@ ZLIB_VERSION       = 1.2.8
 # "Cannot use the installed version of file (xx) to cross-compile file yy"
 FILE_VERSION       = 5.25
 POPT_VERSION       = 1.16
+BEECRYPT_VERSION   = 4.2.1
+RPM_COMMIT         = 95712183458748ea6cafebac1bdd5daa097d9bee
+RPM_SHORT_COMMIT   = 9571218
+BDB_VERSION        = 4.5.20
 
 all: stage1 stage2 stage3 stage4
 
@@ -268,6 +273,8 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/lib64/libz.so \
 	stage3-chroot/usr/bin/file \
 	stage3-chroot/usr/lib64/libpopt.so \
+	stage3-chroot/usr/lib64/libbeecrypt.so \
+	stage3-chroot/usr/bin/rpm \
 	stage3-chroot/init \
 	stage3-disk.img
 
@@ -595,6 +602,73 @@ stage3-chroot/usr/lib64/libpopt.so: popt-$(POPT_VERSION).tar.gz
 popt-$(POPT_VERSION).tar.gz:
 	rm -f $@ $@-t
 	wget -O $@-t http://rpm5.org/files/popt/popt-$(POPT_VERSION).tar.gz
+	mv $@-t $@
+
+# Cross-compile beecrypt.
+stage3-chroot/usr/lib64/libbeecrypt.so: beecrypt-$(BEECRYPT_VERSION).tar.gz
+	rm -rf beecrypt-$(BEECRYPT_VERSION)
+	tar -zxf $^
+	cd beecrypt-$(BEECRYPT_VERSION) && patch -p0 < ../beecrypt-disable-cplusplus.patch
+	cd beecrypt-$(BEECRYPT_VERSION) && autoreconf -i
+	cd beecrypt-$(BEECRYPT_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	LDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64 \
+	./configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64 \
+	    --without-cplusplus \
+	    --without-java \
+	    --disable-openmp \
+	    --disable-static \
+	    --enable-shared
+	cd beecrypt-$(BEECRYPT_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make V=1
+	cd beecrypt-$(BEECRYPT_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make install DESTDIR=$(ROOT)/stage3-chroot V=1
+	chrpath -d stage3-chroot/usr/lib64/libbeecrypt.so.*
+	rm -f stage3-chroot/usr/lib64/*.la
+
+beecrypt-$(BEECRYPT_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t http://downloads.sourceforge.net/sourceforge/beecrypt/beecrypt-$(BEECRYPT_VERSION).tar.gz
+	mv $@-t $@
+
+# Cross-compile RPM / rpmbuild.
+# We build this from a git commit, with a few hacks to the configure
+# script.
+stage3-chroot/usr/bin/rpm: rpm-$(RPM_SHORT_COMMIT).tar.gz db-$(BDB_VERSION).tar.gz
+	rm -rf rpm-$(RPM_SHORT_COMMIT)
+	tar -zxf rpm-$(RPM_SHORT_COMMIT).tar.gz
+	tar -zxf db-$(BDB_VERSION).tar.gz -C rpm-$(RPM_SHORT_COMMIT)
+	cd rpm-$(RPM_SHORT_COMMIT) && ln -s db-$(BDB_VERSION) db
+	cd rpm-$(RPM_SHORT_COMMIT) && patch -p1 < ../rpm-hacks.patch
+	cd rpm-$(RPM_SHORT_COMMIT) && autoreconf -i
+	cd rpm-$(RPM_SHORT_COMMIT) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	LDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64 \
+	./configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64 \
+	    --disable-rpath \
+	    --without-libarchive \
+	    --without-lua \
+	    --with-beecrypt \
+	    --without-archive \
+	    --without-external-db \
+	    --enable-ndb \
+	    --disable-plugins
+	cd rpm-$(RPM_SHORT_COMMIT) && \
+	sed -i 's|^sys_lib_dlsearch_path_spec="/lib64|sys_lib_dlsearch_path_spec="$(ROOT)/stage3-chroot/usr/lib64 /lib64|g' libtool
+	cd rpm-$(RPM_SHORT_COMMIT) && PATH=$(ROOT)/fixed-gcc:$$PATH make V=1
+	cd rpm-$(RPM_SHORT_COMMIT) && PATH=$(ROOT)/fixed-gcc:$$PATH make install DESTDIR=$(ROOT)/stage3-chroot
+	rm -f stage3-chroot/usr/lib64/*.la
+
+rpm-$(RPM_SHORT_COMMIT).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t 'http://rpm.org/gitweb?p=rpm.git;a=snapshot;h=$(RPM_COMMIT);sf=tgz'
+	mv $@-t $@
+
+db-$(BDB_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t http://download.oracle.com/berkeley-db/db-$(BDB_VERSION).tar.gz
 	mv $@-t $@
 
 # Create an /init script.

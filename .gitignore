@@ -17,6 +17,7 @@ stamp-*
 /stage3-disk.img.xz
 
 /bash-4.3/
+/beecrypt-4.2.1/
 /coreutils-8.25/
 /file-5.25/
 /gmp-6.1.1/
@@ -27,6 +28,7 @@ stamp-*
 /popt-1.16/
 /riscv-binutils-gdb-riscv-binutils-2.26/
 /riscv-gcc-riscv-gcc-6.1.0/
+/rpm-9571218/
 /tar-1.29/
 /util-linux-2.28/
 /zlib-1.2.8/

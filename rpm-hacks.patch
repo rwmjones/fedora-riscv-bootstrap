@@ -1,0 +1,53 @@
+diff --git a/configure.ac b/configure.ac
+index e2d5ec3..3f94742 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -309,6 +309,8 @@ AC_SUBST(WITH_NSS_LIB)
+ WITH_MAGIC_INCLUDE=
+ WITH_MAGIC_LIB=
+ 
++old_LIBS="$LIBS"
++LIBS="-lz"
+ AC_CHECK_HEADER([magic.h], [
+     AC_CHECK_LIB(magic, magic_open, [
+       WITH_MAGIC_INCLUDE=
+@@ -319,6 +321,7 @@ AC_CHECK_HEADER([magic.h], [
+ ],[
+       AC_MSG_ERROR([missing required header magic.h]) 
+ ])
++LIBS="$old_LIBS"
+ 
+ AC_SUBST(WITH_MAGIC_INCLUDE)
+ AC_SUBST(WITH_MAGIC_LIB)
+@@ -369,18 +372,19 @@ AM_CONDITIONAL(WITH_ARCHIVE,[test "$with_archive" = yes])
+ 
+ #=================
+ # Check for elfutils libdw library with dwelf_elf_gnu_build_id.
+-AS_IF([test "$WITH_LIBELF" = yes],[
+-  AC_CHECK_HEADERS([elfutils/libdwelf.h],[
+-    AC_CHECK_LIB(dw, dwelf_elf_gnu_build_id, [
+-      AC_DEFINE(HAVE_LIBDW, 1,
+-                [Define to 1 if you have elfutils libdw library])
+-      WITH_LIBDW_LIB="-ldw"
+-      WITH_LIBDW=yes
+-    ])
+-  ])
+-  AC_SUBST(WITH_LIBDW_LIB)
+-  AM_CONDITIONAL(LIBDW,[test "$WITH_LIBDW" = yes])
+-])
++dnl AS_IF([test "$WITH_LIBELF" = yes],[
++dnl   AC_CHECK_HEADERS([elfutils/libdwelf.h],[
++dnl     AC_CHECK_LIB(dw, dwelf_elf_gnu_build_id, [
++dnl       AC_DEFINE(HAVE_LIBDW, 1,
++dnl                 [Define to 1 if you have elfutils libdw library])
++dnl       WITH_LIBDW_LIB="-ldw"
++dnl       WITH_LIBDW=yes
++dnl     ])
++dnl   ])
++dnl   AC_SUBST(WITH_LIBDW_LIB)
++dnl   AM_CONDITIONAL(LIBDW,[test "$WITH_LIBDW" = yes])
++dnl ])
++AM_CONDITIONAL(LIBDW,[false])
+ 
+ #=================
+ # Process --with/without-external-db
