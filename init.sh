@@ -1,9 +1,6 @@
 #!/bin/bash -
 # Init script installed in stage3 disk image.
 
-LD_LIBRARY_PATH=/usr/lib64
-export LD_LIBRARY_PATH
-
 # Root filesystem is mounted as ro, remount it as rw.
 mount.static -o remount,rw /
 
@@ -16,7 +13,7 @@ mkdir -p /run/lock
 # XXX devtmpfs
 
 # Initialize dynamic linker cache.
-ldconfig
+ldconfig /usr/lib64 /usr/lib /lib64 /lib
 
 echo
 echo "Welcome to the Fedora/RISC-V stage3 disk image"
