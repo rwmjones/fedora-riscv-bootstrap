@@ -74,6 +74,7 @@ FINDUTILS_VERSION  = 4.6.0
 SED_VERSION        = 4.2
 PATCH_VERSION      = 2.7.5
 HOSTNAME_VERSION   = 3.15
+GETTEXT_VERSION    = 0.19
 
 all: stage1 stage2 stage3 stage4
 
@@ -299,6 +300,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/bin/sed \
 	stage3-chroot/usr/bin/patch \
 	stage3-chroot/usr/bin/hostname \
+	stage3-chroot/usr/bin/gettext \
 	stage3-chroot/usr/bin/rpm \
 	stage3-chroot/init \
 	stage3-disk.img
@@ -849,6 +851,24 @@ stage3-chroot/usr/bin/hostname: hostname-$(HOSTNAME_VERSION).tar.gz
 hostname-$(HOSTNAME_VERSION).tar.gz:
 	rm -f $@ $@-t
 	wget -O $@-t http://ftp.de.debian.org/debian/pool/main/h/hostname/hostname_$(HOSTNAME_VERSION).tar.gz
+	mv $@-t $@
+
+# Cross-compile GNU gettext.
+stage3-chroot/usr/bin/gettext: gettext-$(GETTEXT_VERSION).tar.gz
+	rm -rf gettext-$(GETTEXT_VERSION)
+	tar -zxf $^
+	cd gettext-$(GETTEXT_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	./configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64
+	cd gettext-$(GETTEXT_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
+	cd gettext-$(GETTEXT_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make install DESTDIR=$(ROOT)/stage3-chroot
+	rm -f stage3-chroot/usr/lib64/*.la
+
+gettext-$(GETTEXT_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t https://ftp.gnu.org/gnu/gettext/gettext-$(GETTEXT_VERSION).tar.gz
 	mv $@-t $@
 
 # Cross-compile RPM / rpmbuild.
