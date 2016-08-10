@@ -1,0 +1,31 @@
+From 85b9fa7d081f70bbc5ef6266fbdbd7480e7331dc Mon Sep 17 00:00:00 2001
+From: "Richard W.M. Jones" <rjones@redhat.com>
+Date: Wed, 10 Aug 2016 15:01:31 +0100
+Subject: [PATCH 2/3] build: fgetc returns int, not char.
+
+Returning the value into a char is a mistake on all platforms, but is
+particularly bad on RISC-V.  On that platform (like ARM) char is
+unsigned.  Therefore EOF (-1) is returned as 255, and the subsequent
+test 'c == EOF' ('255 == -1') fails causing an infinite loop.
+
+Signed-off-by: Richard W.M. Jones <rjones@redhat.com>
+---
+ build/parseSpec.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/build/parseSpec.c b/build/parseSpec.c
+index 85b0ba3..28f00bc 100644
+--- a/build/parseSpec.c
++++ b/build/parseSpec.c
+@@ -323,7 +323,7 @@ retry:
+ 
+     /* Make sure we have something in the read buffer */
+     if (!(ofi->readPtr && *(ofi->readPtr))) {
+-	char c;
++	int c;
+ 	int i = 0;
+ 
+ 	while((c = fgetc(ofi->fp)) != EOF) {
+-- 
+2.7.4
+
