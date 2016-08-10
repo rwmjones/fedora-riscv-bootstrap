@@ -66,6 +66,7 @@ GREP_VERSION       = 2.25
 LESS_VERSION       = 481
 STRACE_COMMIT      = f320e1897832fd07a62e18ed288e75d8e79f4c5b
 STRACE_SHORT_COMMIT = f320e189
+BZIP2_VERSION      = 1.0.6
 
 all: stage1 stage2 stage3 stage4
 
@@ -285,6 +286,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/bin/grep \
 	stage3-chroot/usr/bin/less \
 	stage3-chroot/usr/bin/strace \
+	stage3-chroot/usr/bin/bzip2 \
 	stage3-chroot/init \
 	stage3-disk.img
 
@@ -753,6 +755,25 @@ stage3-chroot/usr/bin/strace: strace-$(STRACE_SHORT_COMMIT).tar.gz
 strace-$(STRACE_SHORT_COMMIT).tar.gz:
 	rm -f $@ $@-t
 	wget -O $@-t 'https://github.com/riscv/riscv-strace/archive/$(STRACE_COMMIT)/riscv-strace-$(STRACE_SHORTCOMMIT).tar.gz'
+	mv $@-t $@
+
+# Cross-compile bzip2.
+stage3-chroot/usr/bin/bzip2: bzip2-$(BZIP2_VERSION).tar.gz
+	rm -rf bzip2-$(BZIP2_VERSION)
+	tar -zxf $^
+	cd bzip2-$(BZIP2_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	make libbz2.a bzip2 bzip2recover \
+	PREFIX=/usr \
+	CC=riscv64-unknown-linux-gnu-gcc \
+	AR=riscv64-unknown-linux-gnu-ar \
+	RANLIB=riscv64-unknown-linux-gnu-ranlib
+	cd bzip2-$(BZIP2_VERSION) && \
+	make install PREFIX=$(ROOT)/stage3-chroot/usr
+
+bzip2-$(BZIP2_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t http://www.bzip.org/1.0.6/bzip2-$(BZIP2_VERSION).tar.gz
 	mv $@-t $@
 
 # Create an /init script.
