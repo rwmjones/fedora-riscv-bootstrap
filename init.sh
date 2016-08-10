@@ -15,6 +15,9 @@ mkdir -p /run/lock
 # Initialize dynamic linker cache.
 ldconfig /usr/lib64 /usr/lib /lib64 /lib
 
+# There is no hardware clock, just ensure the date is not miles out.
+date `date -r /usr/bin +%m%d%H%M%Y`
+
 echo
 echo "Welcome to the Fedora/RISC-V stage3 disk image"
 echo "https://fedoraproject.org/wiki/Architectures/RISC-V"
