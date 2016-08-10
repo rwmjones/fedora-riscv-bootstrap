@@ -736,6 +736,7 @@ less-$(LESS_VERSION).tar.gz:
 	mv $@-t $@
 
 # Cross-compile strace.
+# XXX This does not work.
 stage3-chroot/usr/bin/strace: strace-$(STRACE_SHORT_COMMIT).tar.gz
 	rm -rf strace-$(STRACE_SHORT_COMMIT)
 	tar -zxf $^
