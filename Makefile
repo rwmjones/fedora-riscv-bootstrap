@@ -67,6 +67,7 @@ LESS_VERSION       = 481
 STRACE_COMMIT      = f320e1897832fd07a62e18ed288e75d8e79f4c5b
 STRACE_SHORT_COMMIT = f320e189
 BZIP2_VERSION      = 1.0.6
+MAKE_VERSION       = 4.1
 
 all: stage1 stage2 stage3 stage4
 
@@ -287,6 +288,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/bin/less \
 	stage3-chroot/usr/bin/strace \
 	stage3-chroot/usr/bin/bzip2 \
+	stage3-chroot/usr/bin/make \
 	stage3-chroot/init \
 	stage3-disk.img
 
@@ -774,6 +776,23 @@ stage3-chroot/usr/bin/bzip2: bzip2-$(BZIP2_VERSION).tar.gz
 bzip2-$(BZIP2_VERSION).tar.gz:
 	rm -f $@ $@-t
 	wget -O $@-t http://www.bzip.org/1.0.6/bzip2-$(BZIP2_VERSION).tar.gz
+	mv $@-t $@
+
+# Cross-compile GNU make.
+stage3-chroot/usr/bin/make: make-$(MAKE_VERSION).tar.gz
+	rm -rf make-$(MAKE_VERSION)
+	tar -zxf $^
+	cd make-$(MAKE_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	./configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64
+	cd make-$(MAKE_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
+	cd make-$(MAKE_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
+
+make-$(MAKE_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t https://ftp.gnu.org/gnu/make/make-$(MAKE_VERSION).tar.gz
 	mv $@-t $@
 
 # Create an /init script.
