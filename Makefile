@@ -34,11 +34,15 @@ KERNEL_VERSION   = 4.1.26
 # git commits (optional).
 LOCAL_LINUX_GIT_COPY = $(HOME)/d/linux
 
-# The root packages (plus their dependencies) that we want to
-# cross-compile into the stage 3 chroot.
-# beecrypt-devel is required to build RPM.
-# Packages for usability: nano, grep, less
-STAGE3_PACKAGES = gcc rpm-build beecrypt-devel nano grep less
+# The root packages (plus their dependencies) that we want to in the
+# stage 3 chroot.  This must include all the cross-compiled packages
+# below, and may also include any noarch package we like.
+STAGE3_PACKAGES = ncurses-devel bash coreutils gmp-devel \
+mpfr-devel mpc-devel binutils gcc gcc-c++ util-linux tar \
+gzip zlib-devel file-devel popt-devel beecrypt-devel \
+rpm rpm-build rpm-devel libdb-utils libdb-devel nano \
+grep less strace bzip2-devel make diffutils findutils \
+sed patch hostname gettext-devel
 
 # Versions of cross-compiled packages.
 NCURSES_VERSION    = 6.0-20160730
@@ -344,9 +348,9 @@ stage3-chroot-original/etc/fedora-release:
 stage3-chroot/etc/fedora-release: stage3-chroot-original/etc/fedora-release
 	rm -rf stage3-chroot
 	cp -a stage3-chroot-original stage3-chroot
-	find stage3-chroot -type d | xargs chmod u+w
-	find stage3-chroot -type f | xargs chmod u+w
-	find stage3-chroot -type f | xargs file -N | grep -E '\bELF.*LSB\b' | awk -F: '{print $$1}' | xargs rm -f
+	find stage3-chroot -type d -print0 | xargs -0 chmod u+w
+	find stage3-chroot -type f -print0 | xargs -0 chmod u+w
+	find stage3-chroot -type f -print0 | xargs -0 file -N | grep -E '\bELF.*LSB\b' | awk -F: '{print $$1}' | xargs rm -f
 	rm -f stage3-chroot/lib64/libc.so.6
 
 # Copy in compiled glibc from the riscv-gnu-toolchain sysroot.  Only
