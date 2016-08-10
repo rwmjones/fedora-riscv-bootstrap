@@ -282,13 +282,13 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/bin/file \
 	stage3-chroot/usr/lib64/libpopt.so \
 	stage3-chroot/usr/lib64/libbeecrypt.so \
-	stage3-chroot/usr/bin/rpm \
 	stage3-chroot/usr/bin/nano \
 	stage3-chroot/usr/bin/grep \
 	stage3-chroot/usr/bin/less \
 	stage3-chroot/usr/bin/strace \
 	stage3-chroot/usr/bin/bzip2 \
 	stage3-chroot/usr/bin/make \
+	stage3-chroot/usr/bin/rpm \
 	stage3-chroot/init \
 	stage3-disk.img
 
@@ -645,47 +645,6 @@ beecrypt-$(BEECRYPT_VERSION).tar.gz:
 	wget -O $@-t http://downloads.sourceforge.net/sourceforge/beecrypt/beecrypt-$(BEECRYPT_VERSION).tar.gz
 	mv $@-t $@
 
-# Cross-compile RPM / rpmbuild.
-# We build this from a git commit, with a few hacks to the configure
-# script.
-stage3-chroot/usr/bin/rpm: rpm-$(RPM_SHORT_COMMIT).tar.gz db-$(BDB_VERSION).tar.gz
-	rm -rf rpm-$(RPM_SHORT_COMMIT)
-	tar -zxf rpm-$(RPM_SHORT_COMMIT).tar.gz
-	tar -zxf db-$(BDB_VERSION).tar.gz -C rpm-$(RPM_SHORT_COMMIT)
-	cd rpm-$(RPM_SHORT_COMMIT) && ln -s db-$(BDB_VERSION) db
-	cd rpm-$(RPM_SHORT_COMMIT) && \
-	patch -p1 < ../0001-RISCV-64-bit-riscv64-support.patch && \
-	patch -p1 < ../0002-build-fgetc-returns-int-not-char.patch && \
-	patch -p1 < ../0003-HACKS-TO-GET-RPM-TO-CROSS-COMPILE.patch
-	cd rpm-$(RPM_SHORT_COMMIT) && autoreconf -i
-	cd rpm-$(RPM_SHORT_COMMIT) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
-	LDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64 \
-	./configure \
-	    --host=riscv64-unknown-linux-gnu \
-	    --prefix=/usr --libdir=/usr/lib64 \
-	    --disable-rpath \
-	    --without-libarchive \
-	    --without-lua \
-	    --with-beecrypt \
-	    --without-archive \
-	    --without-external-db \
-	    --enable-ndb \
-	    --disable-plugins
-	cd rpm-$(RPM_SHORT_COMMIT) && PATH=$(ROOT)/fixed-gcc:$$PATH make V=1
-	cd rpm-$(RPM_SHORT_COMMIT) && PATH=$(ROOT)/fixed-gcc:$$PATH make install DESTDIR=$(ROOT)/stage3-chroot
-	rm -f stage3-chroot/usr/lib64/*.la
-
-rpm-$(RPM_SHORT_COMMIT).tar.gz:
-	rm -f $@ $@-t
-	wget -O $@-t 'http://rpm.org/gitweb?p=rpm.git;a=snapshot;h=$(RPM_COMMIT);sf=tgz'
-	mv $@-t $@
-
-db-$(BDB_VERSION).tar.gz:
-	rm -f $@ $@-t
-	wget -O $@-t http://download.oracle.com/berkeley-db/db-$(BDB_VERSION).tar.gz
-	mv $@-t $@
-
 # Cross-compile GNU nano (editor).
 stage3-chroot/usr/bin/nano: nano-$(NANO_VERSION).tar.gz
 	rm -rf nano-$(NANO_VERSION)
@@ -769,7 +728,8 @@ stage3-chroot/usr/bin/bzip2: bzip2-$(BZIP2_VERSION).tar.gz
 	PREFIX=/usr \
 	CC=riscv64-unknown-linux-gnu-gcc \
 	AR=riscv64-unknown-linux-gnu-ar \
-	RANLIB=riscv64-unknown-linux-gnu-ranlib
+	RANLIB=riscv64-unknown-linux-gnu-ranlib \
+	CFLAGS="-Wall -Winline -O2 -g -D_FILE_OFFSET_BITS=64 -fPIC"
 	cd bzip2-$(BZIP2_VERSION) && \
 	make install PREFIX=$(ROOT)/stage3-chroot/usr
 
@@ -793,6 +753,47 @@ stage3-chroot/usr/bin/make: make-$(MAKE_VERSION).tar.gz
 make-$(MAKE_VERSION).tar.gz:
 	rm -f $@ $@-t
 	wget -O $@-t https://ftp.gnu.org/gnu/make/make-$(MAKE_VERSION).tar.gz
+	mv $@-t $@
+
+# Cross-compile RPM / rpmbuild.
+# We build this from a git commit, with a few hacks to the configure
+# script.
+stage3-chroot/usr/bin/rpm: rpm-$(RPM_SHORT_COMMIT).tar.gz db-$(BDB_VERSION).tar.gz
+	rm -rf rpm-$(RPM_SHORT_COMMIT)
+	tar -zxf rpm-$(RPM_SHORT_COMMIT).tar.gz
+	tar -zxf db-$(BDB_VERSION).tar.gz -C rpm-$(RPM_SHORT_COMMIT)
+	cd rpm-$(RPM_SHORT_COMMIT) && ln -s db-$(BDB_VERSION) db
+	cd rpm-$(RPM_SHORT_COMMIT) && \
+	patch -p1 < ../0001-RISCV-64-bit-riscv64-support.patch && \
+	patch -p1 < ../0002-build-fgetc-returns-int-not-char.patch && \
+	patch -p1 < ../0003-HACKS-TO-GET-RPM-TO-CROSS-COMPILE.patch
+	cd rpm-$(RPM_SHORT_COMMIT) && autoreconf -i
+	cd rpm-$(RPM_SHORT_COMMIT) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	LDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64 \
+	./configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64 \
+	    --disable-rpath \
+	    --without-libarchive \
+	    --without-lua \
+	    --with-beecrypt \
+	    --without-archive \
+	    --without-external-db \
+	    --enable-ndb \
+	    --disable-plugins
+	cd rpm-$(RPM_SHORT_COMMIT) && PATH=$(ROOT)/fixed-gcc:$$PATH make V=1
+	cd rpm-$(RPM_SHORT_COMMIT) && PATH=$(ROOT)/fixed-gcc:$$PATH make install DESTDIR=$(ROOT)/stage3-chroot
+	rm -f stage3-chroot/usr/lib64/*.la
+
+rpm-$(RPM_SHORT_COMMIT).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t 'http://rpm.org/gitweb?p=rpm.git;a=snapshot;h=$(RPM_COMMIT);sf=tgz'
+	mv $@-t $@
+
+db-$(BDB_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t http://download.oracle.com/berkeley-db/db-$(BDB_VERSION).tar.gz
 	mv $@-t $@
 
 # Create an /init script.
