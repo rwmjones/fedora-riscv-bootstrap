@@ -69,6 +69,10 @@ STRACE_COMMIT      = f320e1897832fd07a62e18ed288e75d8e79f4c5b
 STRACE_SHORT_COMMIT = f320e189
 BZIP2_VERSION      = 1.0.6
 MAKE_VERSION       = 4.1
+DIFFUTILS_VERSION  = 3.4
+FINDUTILS_VERSION  = 4.6.0
+SED_VERSION        = 4.2
+PATCH_VERSION      = 2.7.5
 
 all: stage1 stage2 stage3 stage4
 
@@ -289,6 +293,10 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/bin/strace \
 	stage3-chroot/usr/bin/bzip2 \
 	stage3-chroot/usr/bin/make \
+	stage3-chroot/usr/bin/diff \
+	stage3-chroot/usr/bin/find \
+	stage3-chroot/usr/bin/sed \
+	stage3-chroot/usr/bin/patch \
 	stage3-chroot/usr/bin/rpm \
 	stage3-chroot/init \
 	stage3-disk.img
@@ -754,6 +762,74 @@ stage3-chroot/usr/bin/make: make-$(MAKE_VERSION).tar.gz
 make-$(MAKE_VERSION).tar.gz:
 	rm -f $@ $@-t
 	wget -O $@-t https://ftp.gnu.org/gnu/make/make-$(MAKE_VERSION).tar.gz
+	mv $@-t $@
+
+# Cross-compile GNU diffutils.
+stage3-chroot/usr/bin/diff: diffutils-$(DIFFUTILS_VERSION).tar.xz
+	rm -rf diffutils-$(DIFFUTILS_VERSION)
+	tar -Jxf $^
+	cd diffutils-$(DIFFUTILS_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	./configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64
+	cd diffutils-$(DIFFUTILS_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
+	cd diffutils-$(DIFFUTILS_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
+
+diffutils-$(DIFFUTILS_VERSION).tar.xz:
+	rm -f $@ $@-t
+	wget -O $@-t https://ftp.gnu.org/gnu/diffutils/diffutils-$(DIFFUTILS_VERSION).tar.xz
+	mv $@-t $@
+
+# Cross-compile GNU findutils.
+stage3-chroot/usr/bin/find: findutils-$(FINDUTILS_VERSION).tar.gz
+	rm -rf findutils-$(FINDUTILS_VERSION)
+	tar -zxf $^
+	cd findutils-$(FINDUTILS_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	./configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64
+	cd findutils-$(FINDUTILS_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
+	cd findutils-$(FINDUTILS_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
+
+findutils-$(FINDUTILS_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t https://ftp.gnu.org/gnu/findutils/findutils-$(FINDUTILS_VERSION).tar.gz
+	mv $@-t $@
+
+# Cross-compile GNU sed.
+stage3-chroot/usr/bin/sed: sed-$(SED_VERSION).tar.gz
+	rm -rf sed-$(SED_VERSION)
+	tar -zxf $^
+	cd sed-$(SED_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	./configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64
+	cd sed-$(SED_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
+	cd sed-$(SED_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
+
+sed-$(SED_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t https://ftp.gnu.org/gnu/sed/sed-$(SED_VERSION).tar.gz
+	mv $@-t $@
+
+# Cross-compile patch.
+stage3-chroot/usr/bin/patch: patch-$(PATCH_VERSION).tar.gz
+	rm -rf patch-$(PATCH_VERSION)
+	tar -zxf $^
+	cd patch-$(PATCH_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	./configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64
+	cd patch-$(PATCH_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
+	cd patch-$(PATCH_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
+
+patch-$(PATCH_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t https://ftp.gnu.org/gnu/patch/patch-$(PATCH_VERSION).tar.gz
 	mv $@-t $@
 
 # Cross-compile RPM / rpmbuild.
