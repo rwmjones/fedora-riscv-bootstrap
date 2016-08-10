@@ -53,9 +53,10 @@ UTIL_LINUX_VERSION = 2.28
 TAR_VERSION        = 1.29
 GZIP_VERSION       = 1.8
 ZLIB_VERSION       = 1.2.8
-# Needs to match the installed (on host) version, otherwise:
-# "Cannot use the installed version of file (xx) to cross-compile file yy"
-FILE_VERSION       = 5.25
+# Needs to match the version of 'file' installed (on host), otherwise:
+#   "Cannot use the installed version of file (xx) to cross-compile file yy"
+# Also note that 5.25 is definitely broken (segfaults in libmagic:magic_close).
+FILE_VERSION       = 5.28
 POPT_VERSION       = 1.16
 BEECRYPT_VERSION   = 4.2.1
 RPM_COMMIT         = 95712183458748ea6cafebac1bdd5daa097d9bee
