@@ -73,6 +73,7 @@ DIFFUTILS_VERSION  = 3.4
 FINDUTILS_VERSION  = 4.6.0
 SED_VERSION        = 4.2
 PATCH_VERSION      = 2.7.5
+HOSTNAME_VERSION   = 3.15
 
 all: stage1 stage2 stage3 stage4
 
@@ -297,6 +298,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/bin/find \
 	stage3-chroot/usr/bin/sed \
 	stage3-chroot/usr/bin/patch \
+	stage3-chroot/usr/bin/hostname \
 	stage3-chroot/usr/bin/rpm \
 	stage3-chroot/init \
 	stage3-disk.img
@@ -830,6 +832,23 @@ stage3-chroot/usr/bin/patch: patch-$(PATCH_VERSION).tar.gz
 patch-$(PATCH_VERSION).tar.gz:
 	rm -f $@ $@-t
 	wget -O $@-t https://ftp.gnu.org/gnu/patch/patch-$(PATCH_VERSION).tar.gz
+	mv $@-t $@
+
+# Cross-compile hostname.
+stage3-chroot/usr/bin/hostname: hostname-$(HOSTNAME_VERSION).tar.gz
+	rm -rf hostname-$(HOSTNAME_VERSION)
+	tar -zxf $^
+	cd hostname && patch -p1 < ../hostname-rh.patch
+	cd hostname && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	make \
+	CC=riscv64-unknown-linux-gnu-gcc \
+	CFLAGS="-O2 -g"
+	cd hostname && make install BASEDIR=$(ROOT)/stage3-chroot
+
+hostname-$(HOSTNAME_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t http://ftp.de.debian.org/debian/pool/main/h/hostname/hostname_$(HOSTNAME_VERSION).tar.gz
 	mv $@-t $@
 
 # Cross-compile RPM / rpmbuild.

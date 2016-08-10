@@ -18,6 +18,9 @@ ldconfig /usr/lib64 /usr/lib /lib64 /lib
 # There is no hardware clock, just ensure the date is not miles out.
 date `date -r /usr/bin +%m%d%H%M%Y`
 
+hostname stage3
+echo stage3.fedoraproject.org > /etc/hostname
+
 echo
 echo "Welcome to the Fedora/RISC-V stage3 disk image"
 echo "https://fedoraproject.org/wiki/Architectures/RISC-V"
