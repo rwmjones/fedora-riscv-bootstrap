@@ -490,6 +490,8 @@ mpc-$(MPC_VERSION).tar.gz:
 stage3-chroot/usr/bin/gcc: gcc-$(GCC_X_VERSION).tar.gz
 	rm -rf riscv-gcc-riscv-gcc-$(GCC_X_VERSION)
 	zcat $^ | tar xf -
+	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION) && \
+	patch -p1 < ../0001-HACKS-TO-GET-GCC-TO-COMPILE.patch
 	mkdir riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build
 	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build && \
 	PATH=$(ROOT)/fixed-gcc:$$PATH \
@@ -504,10 +506,8 @@ stage3-chroot/usr/bin/gcc: gcc-$(GCC_X_VERSION).tar.gz
 	    --disable-libquadmath \
 	    --disable-nls \
 	    --disable-multilib
-# XXX use make all & make install here.  However building libgcc
-# fails, see 'broken-gcc.log'.
-	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build && PATH=$(ROOT)/fixed-gcc:$$PATH make all-gcc
-	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build && make install-gcc DESTDIR=$(ROOT)/stage3-chroot
+	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build && PATH=$(ROOT)/fixed-gcc:$$PATH make
+	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build && make install DESTDIR=$(ROOT)/stage3-chroot
 
 gcc-$(GCC_X_VERSION).tar.gz:
 	rm -f $@ $@-t
