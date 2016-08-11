@@ -43,7 +43,7 @@ mpfr-devel mpc-devel binutils gcc gcc-c++ util-linux tar \
 gzip zlib-devel file-devel popt-devel beecrypt-devel \
 rpm rpm-build rpm-devel libdb-utils libdb-devel nano \
 grep less strace bzip2-devel make diffutils findutils \
-sed patch hostname gettext-devel lua-devel
+sed patch hostname gettext-devel lua-devel xz-devel
 
 # Versions of cross-compiled packages.
 NCURSES_VERSION    = 6.0-20160730
