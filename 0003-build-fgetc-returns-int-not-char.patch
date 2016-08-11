@@ -1,7 +1,7 @@
-From 8217b4c4c44f666adf413ab3a0a21503a6f35a3e Mon Sep 17 00:00:00 2001
+From 0c44e5cdbdc525cc1bf1063b6c561efa23d06b0d Mon Sep 17 00:00:00 2001
 From: "Richard W.M. Jones" <rjones@redhat.com>
 Date: Wed, 10 Aug 2016 15:01:31 +0100
-Subject: [PATCH 2/3] build: fgetc returns int, not char.
+Subject: [PATCH 3/4] build: fgetc returns int, not char.
 
 Returning the value into a char is a mistake on all platforms, but is
 particularly bad on RISC-V.  On that platform (like ARM) char is

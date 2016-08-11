@@ -1,7 +1,7 @@
-From daaa2fb07d725aa0e42c660776f88adebfa70945 Mon Sep 17 00:00:00 2001
+From 7a164577210693c1714c38398fe87270f62bb8c1 Mon Sep 17 00:00:00 2001
 From: "Richard W.M. Jones" <rjones@redhat.com>
 Date: Tue, 9 Aug 2016 18:21:57 +0100
-Subject: [PATCH 3/3] HACKS TO GET RPM TO CROSS-COMPILE
+Subject: [PATCH 4/4] HACKS TO GET RPM TO CROSS-COMPILE
 
 ---
  configure.ac | 28 ++++++++++++++++------------
