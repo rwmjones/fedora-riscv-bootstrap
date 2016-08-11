@@ -37,15 +37,16 @@ LOCAL_LINUX_GIT_COPY = $(HOME)/d/linux
 # The root packages (plus their dependencies) that we want to in the
 # stage 3 chroot.  This must include all the cross-compiled packages
 # below, and may also include any noarch package we like.
-STAGE3_PACKAGES = ncurses-devel bash coreutils gmp-devel \
+STAGE3_PACKAGES = ncurses-devel readline-devel bash coreutils gmp-devel \
 mpfr-devel mpc-devel binutils gcc gcc-c++ util-linux tar \
 gzip zlib-devel file-devel popt-devel beecrypt-devel \
 rpm rpm-build rpm-devel libdb-utils libdb-devel nano \
 grep less strace bzip2-devel make diffutils findutils \
-sed patch hostname gettext-devel
+sed patch hostname gettext-devel lua-devel
 
 # Versions of cross-compiled packages.
 NCURSES_VERSION    = 6.0-20160730
+READLINE_VERSION   = 6.3
 BASH_VERSION       = 4.3
 COREUTILS_VERSION  = 8.25
 GMP_VERSION        = 6.1.1
@@ -79,6 +80,7 @@ SED_VERSION        = 4.2
 PATCH_VERSION      = 2.7.5
 HOSTNAME_VERSION   = 3.15
 GETTEXT_VERSION    = 0.19
+LUA_VERSION        = 5.3.3
 
 all: stage1 stage2 stage3 stage4
 
@@ -279,6 +281,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/etc/fedora-release \
 	stage3-chroot/lib64/libc.so.6 \
 	stage3-chroot/usr/bin/tic \
+	stage3-chroot/usr/lib64/libhistory.so.6 \
 	stage3-chroot/bin/bash \
 	stage3-chroot/bin/ls \
 	stage3-chroot/usr/lib64/libgmp.so.10 \
@@ -305,6 +308,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/bin/patch \
 	stage3-chroot/usr/bin/hostname \
 	stage3-chroot/usr/bin/gettext \
+	stage3-chroot/usr/bin/lua \
 	stage3-chroot/usr/bin/rpm \
 	stage3-chroot/init \
 	stage3-disk.img
@@ -380,6 +384,23 @@ stage3-chroot/usr/bin/tic: ncurses-$(NCURSES_VERSION).tgz
 ncurses-$(NCURSES_VERSION).tgz:
 	rm -f $@ $@-t
 	wget -O $@-t ftp://invisible-island.net/ncurses/current/ncurses-$(NCURSES_VERSION).tgz
+	mv $@-t $@
+
+# Cross-compile readline.
+stage3-chroot/usr/lib64/libhistory.so.6: readline-$(READLINE_VERSION).tar.gz
+	tar zxf $^
+	cd readline-$(READLINE_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	bash_cv_wcwidth_broken=no \
+	./configure --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64
+	cd readline-$(READLINE_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
+	cd readline-$(READLINE_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
+	rm -f stage3-chroot/usr/lib64/*.la
+
+readline-$(READLINE_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t ftp://ftp.gnu.org/gnu/readline/readline-$(READLINE_VERSION).tar.gz
 	mv $@-t $@
 
 # Cross-compile bash.
@@ -876,6 +897,18 @@ gettext-$(GETTEXT_VERSION).tar.gz:
 	wget -O $@-t https://ftp.gnu.org/gnu/gettext/gettext-$(GETTEXT_VERSION).tar.gz
 	mv $@-t $@
 
+# Cross-compile lua.
+stage3-chroot/usr/bin/lua: lua-$(LUA_VERSION).tar.gz
+	rm -rf lua-$(LUA_VERSION)
+	tar -zxf $^
+	cd lua-$(LUA_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make PLAT=linux INSTALL_TOP=/usr CC=riscv64-unknown-linux-gnu-gcc AR="riscv64-unknown-linux-gnu-ar rcu" RANLIB="riscv64-unknown-linux-gnu-ranlib" MYLDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64 MYLIBS=-ltinfo MYCFLAGS="-fPIC -DLUA_COMPAT_5_1"
+	cd lua-$(LUA_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make install INSTALL_TOP=$(ROOT)/stage3-chroot/usr INSTALL_LIB=$(ROOT)/stage3-chroot/usr/lib64
+
+lua-$(LUA_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t https://www.lua.org/ftp/lua-$(LUA_VERSION).tar.gz
+	mv $@-t $@
+
 # Cross-compile RPM / rpmbuild.
 # We build this from a git commit, with a few hacks to the configure
 # script.
@@ -897,7 +930,7 @@ stage3-chroot/usr/bin/rpm: rpm-$(RPM_SHORT_COMMIT).tar.gz db-$(BDB_VERSION).tar.
 	    --prefix=/usr --libdir=/usr/lib64 \
 	    --disable-rpath \
 	    --without-libarchive \
-	    --without-lua \
+	    --with-lua \
 	    --with-beecrypt \
 	    --without-archive \
 	    --without-external-db \

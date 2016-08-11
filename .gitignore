@@ -31,6 +31,7 @@ stamp-*
 /gzip-1.8/
 /hostname/
 /less-481/
+/lua-5.3.3/
 /make-4.1/
 /mpc-1.0.3/
 /mpfr-3.1.4/
@@ -38,6 +39,7 @@ stamp-*
 /ncurses-6.0-20160730/
 /patch-2.7.5/
 /popt-1.16/
+/readline-6.3/
 /riscv-binutils-gdb-riscv-binutils-2.26/
 /riscv-gcc-riscv-gcc-6.1.0/
 /riscv-strace-f320e1897832fd07a62e18ed288e75d8e79f4c5b/
