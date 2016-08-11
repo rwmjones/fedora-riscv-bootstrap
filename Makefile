@@ -37,7 +37,8 @@ LOCAL_LINUX_GIT_COPY = $(HOME)/d/linux
 # The root packages (plus their dependencies) that we want to in the
 # stage 3 chroot.  This must include all the cross-compiled packages
 # below, and may also include any noarch package we like.
-STAGE3_PACKAGES = ncurses-devel readline-devel bash coreutils gmp-devel \
+STAGE3_PACKAGES = iso-codes \
+ncurses-devel readline-devel bash coreutils gmp-devel \
 mpfr-devel mpc-devel binutils gcc gcc-c++ util-linux tar \
 gzip zlib-devel file-devel popt-devel beecrypt-devel \
 rpm rpm-build rpm-devel libdb-utils libdb-devel nano \
