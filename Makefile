@@ -82,6 +82,7 @@ PATCH_VERSION      = 2.7.5
 HOSTNAME_VERSION   = 3.15
 GETTEXT_VERSION    = 0.19
 LUA_VERSION        = 5.3.3
+XZ_VERSION         = 5.2.2
 
 all: stage1 stage2 stage3 stage4
 
@@ -311,6 +312,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/bin/gettext \
 	stage3-chroot/usr/bin/lua \
 	stage3-chroot/usr/bin/rpm \
+	stage3-chroot/usr/bin/xz \
 	stage3-chroot/init \
 	stage3-disk.img
 
@@ -908,6 +910,24 @@ stage3-chroot/usr/bin/lua: lua-$(LUA_VERSION).tar.gz
 lua-$(LUA_VERSION).tar.gz:
 	rm -f $@ $@-t
 	wget -O $@-t https://www.lua.org/ftp/lua-$(LUA_VERSION).tar.gz
+	mv $@-t $@
+
+# Cross-compile xz.
+stage3-chroot/usr/bin/xz: xz-$(XZ_VERSION).tar.gz
+	rm -rf xz-$(XZ_VERSION)
+	tar -zxf $^
+	cd xz-$(XZ_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	./configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64
+	cd xz-$(XZ_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
+	cd xz-$(XZ_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make install DESTDIR=$(ROOT)/stage3-chroot
+	rm -f stage3-chroot/usr/lib64/*.la
+
+xz-$(XZ_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t http://tukaani.org/xz/xz-$(XZ_VERSION).tar.gz
 	mv $@-t $@
 
 # Cross-compile RPM / rpmbuild.
