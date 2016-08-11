@@ -43,7 +43,7 @@ mpfr-devel mpc-devel binutils gcc gcc-c++ util-linux tar \
 gzip zlib-devel file-devel popt-devel beecrypt-devel \
 rpm rpm-build rpm-devel libdb-utils libdb-devel nano \
 grep less strace bzip2-devel make diffutils findutils \
-sed patch hostname gettext-devel lua-devel xz-devel
+sed patch hostname gettext-devel lua-devel xz-devel gawk
 
 # Versions of cross-compiled packages.
 NCURSES_VERSION    = 6.0-20160730
@@ -83,6 +83,7 @@ HOSTNAME_VERSION   = 3.15
 GETTEXT_VERSION    = 0.19
 LUA_VERSION        = 5.3.3
 XZ_VERSION         = 5.2.2
+GAWK_VERSION       = 4.1.3
 
 all: stage1 stage2 stage3 stage4
 
@@ -313,6 +314,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/bin/lua \
 	stage3-chroot/usr/bin/rpm \
 	stage3-chroot/usr/bin/xz \
+	stage3-chroot/usr/bin/gawk \
 	stage3-chroot/init \
 	stage3-disk.img
 
@@ -928,6 +930,23 @@ stage3-chroot/usr/bin/xz: xz-$(XZ_VERSION).tar.gz
 xz-$(XZ_VERSION).tar.gz:
 	rm -f $@ $@-t
 	wget -O $@-t http://tukaani.org/xz/xz-$(XZ_VERSION).tar.gz
+	mv $@-t $@
+
+# Cross-compile GNU awk.
+stage3-chroot/usr/bin/gawk: gawk-$(GAWK_VERSION).tar.gz
+	rm -rf gawk-$(GAWK_VERSION)
+	tar -zxf $^
+	cd gawk-$(GAWK_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	./configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64
+	cd gawk-$(GAWK_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
+	cd gawk-$(GAWK_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
+
+gawk-$(GAWK_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t https://ftp.gnu.org/gnu/gawk/gawk-$(GAWK_VERSION).tar.gz
 	mv $@-t $@
 
 # Cross-compile RPM / rpmbuild.
