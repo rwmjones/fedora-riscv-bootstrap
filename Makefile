@@ -43,7 +43,8 @@ mpfr-devel mpc-devel binutils gcc gcc-c++ util-linux tar \
 gzip zlib-devel file-devel popt-devel beecrypt-devel \
 rpm rpm-build rpm-devel libdb-utils libdb-devel nano \
 grep less strace bzip2-devel make diffutils findutils \
-sed patch hostname gettext-devel lua-devel xz-devel gawk
+sed patch hostname gettext-devel lua-devel xz-devel gawk \
+vim
 
 # Versions of cross-compiled packages.
 NCURSES_VERSION    = 6.0-20160730
@@ -84,6 +85,7 @@ GETTEXT_VERSION    = 0.19
 LUA_VERSION        = 5.3.3
 XZ_VERSION         = 5.2.2
 GAWK_VERSION       = 4.1.3
+VIM_VERSION        = 7.4
 
 all: stage1 stage2 stage3 stage4
 
@@ -315,6 +317,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/bin/rpm \
 	stage3-chroot/usr/bin/xz \
 	stage3-chroot/usr/bin/gawk \
+	stage3-chroot/usr/bin/vim \
 	stage3-chroot/init \
 	stage3-disk.img
 
@@ -947,6 +950,31 @@ stage3-chroot/usr/bin/gawk: gawk-$(GAWK_VERSION).tar.gz
 gawk-$(GAWK_VERSION).tar.gz:
 	rm -f $@ $@-t
 	wget -O $@-t https://ftp.gnu.org/gnu/gawk/gawk-$(GAWK_VERSION).tar.gz
+	mv $@-t $@
+
+# Cross-compile vim.
+stage3-chroot/usr/bin/vim: vim-$(VIM_VERSION).tar.gz
+	rm -rf vim-$(VIM_VERSION)
+	bzcat $^ | tar xf -
+	cd vim74/src && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	vim_cv_memmove_handles_overlap=yes \
+	vim_cv_stat_ignores_slash=no \
+	vim_cv_getcwd_broken=no \
+	vim_cv_tty_group=world \
+	vim_cv_terminfo=yes \
+	vim_cv_toupper_broken=no \
+	LDFLAGS=-L/home/rjones/d/fedora-riscv/stage3-chroot/usr/lib64 \
+	./configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64 \
+	    --with-tlib=tinfo
+	cd vim74/src && PATH=$(ROOT)/fixed-gcc:$$PATH make
+	cd vim74/src && make install DESTDIR=$(ROOT)/stage3-chroot STRIP=riscv64-unknown-linux-gnu-strip
+
+vim-$(VIM_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t ftp://ftp.vim.org/pub/vim/unix/vim-$(VIM_VERSION).tar.bz2
 	mv $@-t $@
 
 # Cross-compile RPM / rpmbuild.
