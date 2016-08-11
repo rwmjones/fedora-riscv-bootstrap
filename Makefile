@@ -930,6 +930,7 @@ stage3-chroot/usr/bin/rpm: rpm-$(RPM_SHORT_COMMIT).tar.gz db-$(BDB_VERSION).tar.
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64 \
 	    --disable-rpath \
+	    --with-vendor=redhat \
 	    --without-libarchive \
 	    --with-lua \
 	    --with-beecrypt \
