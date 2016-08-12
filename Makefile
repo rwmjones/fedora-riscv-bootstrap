@@ -529,6 +529,7 @@ stage3-chroot/usr/bin/gcc: gcc-$(GCC_X_VERSION).tar.gz
 	patch -p1 < ../0001-HACKS-TO-GET-GCC-TO-COMPILE.patch
 	mkdir riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build
 	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build && \
+	gcc_cv_as_leb128=no \
 	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	../configure \
 	    --host=riscv64-unknown-linux-gnu \
@@ -541,7 +542,7 @@ stage3-chroot/usr/bin/gcc: gcc-$(GCC_X_VERSION).tar.gz
 	    --disable-libquadmath \
 	    --disable-nls \
 	    --disable-multilib
-	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build && PATH=$(ROOT)/fixed-gcc:$$PATH make
+	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build && gcc_cv_as_leb128=no PATH=$(ROOT)/fixed-gcc:$$PATH make
 	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build && make install DESTDIR=$(ROOT)/stage3-chroot
 	rm -f stage3-chroot/usr/lib64/*.la
 
