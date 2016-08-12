@@ -1056,4 +1056,7 @@ stage4:
 	echo "XXX TO DO"
 	exit 1
 
+
+
+# Don't run the builds in parallel because they are implicitly ordered.
 .NOTPARALLEL:
