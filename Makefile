@@ -39,7 +39,7 @@ LOCAL_LINUX_GIT_COPY = $(HOME)/d/linux
 # below, and may also include any noarch package we like.
 STAGE3_PACKAGES = iso-codes \
 ncurses-devel readline-devel bash coreutils gmp-devel \
-mpfr-devel mpc-devel binutils gcc gcc-c++ util-linux tar \
+mpfr-devel libmpc-devel binutils gcc gcc-c++ util-linux tar \
 gzip zlib-devel file-devel popt-devel beecrypt-devel \
 rpm rpm-build rpm-devel libdb-utils libdb-devel nano \
 grep less strace bzip2-devel make diffutils findutils \
