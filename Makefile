@@ -1037,16 +1037,18 @@ stage3-disk.img.xz: stage3-disk.img
 	rm -f $@
 	xz --best $^
 
+DISK := stage3-disk.img
+
 # Helper which boots stage3 disk image in spike.
 boot-stage3-in-spike: stage3-disk.img stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
-	spike +disk=stage3-disk.img \
+	spike +disk=$(DISK) \
 	    /usr/bin/bbl stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
 
 # Helper which boots stage3 disk image in qemu.
 boot-stage3-in-qemu: stage3-disk.img stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
 	qemu-system-riscv -kernel /usr/bin/bbl \
 	    -append ./stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
-	    -drive file=stage3-disk.img,format=raw -nographic
+	    -drive file=$(DISK),format=raw -nographic
 
 # Stage 4
 
