@@ -314,8 +314,8 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/bin/hostname \
 	stage3-chroot/usr/bin/gettext \
 	stage3-chroot/usr/bin/lua \
-	stage3-chroot/usr/bin/rpm \
 	stage3-chroot/usr/bin/xz \
+	stage3-chroot/usr/bin/rpm \
 	stage3-chroot/usr/bin/gawk \
 	stage3-chroot/usr/bin/vim \
 	stage3-chroot/init \
