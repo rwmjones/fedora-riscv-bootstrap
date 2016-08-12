@@ -346,10 +346,11 @@ stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux:
 # rebuild (using cross-compiled versions) every ELF binary in this
 # chroot.
 stage3-chroot-original/etc/fedora-release:
-	rm -rf stage3-chroot-original tmp-supermin.d
+	rm -rf stage3-chroot-original-t stage3-chroot-original tmp-supermin.d
 	supermin --prepare $(STAGE3_PACKAGES) -o tmp-supermin.d
-	supermin --build -f chroot tmp-supermin.d -o stage3-chroot-original
+	supermin --build -f chroot tmp-supermin.d -o stage3-chroot-original-t
 	rm -r tmp-supermin.d
+	mv stage3-chroot-original-t stage3-chroot-original
 	@echo -n "Total files in chroot: "
 	@find stage3-chroot-original -type f | wc -l
 	@echo -n "ELF files to be rebuilt: "
@@ -358,12 +359,13 @@ stage3-chroot-original/etc/fedora-release:
 # Copy the original chroot to the final chroot, remove all the ELF
 # files.
 stage3-chroot/etc/fedora-release: stage3-chroot-original/etc/fedora-release
-	rm -rf stage3-chroot
-	cp -a stage3-chroot-original stage3-chroot
-	find stage3-chroot -type d -print0 | xargs -0 chmod u+w
-	find stage3-chroot -type f -print0 | xargs -0 chmod u+w
-	find stage3-chroot -type f -print0 | xargs -0 file -N | grep -E '\bELF.*LSB\b' | awk -F: '{print $$1}' | xargs rm -f
-	rm -f stage3-chroot/lib64/libc.so.6
+	rm -rf stage3-chroot-t stage3-chroot
+	cp -a stage3-chroot-original stage3-chroot-t
+	find stage3-chroot-t -type d -print0 | xargs -0 chmod u+w
+	find stage3-chroot-t -type f -print0 | xargs -0 chmod u+w
+	find stage3-chroot-t -type f -print0 | xargs -0 file -N | grep -E '\bELF.*LSB\b' | awk -F: '{print $$1}' | xargs rm -f
+	rm -f stage3-chroot-t/lib64/libc.so.6
+	mv stage3-chroot-t stage3-chroot
 
 # Copy in compiled glibc from the riscv-gnu-toolchain sysroot.  Only
 # copy files and symlinks, leave the target directory structure
