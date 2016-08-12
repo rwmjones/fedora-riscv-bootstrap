@@ -318,6 +318,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/bin/rpm \
 	stage3-chroot/usr/bin/gawk \
 	stage3-chroot/usr/bin/vim \
+	stamp-redhat-rpmrc \
 	stage3-chroot/init \
 	stage3-disk.img
 
@@ -1022,6 +1023,12 @@ db-$(BDB_VERSION).tar.gz:
 	rm -f $@ $@-t
 	wget -O $@-t http://download.oracle.com/berkeley-db/db-$(BDB_VERSION).tar.gz
 	mv $@-t $@
+
+# Fix optflags in redhat-specific RPM configuration.
+stamp-redhat-rpmrc:
+	rm -f $@
+	echo 'optflags: riscv64 %{__global_cflags}' >> stage3-chroot/usr/lib/rpm/redhat/rpmrc
+	touch $@
 
 # Create an /init script.
 stage3-chroot/init: init.sh
