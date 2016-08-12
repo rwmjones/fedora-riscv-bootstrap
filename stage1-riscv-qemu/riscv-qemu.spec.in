@@ -2,7 +2,7 @@
 
 Name:           riscv-qemu
 Version:        2.5.0
-Release:        0.1.git@SHORTCOMMIT@%{?dist}
+Release:        0.2.git@SHORTCOMMIT@%{?dist}
 Summary:        RISC-V fork of QEMU
 License:        GPLv2+ and LGPLv2+ and BSD
 
@@ -57,7 +57,6 @@ BuildRequires: gtk3-devel
 BuildRequires: vte3-devel
 BuildRequires: gettext
 BuildRequires: librdmacm-devel
-BuildRequires: xen-devel
 BuildRequires: numactl-devel
 BuildRequires: bzip2-devel
 BuildRequires: libepoxy-devel
@@ -80,7 +79,9 @@ This is the RISC-V fork of QEMU.
 
 
 %build
-./configure --prefix=%{_prefix} --target-list=riscv-softmmu --disable-werror
+./configure --prefix=%{_prefix} --target-list=riscv-softmmu \
+            --disable-xen \
+            --disable-werror
 make
 
 
