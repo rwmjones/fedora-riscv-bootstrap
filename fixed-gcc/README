@@ -1,7 +1,0 @@
-The versions of riscv64-unknown-linux-{gcc,g++} in the
-riscv-gnu-toolchain RPM are (possibly) broken in that they require an
-explicit --sysroot parameter.
-
-Work around that by setting $PATH to contain this directory.
-
-Note this should only be used when building stage3.

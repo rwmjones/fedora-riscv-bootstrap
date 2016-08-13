@@ -7,6 +7,8 @@ stamp-*
 
 .gdb_history
 
+/fixed-gcc/
+
 /stage1-riscv-qemu/riscv-qemu.spec
 /stage1-riscv-fesvr/riscv-fesvr.spec
 /stage1-riscv-isa-sim/riscv-isa-sim.spec

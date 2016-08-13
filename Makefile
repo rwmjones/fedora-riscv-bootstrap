@@ -190,6 +190,10 @@ stage2: stage2-riscv-gnu-toolchain/riscv-gnu-toolchain-$(RISCV_GNU_TOOLCHAIN_SHO
 	stage2-riscv-gnu-toolchain/newlib-$(NEWLIB_VERSION).tar.gz \
 	stage2-riscv-gnu-toolchain/riscv-gnu-toolchain.spec \
 	stamp-riscv-gnu-toolchain-installed \
+	fixed-gcc/riscv64-unknown-linux-gnu-cc \
+	fixed-gcc/riscv64-unknown-linux-gnu-gcc \
+	fixed-gcc/riscv64-unknown-linux-gnu-c++ \
+	fixed-gcc/riscv64-unknown-linux-gnu-g++ \
 	stage2-riscv-pk/riscv-pk-$(RISCV_PK_SHORTCOMMIT).tar.gz \
 	stage2-riscv-pk/riscv-pk.spec \
 	stamp-riscv-pk-installed
@@ -253,6 +257,33 @@ stamp-riscv-gnu-toolchain-installed:
 	  exit 1; \
 	}
 	touch $@
+
+# The versions of riscv64-unknown-linux-{gcc,g++} in the
+# riscv-gnu-toolchain RPM are (possibly) broken in that they require an
+# explicit --sysroot parameter.
+#
+# Work around that by setting $PATH to contain fixed-gcc subdirectory.
+#
+# Note this should only be used when building stage3.
+fixed-gcc/riscv64-unknown-linux-gnu-cc:
+	mkdir -p fixed-gcc
+	echo '/usr/bin/riscv64-unknown-linux-gnu-gcc --sysroot=$(ROOT)/stage3-chroot "$$@"' > $@
+	chmod 0755 $@
+
+fixed-gcc/riscv64-unknown-linux-gnu-gcc:
+	mkdir -p fixed-gcc
+	echo '/usr/bin/riscv64-unknown-linux-gnu-gcc --sysroot=$(ROOT)/stage3-chroot "$$@"' > $@
+	chmod 0755 $@
+
+fixed-gcc/riscv64-unknown-linux-gnu-c++:
+	mkdir -p fixed-gcc
+	echo '/usr/bin/riscv64-unknown-linux-gnu-g++ --sysroot=$(ROOT)/stage3-chroot "$$@"' > $@
+	chmod 0755 $@
+
+fixed-gcc/riscv64-unknown-linux-gnu-g++:
+	mkdir -p fixed-gcc
+	echo '/usr/bin/riscv64-unknown-linux-gnu-g++ --sysroot=$(ROOT)/stage3-chroot "$$@"' > $@
+	chmod 0755 $@
 
 stage2-riscv-pk/riscv-pk-$(RISCV_PK_SHORTCOMMIT).tar.gz:
 	rm -f $@ $@-t
