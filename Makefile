@@ -351,6 +351,8 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/bin/vim \
 	stamp-redhat-rpmrc \
 	stage3-chroot/init \
+	stage3-chroot/config.guess \
+	stage3-chroot/config.sub \
 	stage3-disk.img
 
 stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux:
@@ -1063,6 +1065,13 @@ stamp-redhat-rpmrc:
 
 # Create an /init script.
 stage3-chroot/init: init.sh
+	install -m 0755 $^ $@
+
+# Copy latest config.guess and config.sub into the root of the chroot.
+# For some packages it may be required to update these files.
+stage3-chroot/config.guess: config.guess
+	install -m 0755 $^ $@
+stage3-chroot/config.sub: config.sub
 	install -m 0755 $^ $@
 
 # Create the stage3 disk image.
