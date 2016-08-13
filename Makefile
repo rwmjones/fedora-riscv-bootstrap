@@ -968,7 +968,7 @@ stage3-chroot/usr/bin/vim: vim-$(VIM_VERSION).tar.gz
 	vim_cv_tty_group=world \
 	vim_cv_terminfo=yes \
 	vim_cv_toupper_broken=no \
-	LDFLAGS=-L/home/rjones/d/fedora-riscv/stage3-chroot/usr/lib64 \
+	LDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64 \
 	./configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64 \
