@@ -350,6 +350,8 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/bin/gawk \
 	stage3-chroot/usr/bin/vim \
 	stamp-redhat-rpmrc \
+	stamp-rpm-macros \
+	stamp-rpm-platform-riscv64-linux-macros \
 	stage3-chroot/init \
 	stage3-chroot/config.guess \
 	stage3-chroot/config.sub \
@@ -1060,7 +1062,27 @@ db-$(BDB_VERSION).tar.gz:
 # Fix optflags in redhat-specific RPM configuration.
 stamp-redhat-rpmrc:
 	rm -f $@
-	echo 'optflags: riscv64 %{__global_cflags}' >> stage3-chroot/usr/lib/rpm/redhat/rpmrc
+	echo 'optflags: riscv64 %{__global_cflags}' >> $(ROOT)/stage3-chroot/usr/lib/rpm/redhat/rpmrc
+	touch $@
+
+# Hack /usr/lib/rpm/macros until we have a natively build RPM
+# These binaries might not be available in chroot, only in cross toolchain
+stamp-rpm-macros:
+	rm -rf $@
+	sed -i \
+            -e 's/riscv64-unknown-linux-gnu-ar/ar/g' \
+            -e 's/riscv64-unknown-linux-gnu-gcc/gcc/g' \
+            -e 's/riscv64-unknown-linux-gnu-g++/g++/g' \
+            -e 's/riscv64-unknown-linux-gnu-ranlib/ranlib/g' \
+             $(ROOT)/stage3-chroot/usr/lib/rpm/macros
+	touch $@
+
+# RPM is missing riscv64 platform macros which leads to failures while
+# building packages (e.g. bzip2)
+stamp-rpm-platform-riscv64-linux-macros: rpm-platform-riscv64-linux-macros
+	rm -rf $@
+	mkdir -p $(ROOT)/stage3-chroot/usr/lib/rpm/platform/riscv64-linux
+	cp $(ROOT)/rpm-platform-riscv64-linux-macros $(ROOT)/stage3-chroot/usr/lib/rpm/platform/riscv64-linux/macros 
 	touch $@
 
 # Create an /init script.
@@ -1077,6 +1099,7 @@ stage3-chroot/config.sub: config.sub
 # Create the stage3 disk image.
 # Note `-s +...' adds spare space to the disk image.
 stage3-disk.img: stage3-chroot
+	rm -f $@
 	cd stage3-chroot && virt-make-fs . ../$@ -t ext2 -F raw -s +4G
 
 # Upload the compressed disk image.
