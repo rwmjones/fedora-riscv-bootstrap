@@ -351,6 +351,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/bin/gawk \
 	stage3-chroot/usr/bin/vim \
 	stage3-chroot/usr/bin/screen \
+	stage3-chroot/usr/bin/poweroff \
 	stamp-redhat-rpmrc \
 	stamp-rpm-macros \
 	stamp-rpm-platform-riscv64-linux-macros \
@@ -1056,6 +1057,11 @@ screen-$(SCREEN_VERSION).tar.gz:
 	rm -f $@ $@-t
 	wget -O $@-t ftp://ftp.gnu.org/gnu/screen/screen-$(SCREEN_VERSION).tar.gz
 	mv $@-t $@
+
+# Add a custom poweroff program.
+# For some reason this only works in qemu, not spike.
+stage3-chroot/usr/bin/poweroff: poweroff.c
+	$(ROOT)/fixed-gcc/riscv64-unknown-linux-gnu-gcc $^ -o $@
 
 # Cross-compile RPM / rpmbuild.
 # We build this from a git commit, with a few hacks to the configure

@@ -45,4 +45,5 @@ bash -i
 
 # Sync disks and shut down.
 sync
+mount.static -o remount,ro / >&/dev/null
 poweroff
