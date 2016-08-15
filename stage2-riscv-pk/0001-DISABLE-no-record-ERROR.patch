@@ -1,0 +1,27 @@
+From da82e14029558c541b404a92ea64716980fc550a Mon Sep 17 00:00:00 2001
+From: "Richard W.M. Jones" <rjones@redhat.com>
+Date: Mon, 15 Aug 2016 20:58:22 +0100
+Subject: [PATCH] DISABLE "no record" ERROR.
+
+Hits qemu all the time.
+---
+ pk/mtrap.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/pk/mtrap.c b/pk/mtrap.c
+index 478710e..afd5650 100644
+--- a/pk/mtrap.c
++++ b/pk/mtrap.c
+@@ -126,7 +126,8 @@ uintptr_t htif_interrupt(uintptr_t mcause, uintptr_t* regs)
+     m = (void*)atomic_read(&m->sbi_private_data);
+   }
+ 
+-  panic("htif: no record");
++  //panic("htif: no record");
++  return 0;
+ }
+ 
+ static uintptr_t mcall_hart_id()
+-- 
+2.7.4
+
