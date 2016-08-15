@@ -44,7 +44,7 @@ gzip zlib-devel file-devel popt-devel beecrypt-devel \
 rpm rpm-build rpm-devel libdb-utils libdb-devel nano \
 grep less strace bzip2-devel make diffutils findutils \
 sed patch hostname gettext-devel lua-devel xz-devel gawk \
-vim screen
+vim screen m4
 
 # Versions of cross-compiled packages.
 NCURSES_VERSION    = 6.0-20160730
@@ -87,6 +87,7 @@ XZ_VERSION         = 5.2.2
 GAWK_VERSION       = 4.1.3
 VIM_VERSION        = 7.4
 SCREEN_VERSION     = 4.4.0
+M4_VERSION         = 1.4.17
 
 all: stage1 stage2 stage3 stage4
 
@@ -352,6 +353,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/bin/gawk \
 	stage3-chroot/usr/bin/vim \
 	stage3-chroot/usr/bin/screen \
+	stage3-chroot/usr/bin/m4 \
 	stage3-chroot/usr/bin/poweroff \
 	stamp-redhat-rpmrc \
 	stamp-rpm-macros \
@@ -1086,6 +1088,23 @@ screen-$(SCREEN_VERSION).tar.gz:
 # For some reason this only works in qemu, not spike.
 stage3-chroot/usr/bin/poweroff: poweroff.c
 	$(ROOT)/fixed-gcc/riscv64-unknown-linux-gnu-gcc $^ -o $@
+
+# Cross-compile m4
+stage3-chroot/usr/bin/m4: m4-$(M4_VERSION).tar.gz
+	rm -rf m4-$(M4_VERSION)
+	bzcat $^ | tar xf -
+	cd m4-$(M4_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	./configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64
+	cd m4-$(M4_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
+	cd m4-$(M4_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
+
+m4-$(M4_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t http://ftp.gnu.org/gnu/m4/m4-$(M4_VERSION).tar.bz2
+	mv $@-t $@
 
 # Cross-compile RPM / rpmbuild.
 # We build this from a git commit, with a few hacks to the configure
