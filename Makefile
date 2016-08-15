@@ -5,30 +5,34 @@
 ROOT := $(shell pwd)
 
 # Note these are chosen very specifically to ensure the different
-# versions work together.  Don't blindly update to the latest
-# versions.  See also:
+# versions work together.  See riscv-tools submodules.  Don't blindly
+# update to the latest versions.  See also:
 # https://github.com/riscv/riscv-pk/issues/18#issuecomment-206115996
-RISCV_QEMU_COMMIT               = 94f5eb73091fb4fe272db3e943f173ecc0f78ffd
-RISCV_QEMU_SHORTCOMMIT          = 94f5eb73
-RISCV_FESVR_COMMIT              = 0f34d7ad311f78455a674224225f5b3056efba1d
-RISCV_FESVR_SHORTCOMMIT         = 0f34d7ad
-RISCV_ISA_SIM_COMMIT            = 3bfc00ef2a1b1f0b0472a39a866261b00f67027e
-RISCV_ISA_SIM_SHORTCOMMIT       = 3bfc00ef
-RISCV_GNU_TOOLCHAIN_COMMIT      = 728afcddcb0526a0f6560c4032da82805f054d58
-RISCV_GNU_TOOLCHAIN_SHORTCOMMIT = 728afcdd
-RISCV_PK_COMMIT                 = 85ae17aa149b9ea114bdd70cc30ea7e73813fb48
-RISCV_PK_SHORTCOMMIT            = 85ae17aa
+RISCV_QEMU_COMMIT               = 48cd3de36ec47f9c74ab6b20101eb3ee5f332e39
+RISCV_QEMU_SHORTCOMMIT          = 48cd3de3
+RISCV_FESVR_COMMIT              = f052ba6311f3e4e8e32e6eeb9e006be01807040b
+RISCV_FESVR_SHORTCOMMIT         = f052ba63
+RISCV_ISA_SIM_COMMIT            = 5daafcde73f448a702356e049911b5677a1811c2
+RISCV_ISA_SIM_SHORTCOMMIT       = 5daafcde
+RISCV_GNU_TOOLCHAIN_COMMIT      = 7e4859465ef8b38fb8369971c1449270ae7a19a1
+RISCV_GNU_TOOLCHAIN_SHORTCOMMIT = 7e485946
+RISCV_PK_COMMIT                 = 55982bd0192a41d76b13ba92b3c1f3ef80f7e029
+RISCV_PK_SHORTCOMMIT            = 55982bd0
 
-# For the correct versions, see
-# riscv-gnu-toolchain/Makefile.in *_version variables
-BINUTILS_VERSION = 2.25.1
-GLIBC_VERSION    = 2.22
-GCC_VERSION      = 5.3.0
-NEWLIB_VERSION   = 2.2.0
+# See riscv-gnu-toolchain for the right commits/versions.
+BINUTILS_COMMIT                 = d10c79b71de7e4b1538ae8a31b8d5d4b52d15b5f
+BINUTILS_SHORTCOMMIT            = d10c79b7
+DEJAGNU_COMMIT                  =
+DEJAGNU_SHORTCOMMIT             =
+GCC_COMMIT                      = 8102d8fcd0d9fb6a291a9c3f45150401c7e5562d
+GCC_SHORTCOMMIT                 = 8102d8fc
+GLIBC_COMMIT                    = bce06f45839e9b1404dfbf19cd56c9f697efa9d1
+GLIBC_SHORTCOMMIT               = bce06f45
+NEWLIB_VERSION                  = 2.2.0
 
 # https://github.com/riscv/riscv-linux
-KERNEL_VERSION   = 4.1.26
-KERNEL_BRANCH    = linux-4.1.y-riscv
+KERNEL_VERSION   = 4.6.2
+KERNEL_BRANCH    = priv-1.9
 
 # A local copy of Linux git repo so you don't have to keep downloading
 # git commits (optional).
@@ -55,7 +59,7 @@ COREUTILS_VERSION  = 8.25
 GMP_VERSION        = 6.1.1
 MPFR_VERSION       = 3.1.4
 MPC_VERSION        = 1.0.3
-BINUTILS_X_VERSION = 2.26
+BINUTILS_X_VERSION = 2.27
 GCC_X_VERSION      = 6.1.0
 UTIL_LINUX_VERSION = 2.28
 TAR_VERSION        = 1.29
@@ -268,44 +272,40 @@ stamp-riscv-isa-sim-installed:
 # Stage 2
 
 stage2: stage2-riscv-gnu-toolchain/riscv-gnu-toolchain-$(RISCV_GNU_TOOLCHAIN_SHORTCOMMIT).tar.gz \
-	stage2-riscv-gnu-toolchain/binutils-$(BINUTILS_VERSION).tar.gz \
-	stage2-riscv-gnu-toolchain/gcc-$(GCC_VERSION).tar.gz \
-	stage2-riscv-gnu-toolchain/glibc-$(GLIBC_VERSION).tar.gz \
+	stage2-riscv-gnu-toolchain/riscv-binutils-gdb-$(BINUTILS_SHORTCOMMIT).tar.gz \
+	stage2-riscv-gnu-toolchain/riscv-gcc-$(GCC_SHORTCOMMIT).tar.gz \
+	stage2-riscv-gnu-toolchain/riscv-glibc-$(GLIBC_SHORTCOMMIT).tar.gz \
 	stage2-riscv-gnu-toolchain/newlib-$(NEWLIB_VERSION).tar.gz \
 	stage2-riscv-gnu-toolchain/riscv-gnu-toolchain.spec \
 	stamp-riscv-gnu-toolchain-installed \
 	fixed-gcc/riscv64-unknown-linux-gnu-cc \
 	fixed-gcc/riscv64-unknown-linux-gnu-gcc \
 	fixed-gcc/riscv64-unknown-linux-gnu-c++ \
-	fixed-gcc/riscv64-unknown-linux-gnu-g++ \
-	stage2-riscv-pk/riscv-pk-$(RISCV_PK_SHORTCOMMIT).tar.gz \
-	stage2-riscv-pk/riscv-pk.spec \
-	stamp-riscv-pk-installed
+	fixed-gcc/riscv64-unknown-linux-gnu-g++
 
 stage2-riscv-gnu-toolchain/riscv-gnu-toolchain-$(RISCV_GNU_TOOLCHAIN_SHORTCOMMIT).tar.gz:
 	rm -f $@ $@-t
-	wget -O $@-t https://github.com/lowRISC/riscv-gnu-toolchain/archive/$(RISCV_GNU_TOOLCHAIN_COMMIT)/riscv-gnu-toolchain-$(RISCV_GNU_TOOLCHAIN_SHORTCOMMIT).tar.gz
+	wget -O $@-t https://github.com/riscv/riscv-gnu-toolchain/archive/$(RISCV_GNU_TOOLCHAIN_COMMIT)/riscv-gnu-toolchain-$(RISCV_GNU_TOOLCHAIN_SHORTCOMMIT).tar.gz
 	mv $@-t $@
 
-stage2-riscv-gnu-toolchain/binutils-$(BINUTILS_VERSION).tar.gz:
+stage2-riscv-gnu-toolchain/riscv-binutils-gdb-$(BINUTILS_SHORTCOMMIT).tar.gz:
 	rm -f $@ $@-t
-	wget -O $@-t http://mirrors.kernel.org/gnu/binutils/binutils-$(BINUTILS_VERSION).tar.gz
+	wget -O $@-t https://github.com/riscv/riscv-binutils-gdb/archive/$(BINUTILS_COMMIT)/riscv-binutils-gdb-$(BINUTILS_SHORTCOMMIT).tar.gz
 	mv $@-t $@
 
-# GCC 5 no longer compiles with GCC 6 unless we patch it.
-# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=69959
-stage2-riscv-gnu-toolchain/gcc-$(GCC_VERSION).tar.gz:
+#stage2-riscv-gnu-toolchain/riscv-dejagnu-$(DEJAGNU_SHORTCOMMIT).tar.gz:
+#	rm -f $@ $@-t
+#	wget -O $@-t https://github.com/riscv/riscv-dejagnu/archive/$(DEJAGNU_COMMIT)/riscv-dejagnu-$(DEJAGNU_SHORTCOMMIT).tar.gz
+#	mv $@-t $@
+
+stage2-riscv-gnu-toolchain/riscv-gcc-$(GCC_SHORTCOMMIT).tar.gz:
 	rm -f $@ $@-t
-	wget -O $@-t http://mirrors.kernel.org/gnu/gcc/gcc-$(GCC_VERSION)/gcc-$(GCC_VERSION).tar.gz
-	zcat $@-t | tar xf -
-	cd gcc-$(GCC_VERSION) && patch -p0 < ../stage2-riscv-gnu-toolchain/gcc-5-fix-compilation-with-gcc-6.patch
-	tar zcf $@-t gcc-$(GCC_VERSION)
-	rm -r gcc-$(GCC_VERSION)
+	wget -O $@-t https://github.com/riscv/riscv-gcc/archive/$(GCC_COMMIT)/riscv-gcc-$(GCC_SHORTCOMMIT).tar.gz
 	mv $@-t $@
 
-stage2-riscv-gnu-toolchain/glibc-$(GLIBC_VERSION).tar.gz:
+stage2-riscv-gnu-toolchain/riscv-glibc-$(GLIBC_SHORTCOMMIT).tar.gz:
 	rm -f $@ $@-t
-	wget -O $@-t http://mirrors.kernel.org/gnu/glibc/glibc-$(GLIBC_VERSION).tar.gz
+	wget -O $@-t https://github.com/riscv/riscv-glibc/archive/$(GLIBC_COMMIT)/riscv-glibc-$(GLIBC_SHORTCOMMIT).tar.gz
 	mv $@-t $@
 
 stage2-riscv-gnu-toolchain/newlib-$(NEWLIB_VERSION).tar.gz:
@@ -316,9 +316,14 @@ stage2-riscv-gnu-toolchain/newlib-$(NEWLIB_VERSION).tar.gz:
 stage2-riscv-gnu-toolchain/riscv-gnu-toolchain.spec: stage2-riscv-gnu-toolchain/riscv-gnu-toolchain.spec.in
 	sed -e 's/@COMMIT@/$(RISCV_GNU_TOOLCHAIN_COMMIT)/g' \
 	    -e 's/@SHORTCOMMIT@/$(RISCV_GNU_TOOLCHAIN_SHORTCOMMIT)/g' \
-	    -e 's/@BINUTILS_VERSION@/$(BINUTILS_VERSION)/g' \
-	    -e 's/@GCC_VERSION@/$(GCC_VERSION)/g' \
-	    -e 's/@GLIBC_VERSION@/$(GLIBC_VERSION)/g' \
+	    -e 's/@BINUTILS_COMMIT@/$(BINUTILS_COMMIT)/g' \
+	    -e 's/@BINUTILS_SHORTCOMMIT@/$(BINUTILS_SHORTCOMMIT)/g' \
+	    -e 's/@DEJAGNU_COMMIT@/$(DEJAGNU_COMMIT)/g' \
+	    -e 's/@DEJAGNU_SHORTCOMMIT@/$(DEJAGNU_SHORTCOMMIT)/g' \
+	    -e 's/@GCC_COMMIT@/$(GCC_COMMIT)/g' \
+	    -e 's/@GCC_SHORTCOMMIT@/$(GCC_SHORTCOMMIT)/g' \
+	    -e 's/@GLIBC_COMMIT@/$(GLIBC_COMMIT)/g' \
+	    -e 's/@GLIBC_SHORTCOMMIT@/$(GLIBC_SHORTCOMMIT)/g' \
 	    -e 's/@NEWLIB_VERSION@/$(NEWLIB_VERSION)/g' \
 	    < $^ > $@-t
 	mv $@-t $@
@@ -371,7 +376,7 @@ fixed-gcc/riscv64-unknown-linux-gnu-g++:
 
 stage2-riscv-pk/riscv-pk-$(RISCV_PK_SHORTCOMMIT).tar.gz:
 	rm -f $@ $@-t
-	wget -O $@-t https://github.com/lowRISC/riscv-pk/archive/$(RISCV_PK_COMMIT)/riscv-pk-$(RISCV_PK_SHORTCOMMIT).tar.gz
+	wget -O $@-t https://github.com/riscv/riscv-pk/archive/$(RISCV_PK_COMMIT)/riscv-pk-$(RISCV_PK_SHORTCOMMIT).tar.gz
 	mv $@-t $@
 
 stage2-riscv-pk/riscv-pk.spec: stage2-riscv-pk/riscv-pk.spec.in
@@ -457,8 +462,13 @@ stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux: linux-$(KERNEL_VERSION).tar.xz
 	cd stage3-kernel && tar -Jxf ../$^
 	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
 	git init && \
-	git remote add -t $(KERNEL_BRANCH) origin https://github.com/riscv/riscv-linux.git && \
-	( git remote add local $(LOCAL_LINUX_GIT_COPY); git fetch local; : ) && \
+	git remote add -t $(KERNEL_BRANCH) origin https://github.com/riscv/riscv-linux.git
+	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
+	git remote add local $(LOCAL_LINUX_GIT_COPY); \
+	git fetch local; \
+	git remote rm local; \
+	git branch -D $(KERNEL_BRANCH); :
+	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
 	git fetch && \
 	git checkout -f -t origin/$(KERNEL_BRANCH)
 	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
@@ -467,26 +477,31 @@ stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux: linux-$(KERNEL_VERSION).tar.xz
 # https://github.com/palmer-dabbelt/riscv-gentoo-infra/blob/master/patches/linux/0001-riscv64_makefile.patch
 	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
 	patch -p1 < ../0001-riscv64_makefile.patch
+# Enable DMA in the kernel, so virtio works.
+	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
+	patch -p1 < ../0001-dma-add-coherent-physically-mapped-DMA.patch
 	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
 	make ARCH=riscv64 defconfig
-	( \
-	echo CONFIG_CMDLINE=\"root=/dev/htifblk0 init=/init\"; \
-	echo CONFIG_CROSS_COMPILE=riscv64-unknown-elf-; \
-	echo CONFIG_FILE_LOCKING=y; \
-	echo CONFIG_NET_CORE=y; \
-	echo CONFIG_NETDEVICES=y; \
-	echo CONFIG_VIRTIO=y; \
-	echo CONFIG_VIRTIO_MMIO=y; \
-	echo CONFIG_VIRTIO_MMIO_CMDLINE_DEVICES=y; \
-	echo CONFIG_VIRTIO_NET=y; \
-	echo CONFIG_VIRTIO_BLK=y; \
-	echo CONFIG_VIRTIO_CONSOLE=y; \
-	echo CONFIG_SCSI_VIRTIO=y; \
-	echo CONFIG_SYSFS=y; \
-	echo CONFIG_BLK_DEV=y; \
-	echo CONFIG_BLK_DEV_LOOP=y; \
-	echo CONFIG_EXT4_FS=y; \
-	) >> stage3-kernel/linux-$(KERNEL_VERSION)/.config
+	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
+	./scripts/config --enable CONFIG_CMDLINE_BOOL ; \
+	./scripts/config --set-str CONFIG_CMDLINE "root=/dev/htifblk0 init=/init virtio_mmio.device=64K@0xFFFFFFFFF0000400:9" ; \
+	./scripts/config --set-str CONFIG_CROSS_COMPILE riscv64-unknown-linux-gnu- ; \
+	./scripts/config --enable CONFIG_FILE_LOCKING ; \
+	./scripts/config --enable CONFIG_EARLY_PRINTK ; \
+	./scripts/config --enable CONFIG_NET_CORE ; \
+	./scripts/config --enable CONFIG_NETDEVICES ; \
+	./scripts/config --enable CONFIG_VIRTIO ; \
+	./scripts/config --enable CONFIG_VIRTIO_MMIO ; \
+	./scripts/config --enable CONFIG_VIRTIO_MMIO_CMDLINE_DEVICES ; \
+	./scripts/config --enable CONFIG_VIRTIO_NET ; \
+	./scripts/config --enable CONFIG_VIRTIO_BLK ; \
+	./scripts/config --enable CONFIG_VIRTIO_CONSOLE ; \
+	./scripts/config --enable CONFIG_SCSI_VIRTIO ; \
+	./scripts/config --enable CONFIG_SYSFS ; \
+	./scripts/config --enable CONFIG_BLK_DEV ; \
+	./scripts/config --enable CONFIG_BLK_DEV_LOOP ; \
+	./scripts/config --enable CONFIG_EXT4_FS ; \
+	:
 	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
 	make ARCH=riscv64 olddefconfig
 	cd stage3-kernel/linux-$(KERNEL_VERSION) && \

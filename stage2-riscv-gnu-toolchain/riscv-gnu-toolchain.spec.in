@@ -11,17 +11,21 @@
 
 Name:           riscv-gnu-toolchain
 Version:        0
-Release:        0.6.git@SHORTCOMMIT@%{?dist}
+Release:        0.7.git@SHORTCOMMIT@%{?dist}
 Summary:        RISC-V GNU cross-toolchain, containing binutils and GCC
 License:        GPLv2+ and LGPLv2+ and BSD
 
 URL:            https://github.com/riscv/riscv-qemu
-Source0:        https://github.com/riscv/%{name}/archive/@COMMIT@/%{name}-@SHORTCOMMIT@.tar.gz
 
-Source1:        http://mirrors.kernel.org/gnu/binutils/binutils-@BINUTILS_VERSION@.tar.gz
-Source2:        http://mirrors.kernel.org/gnu/glibc/glibc-@GLIBC_VERSION@.tar.gz
-Source3:        http://mirrors.kernel.org/gnu/gcc/gcc-@GCC_VERSION@/gcc-@GCC_VERSION@.tar.gz
-Source4:        ftp://sourceware.org/pub/newlib/newlib-@NEWLIB_VERSION@.tar.gz
+# See https://github.com/rwmjones/fedora-riscv Makefile for how these
+# are created.
+Source0:        riscv-gnu-toolchain-@SHORTCOMMIT@.tar.gz
+Source1:        riscv-binutils-gdb-@BINUTILS_SHORTCOMMIT@.tar.gz
+#Source2:        riscv-dejagnu-@DEJAGNU_SHORTCOMMIT@.tar.gz
+Source3:        riscv-gcc-@GCC_SHORTCOMMIT@.tar.gz
+Source4:        riscv-glibc-@GLIBC_SHORTCOMMIT@.tar.gz
+
+Source5:        ftp://sourceware.org/pub/newlib/newlib-@NEWLIB_VERSION@.tar.gz
 
 # Patches to fix file locking, thanks Manuel A. Fernandez Montecelo.
 Patch1:         0001-Provide-bits-fcntl.h-for-RISC-V.patch
@@ -59,6 +63,21 @@ includes binutils and GCC.
 %patch1 -p1
 %patch2 -p1
 
+# Remove the (empty) submodules directories.  We are going to
+# replace their content with the previously downloaded tarballs.
+rm -r riscv-binutils-gdb
+#rm -r riscv-dejagnu
+rm -r riscv-gcc
+rm -r riscv-glibc
+
+tar zxf %{SOURCE1}
+mv riscv-binutils-gdb-@BINUTILS_COMMIT@ riscv-binutils-gdb
+#tar zxf %{SOURCE2}
+#mv riscv-dejagnu-@DEJAGNU_COMMIT@ riscv-dejagnu
+tar zxf %{SOURCE3}
+mv riscv-gcc-@GCC_COMMIT@ riscv-gcc
+tar zxf %{SOURCE4}
+mv riscv-glibc-@GLIBC_COMMIT@ riscv-glibc
 
 %build
 # This only works if you build in a build subdirectory.
@@ -66,8 +85,8 @@ mkdir build
 pushd build
 ../configure --prefix=%{_prefix} --libdir=%{_libdir}
 
-# The ordinary Makefile downloads upstream GNU packages.  Instead we
-# provide these as local files.  Note this is "DISTDIR" not "DESTDIR".
+# The ordinary Makefile downloads newlib.  Instead we provide these as
+# local files.  Note this is "DISTDIR" not "DESTDIR".
 export DISTDIR=%{_sourcedir}
 
 # Since the Makefile installs as it goes along, clean the buildroot
@@ -100,8 +119,21 @@ rm -r $RPM_BUILD_ROOT%{_datadir}/info
 rm -r $RPM_BUILD_ROOT%{_mandir}
 rm -r $RPM_BUILD_ROOT%{_datadir}/locale
 
+# This is also provided by system gdb.
+rm $RPM_BUILD_ROOT%{_prefix}/include/gdb/jit-reader.h
+rm -r $RPM_BUILD_ROOT%{_datadir}/gdb
+
 # Remove this libtool linker file.
 rm $RPM_BUILD_ROOT%{_libdir}/libcc1.la
+
+# These libraries are placed in the wrong directory.
+mv $RPM_BUILD_ROOT%{_prefix}/lib/lib*-sim.a $RPM_BUILD_ROOT%{_libdir}
+
+# Don't know why these are created.
+# Be careful about deleting them.
+if [ -f $RPM_BUILD_ROOT$RPM_BUILD_ROOT/usr/sysroot/usr/include/_G_config.h ]; then
+    find $RPM_BUILD_ROOT$RPM_BUILD_ROOT/usr/sysroot -type f -delete
+fi
 
 
 %files
@@ -111,13 +143,14 @@ rm $RPM_BUILD_ROOT%{_libdir}/libcc1.la
 %{_libdir}/libcc1.so
 %{_libdir}/libcc1.so.0
 %{_libdir}/libcc1.so.0.0.0
+%{_libdir}/lib*-sim.a
 %{_libexecdir}/gcc/riscv64-unknown-elf
 %{_libexecdir}/gcc/riscv64-unknown-linux-gnu
 %{_prefix}/lib/gcc/riscv64-unknown-elf
 %{_prefix}/lib/gcc/riscv64-unknown-linux-gnu
 %{_prefix}/riscv64-unknown-elf
 %{_prefix}/riscv64-unknown-linux-gnu
-%{_datadir}/gcc-@GCC_VERSION@
+%{_datadir}/gcc-*
 %{_prefix}/sysroot
 
 

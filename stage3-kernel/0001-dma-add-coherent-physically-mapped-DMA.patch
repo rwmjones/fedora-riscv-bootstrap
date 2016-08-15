@@ -1,0 +1,161 @@
+From 308568c3712d2e60715473f0a435ac625d993886 Mon Sep 17 00:00:00 2001
+From: "Wesley W. Terpstra" <wesley@sifive.com>
+Date: Mon, 20 Jun 2016 18:40:52 -0700
+Subject: [PATCH] dma: add coherent physically mapped DMA
+
+(cherry picked from commit 2c56aec69141bb5301253d2d12d471f018f03bf3)
+---
+ arch/riscv/Kconfig                   |  9 ++++-
+ arch/riscv/configs/riscv64_spike     |  1 -
+ arch/riscv/include/asm/device.h      | 26 +++++++++++++++
+ arch/riscv/include/asm/dma-mapping.h | 64 ++++++++++++++++++++++++++++++++++++
+ 4 files changed, 98 insertions(+), 2 deletions(-)
+ create mode 100644 arch/riscv/include/asm/device.h
+ create mode 100644 arch/riscv/include/asm/dma-mapping.h
+
+diff --git a/arch/riscv/Kconfig b/arch/riscv/Kconfig
+index a6b4e83..d67231b 100644
+--- a/arch/riscv/Kconfig
++++ b/arch/riscv/Kconfig
+@@ -17,6 +17,9 @@ config RISCV
+ 	select GENERIC_ATOMIC64 if !64BIT || !RV_ATOMIC
+ 	select HAVE_MEMBLOCK
+ 	select HAVE_MEMBLOCK_NODE_MAP
++	select HAVE_DMA_API_DEBUG
++	select HAVE_DMA_CONTIGUOUS
++	select HAVE_GENERIC_DMA_COHERENT
+ 	select NO_BOOTMEM
+ 	select RV_ATOMIC if SMP
+ 	select RV_SYSRISCV_ATOMIC if !RV_ATOMIC
+@@ -27,9 +30,13 @@ config RISCV
+ config MMU
+ 	def_bool y
+ 
+-config NO_DMA
++# even on 32-bit, physical (and DMA) addresses are > 32-bits
++config ARCH_PHYS_ADDR_T_64BIT
+ 	def_bool y
+ 
++config ARCH_DMA_ADDR_T_64BIT
++ 	def_bool y
++
+ config STACKTRACE_SUPPORT
+ 	def_bool y
+ 
+diff --git a/arch/riscv/configs/riscv64_spike b/arch/riscv/configs/riscv64_spike
+index 52853bd..3c080c7 100644
+--- a/arch/riscv/configs/riscv64_spike
++++ b/arch/riscv/configs/riscv64_spike
+@@ -4,7 +4,6 @@
+ #
+ CONFIG_RISCV=y
+ CONFIG_MMU=y
+-CONFIG_NO_DMA=y
+ CONFIG_STACKTRACE_SUPPORT=y
+ CONFIG_RWSEM_GENERIC_SPINLOCK=y
+ CONFIG_GENERIC_BUG=y
+diff --git a/arch/riscv/include/asm/device.h b/arch/riscv/include/asm/device.h
+new file mode 100644
+index 0000000..0d8453c
+--- /dev/null
++++ b/arch/riscv/include/asm/device.h
+@@ -0,0 +1,26 @@
++/*
++ * Copyright (C) 2012 ARM Ltd.
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
++ */
++#ifndef __ASM_DEVICE_H
++#define __ASM_DEVICE_H
++
++struct dev_archdata {
++	struct dma_map_ops *dma_ops;
++};
++
++struct pdev_archdata {
++};
++
++#endif
+diff --git a/arch/riscv/include/asm/dma-mapping.h b/arch/riscv/include/asm/dma-mapping.h
+new file mode 100644
+index 0000000..c6099e9
+--- /dev/null
++++ b/arch/riscv/include/asm/dma-mapping.h
+@@ -0,0 +1,64 @@
++/*
++ * Copyright (C) 2003-2004 Hewlett-Packard Co
++ *	David Mosberger-Tang <davidm@hpl.hp.com>
++ * Copyright (C) 2012 ARM Ltd.
++ * Copyright (C) 2016 SiFive Inc.
++ *      Wesley W. Terpstra <wesley@sifive.com>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
++ */
++#ifndef __ASM_RISCV_DMA_MAPPING_H
++#define __ASM_RISCV_DMA_MAPPING_H
++
++#ifdef __KERNEL__
++
++/* Use ops->dma_mapping_error (if it exists) or assume success */
++// #undef DMA_ERROR_CODE
++
++static inline struct dma_map_ops *get_dma_ops(struct device *dev)
++{
++	if (unlikely(dev->archdata.dma_ops))
++		return dev->archdata.dma_ops;
++	else
++		return &dma_noop_ops;
++}
++
++static inline bool dma_capable(struct device *dev, dma_addr_t addr, size_t size)
++{
++	if (!dev->dma_mask)
++		return false;
++
++	return addr + size - 1 <= *dev->dma_mask;
++}
++
++static inline dma_addr_t phys_to_dma(struct device *dev, phys_addr_t paddr)
++{
++	return (dma_addr_t)paddr;
++}
++
++static inline phys_addr_t dma_to_phys(struct device *dev, dma_addr_t dev_addr)
++{
++	return (phys_addr_t)dev_addr;
++}
++
++static inline void dma_cache_sync(struct device *dev, void *vaddr, size_t size, enum dma_data_direction dir)
++{
++	/*
++	 * RISC-V is cache-coherent, so this is mostly a no-op.  However, we do need to
++	 * ensure that dma_cache_sync() enforces order, hence the mb().
++	 */
++	mb();
++}
++
++#endif	/* __KERNEL__ */
++#endif	/* __ASM_RISCV_DMA_MAPPING_H */
+-- 
+2.7.4
+
