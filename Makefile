@@ -326,6 +326,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/lib64/libmpc.so.3 \
 	stage3-chroot/usr/bin/as \
 	stage3-chroot/usr/bin/gcc \
+	stage3-chroot/usr/lib64/libstdc++.so \
 	stage3-chroot/usr/bin/mount \
 	stage3-chroot/usr/bin/tar \
 	stage3-chroot/usr/bin/gzip \
@@ -598,6 +599,29 @@ stage3-chroot/usr/bin/gcc: gcc-$(GCC_X_VERSION).tar.gz
 	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build && gcc_cv_as_leb128=no PATH=$(ROOT)/fixed-gcc:$$PATH make
 	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build && make install DESTDIR=$(ROOT)/stage3-chroot
 	rm -f stage3-chroot/usr/lib64/*.la
+# See next rule for why we do this ...
+	rm -f stage3-chroot/usr/lib64/libstdc++*
+
+# libstdc++ isn't built correctly.  I believe it installs an x86
+# executable into /usr/lib64 and ignores the --libdir parameter
+# entirely.  Fix this mess.
+stage3-chroot/usr/lib64/libstdc++.so: stage3-chroot/usr/bin/gcc
+	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build/riscv64-unknown-linux-gnu/libstdc++-v3 && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	../../../libstdc++-v3/configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64
+	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build/riscv64-unknown-linux-gnu/libstdc++-v3 && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	make clean
+	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build/riscv64-unknown-linux-gnu/libstdc++-v3 && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	make
+	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build/riscv64-unknown-linux-gnu/libstdc++-v3 && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	make install DESTDIR=$(ROOT)/stage3-chroot
+# make install ignores --libdir, so we have to do this:
+	mv $(ROOT)/stage3-chroot/usr/lib/libstdc++* $(ROOT)/stage3-chroot/usr/lib64/
 
 gcc-$(GCC_X_VERSION).tar.gz:
 	rm -f $@ $@-t
