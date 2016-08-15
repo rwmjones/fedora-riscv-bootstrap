@@ -1084,11 +1084,6 @@ screen-$(SCREEN_VERSION).tar.gz:
 	wget -O $@-t ftp://ftp.gnu.org/gnu/screen/screen-$(SCREEN_VERSION).tar.gz
 	mv $@-t $@
 
-# Add a custom poweroff program.
-# For some reason this only works in qemu, not spike.
-stage3-chroot/usr/bin/poweroff: poweroff.c
-	$(ROOT)/fixed-gcc/riscv64-unknown-linux-gnu-gcc $^ -o $@
-
 # Cross-compile m4
 stage3-chroot/usr/bin/m4: m4-$(M4_VERSION).tar.gz
 	rm -rf m4-$(M4_VERSION)
@@ -1174,6 +1169,11 @@ stamp-rpm-platform-riscv64-linux-macros: rpm-platform-riscv64-linux-macros
 	mkdir -p $(ROOT)/stage3-chroot/usr/lib/rpm/platform/riscv64-linux
 	cp $(ROOT)/rpm-platform-riscv64-linux-macros $(ROOT)/stage3-chroot/usr/lib/rpm/platform/riscv64-linux/macros 
 	touch $@
+
+# Add a custom poweroff program.
+# For some reason this only works in qemu, not spike.
+stage3-chroot/usr/bin/poweroff: poweroff.c
+	$(ROOT)/fixed-gcc/riscv64-unknown-linux-gnu-gcc $^ -o $@
 
 # Create an /init script.
 stage3-chroot/init: init.sh
