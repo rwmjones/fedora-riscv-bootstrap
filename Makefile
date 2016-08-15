@@ -370,8 +370,20 @@ stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux:
 	git checkout -f linux-4.1.y-riscv && \
 	make mrproper && \
 	make ARCH=riscv defconfig
-	echo CONFIG_CMDLINE=\"root=/dev/htifblk0 init=/init\" >> stage3-kernel/linux-$(KERNEL_VERSION)/.config
-	echo CONFIG_CROSS_COMPILE=riscv64-unknown-elf- >> stage3-kernel/linux-$(KERNEL_VERSION)/.config
+	( \
+	echo CONFIG_CMDLINE=\"root=/dev/htifblk0 init=/init\"; \
+	echo CONFIG_CROSS_COMPILE=riscv64-unknown-elf-; \
+	echo CONFIG_NET_CORE=y; \
+	echo CONFIG_NETDEVICES=y; \
+	echo CONFIG_VIRTIO=y; \
+	echo CONFIG_VIRTIO_MMIO=y; \
+	echo CONFIG_VIRTIO_MMIO_CMDLINE_DEVICES=y; \
+	echo CONFIG_VIRTIO_NET=y; \
+	echo CONFIG_VIRTIO_BLK=y; \
+	echo CONFIG_VIRTIO_CONSOLE=y; \
+	echo CONFIG_SCSI_VIRTIO=y; \
+	echo CONFIG_SYSFS=y; \
+	) >> stage3-kernel/linux-$(KERNEL_VERSION)/.config
 	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
 	make ARCH=riscv olddefconfig
 	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
