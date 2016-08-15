@@ -44,7 +44,7 @@ gzip zlib-devel file-devel popt-devel beecrypt-devel \
 rpm rpm-build rpm-devel libdb-utils libdb-devel nano \
 grep less strace bzip2-devel make diffutils findutils \
 sed patch hostname gettext-devel lua-devel xz-devel gawk \
-vim
+vim screen
 
 # Versions of cross-compiled packages.
 NCURSES_VERSION    = 6.0-20160730
@@ -86,6 +86,7 @@ LUA_VERSION        = 5.3.3
 XZ_VERSION         = 5.2.2
 GAWK_VERSION       = 4.1.3
 VIM_VERSION        = 7.4
+SCREEN_VERSION     = 4.4.0
 
 all: stage1 stage2 stage3 stage4
 
@@ -349,6 +350,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/bin/rpm \
 	stage3-chroot/usr/bin/gawk \
 	stage3-chroot/usr/bin/vim \
+	stage3-chroot/usr/bin/screen \
 	stamp-redhat-rpmrc \
 	stamp-rpm-macros \
 	stamp-rpm-platform-riscv64-linux-macros \
@@ -1026,6 +1028,33 @@ stage3-chroot/usr/bin/vim: vim-$(VIM_VERSION).tar.gz
 vim-$(VIM_VERSION).tar.gz:
 	rm -f $@ $@-t
 	wget -O $@-t ftp://ftp.vim.org/pub/vim/unix/vim-$(VIM_VERSION).tar.bz2
+	mv $@-t $@
+
+# Cross-compile screen.
+stage3-chroot/usr/bin/screen: screen-$(SCREEN_VERSION).tar.gz
+	rm -rf screen-$(SCREEN_VERSION)
+	tar -zxf $^
+	cd screen-$(SCREEN_VERSION) && patch -p1 < ../screen-cross-compile.patch
+	cd screen-$(SCREEN_VERSION) && autoreconf -i
+	cd screen-$(SCREEN_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	./configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64 \
+	    --disable-pam \
+	    --with-pty-mode=0620 \
+	    --with-pty-group=5 \
+	    --with-sys-screenrc="/etc/screenrc" \
+	    --with-socket-dir="/var/run/screen"
+	cd screen-$(SCREEN_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make LDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64
+	cd screen-$(SCREEN_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
+# If the user has a .screenrc, indicating local preferences, copy
+# it into the chroot.  However don't fail if not found.
+	-cp $(HOME)/.screenrc stage3-chroot/
+
+screen-$(SCREEN_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t ftp://ftp.gnu.org/gnu/screen/screen-$(SCREEN_VERSION).tar.gz
 	mv $@-t $@
 
 # Cross-compile RPM / rpmbuild.
