@@ -44,7 +44,7 @@ gzip zlib-devel file-devel popt-devel beecrypt-devel \
 rpm rpm-build rpm-devel libdb-utils libdb-devel nano \
 grep less strace bzip2-devel make diffutils findutils \
 sed patch hostname gettext-devel lua-devel xz-devel gawk \
-vim screen m4
+vim screen m4 flex bison
 
 # Versions of cross-compiled packages.
 NCURSES_VERSION    = 6.0-20160730
@@ -88,6 +88,8 @@ GAWK_VERSION       = 4.1.3
 VIM_VERSION        = 7.4
 SCREEN_VERSION     = 4.4.0
 M4_VERSION         = 1.4.17
+FLEX_VERSION       = 2.6.0
+BISON_VERSION      = 3.0.4
 
 all: stage1 stage2 stage3 stage4
 
@@ -354,6 +356,8 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/bin/vim \
 	stage3-chroot/usr/bin/screen \
 	stage3-chroot/usr/bin/m4 \
+	stage3-chroot/usr/bin/flex \
+	stage3-chroot/usr/bin/bison \
 	stage3-chroot/usr/bin/poweroff \
 	stamp-redhat-rpmrc \
 	stamp-rpm-macros \
@@ -1099,6 +1103,43 @@ stage3-chroot/usr/bin/m4: m4-$(M4_VERSION).tar.gz
 m4-$(M4_VERSION).tar.gz:
 	rm -f $@ $@-t
 	wget -O $@-t http://ftp.gnu.org/gnu/m4/m4-$(M4_VERSION).tar.bz2
+	mv $@-t $@
+
+# Cross-compile flex.
+stage3-chroot/usr/bin/flex: flex-$(FLEX_VERSION).tar.gz
+	rm -rf flex-$(FLEX_VERSION)
+	tar zxf $^
+	cd flex-$(FLEX_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	./configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64
+# flex tries to build the tests during 'make all', by running the
+# already-compiled flex binary.  Set SUBDIRS to prevent it from going
+# into any directories except those needed to build flex itself.
+	cd flex-$(FLEX_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make SUBDIRS="lib src"
+	cd flex-$(FLEX_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot SUBDIRS="lib src"
+
+flex-$(FLEX_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t http://downloads.sourceforge.net/sourceforge/flex/flex-$(FLEX_VERSION).tar.gz
+	mv $@-t $@
+
+# Cross-compile bison.
+stage3-chroot/usr/bin/bison: bison-$(BISON_VERSION).tar.gz
+	rm -rf bison-$(BISON_VERSION)
+	tar zxf $^
+	cd bison-$(BISON_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	./configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64
+	cd bison-$(BISON_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
+	cd bison-$(BISON_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
+
+bison-$(BISON_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t http://ftp.gnu.org/gnu/bison/bison-$(BISON_VERSION).tar.gz
 	mv $@-t $@
 
 # Cross-compile RPM / rpmbuild.
