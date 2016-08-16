@@ -362,6 +362,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stamp-redhat-rpmrc \
 	stamp-rpm-macros \
 	stamp-rpm-platform-riscv64-linux-macros \
+	disable-hardening-macros \
 	stage3-chroot/init \
 	stage3-chroot/config.guess \
 	stage3-chroot/config.sub \
@@ -1209,6 +1210,17 @@ stamp-rpm-platform-riscv64-linux-macros: rpm-platform-riscv64-linux-macros
 	rm -rf $@
 	mkdir -p $(ROOT)/stage3-chroot/usr/lib/rpm/platform/riscv64-linux
 	cp $(ROOT)/rpm-platform-riscv64-linux-macros $(ROOT)/stage3-chroot/usr/lib/rpm/platform/riscv64-linux/macros 
+	touch $@
+
+# riscv64 toolchain has issues linking static binaries if hardedning is enabled.
+# This is caused by '-pie' flag on gcc link command (e.g. bzip2)
+# Until issue is resolved globally disable hardening
+disable-hardening-macros:
+	rm -rf $@
+	sed -i \
+          -e 's/\(^%_hardened_build\).*/\1\t0/' \
+          -e 's/\(^%_configure_libtool_hardening_hack\).*/\1\t0/' \
+          $(ROOT)/stage3-chroot/usr/lib/rpm/redhat/macros
 	touch $@
 
 # Add a custom poweroff program.
