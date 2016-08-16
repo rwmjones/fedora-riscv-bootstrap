@@ -1208,7 +1208,7 @@ boot-stage3-in-spike: stage3-disk.img stage3-kernel/linux-$(KERNEL_VERSION)/vmli
 
 # Helper which boots stage3 disk image in qemu.
 boot-stage3-in-qemu: stage3-disk.img stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
-	qemu-system-riscv -kernel /usr/bin/bbl \
+	qemu-system-riscv -m 4G -kernel /usr/bin/bbl \
 	    -append ./stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	    -drive file=$(DISK),format=raw -nographic
 
