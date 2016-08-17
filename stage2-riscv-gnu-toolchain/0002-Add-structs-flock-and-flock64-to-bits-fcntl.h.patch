@@ -1,0 +1,58 @@
+From 8b540eaa82259b759d469f4ed692b3c17d9c3745 Mon Sep 17 00:00:00 2001
+From: "Manuel A. Fernandez Montecelo" <manuel.montezelo@gmail.com>
+Date: Tue, 29 Mar 2016 14:47:40 +0100
+Subject: [PATCH 2/2] Add structs 'flock' and 'flock64' to "bits/fcntl.h"
+
+The arch-specific file needs to provide this, according to
+"linux/bits/fcntl-linux.h".  "linux/generic/bits/fcntl.h" used to provide this
+for RISC-V.
+
+Another way to achieve the same result might be to include
+"linux/generic/bits/fcntl.h" from RISC-V's own "bits/fcntl.h", but 'flock' is
+defined a bit differently (it will possibly be even more different in the
+128-bit implementation) and it's not guarded by "ifndef" in
+"linux/generic/bits/fcntl.h".
+
+(cherry picked from commit fb6fe2abd0b137353f60b8fb1da424a1d1bb435e)
+---
+ glibc/sysdeps/unix/sysv/linux/riscv/bits/fcntl.h | 25 ++++++++++++++++++++++++
+ 1 file changed, 25 insertions(+)
+
+diff --git a/glibc/sysdeps/unix/sysv/linux/riscv/bits/fcntl.h b/glibc/sysdeps/unix/sysv/linux/riscv/bits/fcntl.h
+index 6a00f26..8a166f6 100644
+--- a/glibc/sysdeps/unix/sysv/linux/riscv/bits/fcntl.h
++++ b/glibc/sysdeps/unix/sysv/linux/riscv/bits/fcntl.h
+@@ -32,5 +32,30 @@
+ # define F_SETLKW64	7	/* Set record locking info (blocking).	*/
+ #endif
+ 
++struct flock
++  {
++    short int l_type;   /* Type of lock: F_RDLCK, F_WRLCK, or F_UNLCK.  */
++    short int l_whence; /* Where `l_start' is relative to (like `lseek').  */
++#if __WORDSIZE == 64 || !defined __USE_FILE_OFFSET64
++    __off_t l_start;    /* Offset where the lock begins.  */
++    __off_t l_len;      /* Size of the locked area; zero means until EOF.  */
++#else
++    __off64_t l_start;  /* Offset where the lock begins.  */
++    __off64_t l_len;    /* Size of the locked area; zero means until EOF.  */
++#endif
++    __pid_t l_pid;      /* Process holding the lock.  */
++  };
++
++#ifdef __USE_LARGEFILE64
++struct flock64
++  {
++    short int l_type;   /* Type of lock: F_RDLCK, F_WRLCK, or F_UNLCK.  */
++    short int l_whence; /* Where `l_start' is relative to (like `lseek').  */
++    __off64_t l_start;  /* Offset where the lock begins.  */
++    __off64_t l_len;    /* Size of the locked area; zero means until EOF.  */
++    __pid_t l_pid;      /* Process holding the lock.  */
++  };
++#endif
++
+ /* Include generic Linux declarations.  */
+ #include <bits/fcntl-linux.h>
+-- 
+2.7.4
+

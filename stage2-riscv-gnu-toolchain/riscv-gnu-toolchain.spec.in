@@ -11,7 +11,7 @@
 
 Name:           riscv-gnu-toolchain
 Version:        0
-Release:        0.5.git@SHORTCOMMIT@%{?dist}
+Release:        0.6.git@SHORTCOMMIT@%{?dist}
 Summary:        RISC-V GNU cross-toolchain, containing binutils and GCC
 License:        GPLv2+ and LGPLv2+ and BSD
 
@@ -22,6 +22,10 @@ Source1:        http://mirrors.kernel.org/gnu/binutils/binutils-@BINUTILS_VERSIO
 Source2:        http://mirrors.kernel.org/gnu/glibc/glibc-@GLIBC_VERSION@.tar.gz
 Source3:        http://mirrors.kernel.org/gnu/gcc/gcc-@GCC_VERSION@/gcc-@GCC_VERSION@.tar.gz
 Source4:        ftp://sourceware.org/pub/newlib/newlib-@NEWLIB_VERSION@.tar.gz
+
+# Patches to fix file locking, thanks Manuel A. Fernandez Montecelo.
+Patch1:         0001-Provide-bits-fcntl.h-for-RISC-V.patch
+Patch2:         0002-Add-structs-flock-and-flock64-to-bits-fcntl.h.patch
 
 # XXX These BuildRequires are just culled from the GCC spec
 # and probably overestimate the real requirements.
@@ -52,6 +56,8 @@ includes binutils and GCC.
 
 %prep
 %setup -q -n %{name}-@COMMIT@
+%patch1 -p1
+%patch2 -p1
 
 
 %build
