@@ -20,6 +20,8 @@ stamp-*
 /stage3-disk.img
 /stage3-disk.img.xz
 
+/autoconf-2.69/
+/automake-1.15/
 /bash-4.3/
 /beecrypt-4.2.1/
 /bison-3.0.4/
@@ -44,6 +46,7 @@ stamp-*
 /nano-2.6.2/
 /ncurses-6.0-20160730/
 /patch-2.7.5/
+/perl-5.24.0/
 /popt-1.16/
 /readline-6.3/
 /riscv-binutils-gdb-riscv-binutils-2.26/
