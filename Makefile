@@ -391,6 +391,7 @@ stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux:
 	( \
 	echo CONFIG_CMDLINE=\"root=/dev/htifblk0 init=/init\"; \
 	echo CONFIG_CROSS_COMPILE=riscv64-unknown-elf-; \
+	echo CONFIG_FILE_LOCKING=y; \
 	echo CONFIG_NET_CORE=y; \
 	echo CONFIG_NETDEVICES=y; \
 	echo CONFIG_VIRTIO=y; \
