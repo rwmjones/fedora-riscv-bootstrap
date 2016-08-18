@@ -90,6 +90,10 @@ SCREEN_VERSION     = 4.4.0
 M4_VERSION         = 1.4.17
 FLEX_VERSION       = 2.6.0
 BISON_VERSION      = 3.0.4
+AUTOCONF_VERSION   = 2.69
+AUTOMAKE_VERSION   = 1.15
+PERL_VERSION       = 5.24.0
+PERL_CROSS_VERSION = 1.0.3
 
 all: stage1 stage2 stage3 stage4
 
@@ -359,6 +363,9 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/bin/flex \
 	stage3-chroot/usr/bin/bison \
 	stage3-chroot/usr/bin/poweroff \
+	stage3-chroot/usr/bin/autoconf \
+	stage3-chroot/usr/bin/automake \
+	stage3-chroot/usr/bin/perl \
 	stamp-redhat-rpmrc \
 	stamp-rpm-macros \
 	stamp-rpm-platform-riscv64-linux-macros \
@@ -877,6 +884,7 @@ stage3-chroot/usr/bin/make: make-$(MAKE_VERSION).tar.gz
 	cd make-$(MAKE_VERSION) && \
 	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	./configure \
+	    --without-guile \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
 	cd make-$(MAKE_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
@@ -1141,6 +1149,68 @@ stage3-chroot/usr/bin/bison: bison-$(BISON_VERSION).tar.gz
 bison-$(BISON_VERSION).tar.gz:
 	rm -f $@ $@-t
 	wget -O $@-t http://ftp.gnu.org/gnu/bison/bison-$(BISON_VERSION).tar.gz
+	mv $@-t $@
+
+# Cross-compile autoconf
+stage3-chroot/usr/bin/autoconf: autoconf-$(AUTOCONF_VERSION).tar.gz
+	rm -rf autoconf-$(AUTOCONF_VERSION)
+	tar zxf $^
+	cd autoconf-$(AUTOCONF_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	./configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64
+	cd autoconf-$(AUTOCONF_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
+	cd autoconf-$(AUTOCONF_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
+
+autoconf-$(AUTOCONF_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t http://ftp.gnu.org/gnu/autoconf/autoconf-$(AUTOCONF_VERSION).tar.gz
+	mv $@-t $@
+
+# Cross-compile automake (note: requires Perl)
+stage3-chroot/usr/bin/automake: automake-$(AUTOMAKE_VERSION).tar.gz automake-port-to-perl522.patch automake-port-to-future-gzip.patch
+	rm -rf automake-$(AUTOMAKE_VERSION)
+	tar zxf automake-$(AUTOMAKE_VERSION).tar.gz
+	cd automake-$(AUTOMAKE_VERSION) && \
+	patch -p1 < ../automake-port-to-future-gzip.patch && \
+	patch -p1 < ../automake-port-to-perl522.patch && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	./configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64
+	cd automake-$(AUTOMAKE_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
+	cd automake-$(AUTOMAKE_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
+
+automake-$(AUTOMAKE_VERSION).tar.gz:
+	rm -rf $@ $@-t
+	wget -O $@-t http://ftp.gnu.org/gnu/automake/automake-$(AUTOMAKE_VERSION).tar.gz
+	mv $@-t $@
+
+# Cross-compile Perl
+# Let's use perl-cross which is not-upstreamed changes which allow building Perl
+# without already having Perl or SSH access to target system.
+stage3-chroot/usr/bin/perl: perl-$(PERL_VERSION).tar.gz perl-$(PERL_VERSION)-cross-$(PERL_CROSS_VERSION).tar.gz
+	rm -rf perl-$(PERL_VERSION)
+	tar zxf perl-$(PERL_VERSION).tar.gz
+	tar -zx --overwrite -f perl-$(PERL_VERSION)-cross-$(PERL_CROSS_VERSION).tar.gz
+	cd perl-$(PERL_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	./configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --target=riscv64-unknown-linux-gnu \
+	    --prefix=/usr
+	cd perl-$(PERL_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
+	cd perl-$(PERL_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
+
+perl-$(PERL_VERSION).tar.gz:
+	rm -rf $@ $@-t
+	wget -O $@-t http://www.cpan.org/src/5.0/perl-$(PERL_VERSION).tar.gz
+	mv $@-t $@
+
+perl-$(PERL_VERSION)-cross-$(PERL_CROSS_VERSION).tar.gz:
+	rm -rf $@ $@-t
+	wget -O $@-t https://github.com/arsv/perl-cross/releases/download/$(PERL_CROSS_VERSION)/perl-$(PERL_VERSION)-cross-$(PERL_CROSS_VERSION).tar.gz
 	mv $@-t $@
 
 # Cross-compile RPM / rpmbuild.
