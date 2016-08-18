@@ -180,6 +180,8 @@ FLEX_VERSION       = 2.6.0
 BISON_VERSION      = 3.0.4
 AUTOCONF_VERSION   = 2.69
 AUTOMAKE_VERSION   = 1.15
+PERL_VERSION       = 5.24.0
+PERL_CROSS_VERSION = 1.0.3
 ELFUTILS_VERSION   = 0.170
 GIT_VERSION        = 2.9.3
 JSONCPP_VERSION    = 1.7.4
@@ -238,6 +240,7 @@ stage3: riscv-linux/vmlinux \
 	stage3-chroot/usr/bin/poweroff \
 	stage3-chroot/usr/bin/autoconf \
 	stage3-chroot/usr/bin/automake \
+	stage3-chroot/usr/bin/perl \
 	stage3-chroot/usr/bin/git \
 	stage3-chroot/usr/lib64/libjsoncpp.so \
 	stage3-chroot/etc/profile.d/aliases.sh \
@@ -1177,6 +1180,30 @@ stage3-chroot/usr/lib64/libjsoncpp.so: jsoncpp-$(JSONCPP_VERSION).tar.gz
 jsoncpp-$(JSONCPP_VERSION).tar.gz:
 	rm -f $@ $@-t
 	wget -O $@-t 'https://github.com/open-source-parsers/jsoncpp/archive/$(JSONCPP_VERSION).tar.gz#/jsoncpp-$(JSONCPP_VERSION).tar.gz'
+
+# Cross-compile Perl
+# Let's use perl-cross which is not-upstreamed changes which allow building Perl
+# without already having Perl or SSH access to target system.
+stage3-chroot/usr/bin/perl: perl-$(PERL_VERSION).tar.gz perl-$(PERL_VERSION)-cross-$(PERL_CROSS_VERSION).tar.gz
+	rm -rf perl-$(PERL_VERSION)
+	tar zxf perl-$(PERL_VERSION).tar.gz
+	tar -zx --overwrite -f perl-$(PERL_VERSION)-cross-$(PERL_CROSS_VERSION).tar.gz
+	cd perl-$(PERL_VERSION) && \
+	./configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --target=riscv64-unknown-linux-gnu \
+	    --prefix=/usr
+	cd perl-$(PERL_VERSION) && $(MAKE)
+	cd perl-$(PERL_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
+
+perl-$(PERL_VERSION).tar.gz:
+	rm -rf $@ $@-t
+	wget -O $@-t http://www.cpan.org/src/5.0/perl-$(PERL_VERSION).tar.gz
+	mv $@-t $@
+
+perl-$(PERL_VERSION)-cross-$(PERL_CROSS_VERSION).tar.gz:
+	rm -rf $@ $@-t
+	wget -O $@-t https://github.com/arsv/perl-cross/releases/download/$(PERL_CROSS_VERSION)/perl-$(PERL_VERSION)-cross-$(PERL_CROSS_VERSION).tar.gz
 	mv $@-t $@
 
 # Cross-compile RPM / rpmbuild.
