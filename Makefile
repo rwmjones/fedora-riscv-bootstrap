@@ -95,6 +95,70 @@ AUTOMAKE_VERSION   = 1.15
 PERL_VERSION       = 5.24.0
 PERL_CROSS_VERSION = 1.0.3
 
+# When building the clean stage4, we don't have to build noarch RPMs,
+# we can just download them from Koji (the Fedora build system).
+#
+# To construct this list, run:
+#
+# supermin -v -v -v --prepare -o /tmp/supermin.d $(STAGE3_PACKAGES) >&/tmp/log
+#
+# then find the full list of packages near the end of the log file,
+# and cut out only the noarch packages.  Convert the names to source
+# package names.  Some noarch packages can be dropped from this list
+# if they are judged unnecessary, or if they pull in too many arch-ful
+# dependencies.
+#
+# NB: After changing this list you MUST: 'rm stamp-koji-packages'
+STAGE4_KOJI_NOARCH_NAMES = \
+	autoconf \
+	automake \
+	basesystem \
+	ca-certificates \
+	crypto-policies \
+	elfutils \
+	emacs \
+	fedora-release \
+	fedora-repos \
+	gettext \
+	ghc-srpm-macros \
+	gnat-srpm-macros \
+	go-srpm-macros \
+	iso-codes \
+	ncurses \
+	ocaml-srpm-macros \
+	perl-Carp \
+	perl-Error \
+	perl-Exporter \
+	perl-Fedora-VSP \
+	perl-File-Path \
+	perl-File-Temp \
+	perl-Getopt-Long \
+	perl-HTTP-Tiny \
+	perl-Pod-Escapes \
+	perl-Pod-Perldoc \
+	perl-Pod-Simple \
+	perl-Pod-Usage \
+	perl-Term-ANSIColor \
+	perl-Term-Cap \
+	perl-Text-ParseWords \
+	perl-Text-Tabs+Wrap \
+	perl-Thread-Queue \
+	perl-Time-Local \
+	perl-constant \
+	perl-generators \
+	perl-parent \
+	perl-podlators \
+	perl-srpm-macros \
+	python-pip \
+	python-rpm-macros \
+	python-setuptools \
+	redhat-rpm-config \
+	setup \
+	sgml-common \
+	tzdata
+
+STAGE4_KOJI_FEDORA_RELEASE = f25
+
 all: stage1 stage2 stage3 stage4
 
 # Stage 1
@@ -403,6 +467,9 @@ stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux:
 	echo CONFIG_VIRTIO_CONSOLE=y; \
 	echo CONFIG_SCSI_VIRTIO=y; \
 	echo CONFIG_SYSFS=y; \
+	echo CONFIG_BLK_DEV=y; \
+	echo CONFIG_BLK_DEV_LOOP=y; \
+	echo CONFIG_EXT4_FS=y; \
 	) >> stage3-kernel/linux-$(KERNEL_VERSION)/.config
 	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
 	make ARCH=riscv olddefconfig
@@ -1324,7 +1391,7 @@ stage3-chroot/config.sub: config.sub
 # Note `-s +...' adds spare space to the disk image.
 stage3-disk.img: stage3-chroot
 	rm -f $@
-	cd stage3-chroot && virt-make-fs . ../$@ -t ext2 -F raw -s +4G
+	cd stage3-chroot && virt-make-fs . ../$@ -t ext2 -F raw -s +20G
 
 # Upload the compressed disk image.
 upload-stage3: stage3-disk.img.xz
@@ -1348,11 +1415,73 @@ boot-stage3-in-qemu: stage3-disk.img stage3-kernel/linux-$(KERNEL_VERSION)/vmlin
 
 # Stage 4
 
-stage4:
-	echo "XXX TO DO"
-	exit 1
+stage4: stage4-disk.img
 
+# The clean stage4 disk image, built only from RPMs.
+stage4-disk.img: stage4-builder.img
+	rm -f $@ $@-t
+	qemu-system-riscv -m 4G -kernel /usr/bin/bbl \
+	    -append ./stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
+	    -drive file=$<,format=raw -nographic
+	guestfish -a $< -i download /var/tmp/stage4-disk.img $@-t
+	mv $@-t $@
 
+# The "builder" is a variation of stage3-disk.img with a modified
+# /init script and containing all the RPMs built so far.  The /init
+# script takes the RPMs and tries to build stage4-disk.img from them.
+stage4-builder.img: stage3-disk.img \
+		stage4-disk.img-template.tar.gz \
+		stage3-built-rpms/RPMS \
+		stamp-koji-packages \
+		builder.sh
+	rm -f $@ $@-t
+	cp $< $@-t
+	guestfish -a $@-t -i \
+		upload builder.sh /init : \
+		chmod 0755 /init : \
+		mkdir-p /var/tmp/RPMS/noarch
+	virt-copy-in -a $@-t \
+		stage4-disk.img-template.tar.gz \
+		stage3-built-rpms/RPMS \
+		/var/tmp
+	virt-copy-in -a $@-t \
+		stage4-koji-noarch-rpms/*.noarch.rpm \
+		/var/tmp/RPMS/noarch
+	mv $@-t $@
+
+# Make an empty template for the stage4 disk image.
+# This just avoids having to upload mkfs tools to stage3.
+#
+# We have to use '.tar.gz' format here because it's the only format
+# that preserves sparseness properly (we could use 'xz' instead, but
+# that's really slow).
+stage4-disk.img-template.tar.gz: stage4-disk.img-template.tar
+	rm -f $@
+	gzip -9 -k $^
+
+stage4-disk.img-template.tar: stage4-disk.img-template
+	rm -f $@ $@-t
+	tar -cSf $@-t $^
+	mv $@-t $@
+
+stage4-disk.img-template:
+	rm -f $@ $@-t
+	truncate -s 10G $@-t
+	mkfs -t ext4 $@-t
+	mv $@-t $@
+
+# Download STAGE4_KOJI_NOARCH_NAMES packages.
+stamp-koji-packages:
+	rm -f $@
+	mkdir -p stage4-koji-noarch-rpms
+	cd stage4-koji-noarch-rpms && \
+	for f in $$( koji latest-build $(STAGE4_KOJI_FEDORA_RELEASE) $(STAGE4_KOJI_NOARCH_NAMES) --quiet | awk '{print $$1}' ); do \
+	    test -f $$f.src.rpm || koji download-build $$f || exit 1; \
+	done;
+# Blacklist a few packages which cause excessive dependencies.
+	rm -f stage4-koji-noarch-rpms/fedora-release-[a-z]*
+	rm -f stage4-koji-noarch-rpms/emacs-gettext-*
+	touch $@
 
 # Don't run the builds in parallel because they are implicitly ordered.
 .NOTPARALLEL:

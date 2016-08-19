@@ -19,6 +19,10 @@ stamp-*
 /stage3-chroot/
 /stage3-disk.img
 /stage3-disk.img.xz
+/stage4-builder.img
+/stage4-disk.img-template
+/stage4-disk.img-template.tar
+/stage4-koji-noarch-rpms/
 
 /autoconf-2.69/
 /automake-1.15/
