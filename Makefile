@@ -1407,7 +1407,7 @@ upload-stage3: stage3-disk.img.xz
 	scp $^ tick:public_html/riscv/
 stage3-disk.img.xz: stage3-disk.img
 	rm -f $@
-	xz --best $^
+	xz --best -k $^
 
 DISK := stage3-disk.img
 
