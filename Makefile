@@ -324,6 +324,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot-original/etc/fedora-release \
 	stage3-chroot/etc/fedora-release \
 	stage3-chroot/lib64/libc.so.6 \
+	stage3-chroot/usr/include/asm/ptrace.h \
 	stage3-chroot/usr/bin/tic \
 	stage3-chroot/usr/lib64/libhistory.so.6 \
 	stage3-chroot/bin/bash \
@@ -435,6 +436,7 @@ stage3-chroot/etc/fedora-release: stage3-chroot-original/etc/fedora-release
 	find stage3-chroot-t -type f -print0 | xargs -0 file -N | grep -E '\bELF.*LSB\b' | awk -F: '{print $$1}' | xargs rm -f
 	rm -f stage3-chroot-t/lib64/libc.so.6
 	mv stage3-chroot-t stage3-chroot
+	rm -f stage3-chroot/usr/include/asm/ptrace.h
 
 # Copy in compiled glibc from the riscv-gnu-toolchain sysroot.  Only
 # copy files and symlinks, leave the target directory structure
@@ -446,6 +448,12 @@ stage3-chroot/lib64/libc.so.6:
 	    cp -d /usr/sysroot/$$f stage3-chroot/$$f; \
 	done
 	cd stage3-chroot/lib64 && for f in ../lib/*; do ln -sf $$f; done
+	rm -f stage3-chroot/usr/include/asm/ptrace.h
+
+# Copy in the correct Linux header files.
+stage3-chroot/usr/include/asm/ptrace.h: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
+	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
+	make ARCH=riscv headers_install INSTALL_HDR_PATH=$(ROOT)/stage3-chroot/usr
 
 # Cross-compile ncurses.
 stage3-chroot/usr/bin/tic: ncurses-$(NCURSES_VERSION).tgz
