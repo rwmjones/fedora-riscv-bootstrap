@@ -448,11 +448,16 @@ stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux:
 	  git init; \
 	}
 	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
-	git remote add riscv https://github.com/riscv/riscv-linux && \
-	git fetch riscv && \
+	git remote add riscv-linux https://github.com/riscv/riscv-linux && \
+	git fetch riscv-linux && \
 	git checkout -f linux-4.1.y-riscv && \
-	make mrproper && \
-	make ARCH=riscv defconfig
+	make mrproper
+# So we can build with ARCH=riscv64:
+# https://github.com/palmer-dabbelt/riscv-gentoo-infra/blob/master/patches/linux/0001-riscv64_makefile.patch
+	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
+	patch -p1 < ../0001-riscv64_makefile.patch
+	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
+	make ARCH=riscv64 defconfig
 	( \
 	echo CONFIG_CMDLINE=\"root=/dev/htifblk0 init=/init\"; \
 	echo CONFIG_CROSS_COMPILE=riscv64-unknown-elf-; \
@@ -472,11 +477,11 @@ stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux:
 	echo CONFIG_EXT4_FS=y; \
 	) >> stage3-kernel/linux-$(KERNEL_VERSION)/.config
 	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
-	make ARCH=riscv olddefconfig
+	make ARCH=riscv64 olddefconfig
 	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
-	make ARCH=riscv vmlinux
+	make ARCH=riscv64 vmlinux
 	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
-	make ARCH=riscv headers_install INSTALL_HDR_PATH=$(ROOT)/stage3-chroot/usr
+	make ARCH=riscv64 headers_install INSTALL_HDR_PATH=$(ROOT)/stage3-chroot/usr
 	ls -l $@
 
 # Build an original (x86-64) chroot using supermin.  We then aim to
@@ -520,7 +525,7 @@ stage3-chroot/lib64/libc.so.6:
 # Copy in the correct Linux header files.
 stage3-chroot/usr/include/asm/ptrace.h: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
 	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
-	make ARCH=riscv headers_install INSTALL_HDR_PATH=$(ROOT)/stage3-chroot/usr
+	make ARCH=riscv64 headers_install INSTALL_HDR_PATH=$(ROOT)/stage3-chroot/usr
 
 # Cross-compile ncurses.
 stage3-chroot/usr/bin/tic: ncurses-$(NCURSES_VERSION).tgz
