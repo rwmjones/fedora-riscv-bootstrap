@@ -407,6 +407,8 @@ stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux:
 	make ARCH=riscv olddefconfig
 	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
 	make ARCH=riscv vmlinux
+	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
+	make ARCH=riscv headers_install INSTALL_HDR_PATH=$(ROOT)/stage3-chroot/usr
 	ls -l $@
 
 # Build an original (x86-64) chroot using supermin.  We then aim to
