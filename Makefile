@@ -26,9 +26,9 @@ GLIBC_VERSION    = 2.22
 GCC_VERSION      = 5.3.0
 NEWLIB_VERSION   = 2.2.0
 
-# See linux-4.1.y-riscv branch of
 # https://github.com/riscv/riscv-linux
 KERNEL_VERSION   = 4.1.26
+KERNEL_BRANCH    = linux-4.1.y-riscv
 
 # A local copy of Linux git repo so you don't have to keep downloading
 # git commits (optional).
@@ -440,17 +440,16 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/config.sub \
 	stage3-disk.img
 
-stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux:
+stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux: linux-$(KERNEL_VERSION).tar.xz
 	rm -rf stage3-kernel/linux-$(KERNEL_VERSION)
-	cp -a $(LOCAL_LINUX_GIT_COPY) stage3-kernel/linux-$(KERNEL_VERSION) || { \
-	  mkdir stage3-kernel/linux-$(KERNEL_VERSION) && \
-	  cd stage3-kernel/linux-$(KERNEL_VERSION) && \
-	  git init; \
-	}
+	cd stage3-kernel && tar -Jxf ../$^
 	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
-	git remote add riscv-linux https://github.com/riscv/riscv-linux && \
-	git fetch riscv-linux && \
-	git checkout -f linux-4.1.y-riscv && \
+	git init && \
+	git remote add -t $(KERNEL_BRANCH) origin https://github.com/riscv/riscv-linux.git && \
+	( git remote add local $(LOCAL_LINUX_GIT_COPY); git fetch local; : ) && \
+	git fetch && \
+	git checkout -f -t origin/$(KERNEL_BRANCH)
+	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
 	make mrproper
 # So we can build with ARCH=riscv64:
 # https://github.com/palmer-dabbelt/riscv-gentoo-infra/blob/master/patches/linux/0001-riscv64_makefile.patch
@@ -483,6 +482,11 @@ stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux:
 	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
 	make ARCH=riscv64 headers_install INSTALL_HDR_PATH=$(ROOT)/stage3-chroot/usr
 	ls -l $@
+
+linux-$(KERNEL_VERSION).tar.xz:
+	rm -f $@ $@-t
+	wget -O $@-t https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-$(KERNEL_VERSION).tar.xz
+	mv $@-t $@
 
 # Build an original (x86-64) chroot using supermin.  We then aim to
 # rebuild (using cross-compiled versions) every ELF binary in this
