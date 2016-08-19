@@ -72,8 +72,8 @@ BDB_VERSION        = 4.5.20
 NANO_VERSION       = 2.6.2
 GREP_VERSION       = 2.25
 LESS_VERSION       = 481
-STRACE_COMMIT      = f320e1897832fd07a62e18ed288e75d8e79f4c5b
-STRACE_SHORT_COMMIT = f320e189
+STRACE_COMMIT      = 4b69c4736cb9b44e0bd7bef16f7f8602b5d2f113
+STRACE_SHORT_COMMIT = 4b69c473
 BZIP2_VERSION      = 1.0.6
 MAKE_VERSION       = 4.1
 DIFFUTILS_VERSION  = 3.4
@@ -850,22 +850,23 @@ less-$(LESS_VERSION).tar.gz:
 
 # Cross-compile strace.
 # XXX This does not work.
-stage3-chroot/usr/bin/strace: strace-$(STRACE_SHORT_COMMIT).tar.gz
-	rm -rf strace-$(STRACE_SHORT_COMMIT)
-	tar -zxf $^
-	cd riscv-strace-$(STRACE_COMMIT) && patch -p1 < ../0001-Update-riscv_regs-for-ptrace.h-from-Linux-4.1.x.patch
-	cd riscv-strace-$(STRACE_COMMIT) && \
+stage3-chroot/usr/bin/strace: strace-$(STRACE_SHORT_COMMIT).tar.gz stage3-chroot/usr/include/asm/ptrace.h
+	rm -rf strace-$(STRACE_COMMIT)
+	tar -zxf $<
+	cd strace-$(STRACE_COMMIT) && patch -p1 < ../0001-Build-strace-for-RISC-V.patch
+	cd strace-$(STRACE_COMMIT) && ./bootstrap
+	cd strace-$(STRACE_COMMIT) && \
 	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	LDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64 \
 	./configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	cd riscv-strace-$(STRACE_COMMIT) && PATH=$(ROOT)/fixed-gcc:$$PATH make
-	cd riscv-strace-$(STRACE_COMMIT) && make install DESTDIR=$(ROOT)/stage3-chroot
+	cd strace-$(STRACE_COMMIT) && PATH=$(ROOT)/fixed-gcc:$$PATH make
+	cd strace-$(STRACE_COMMIT) && make install DESTDIR=$(ROOT)/stage3-chroot
 
 strace-$(STRACE_SHORT_COMMIT).tar.gz:
 	rm -f $@ $@-t
-	wget -O $@-t 'https://github.com/riscv/riscv-strace/archive/$(STRACE_COMMIT)/riscv-strace-$(STRACE_SHORTCOMMIT).tar.gz'
+	wget -O $@-t 'https://github.com/strace/strace/archive/$(STRACE_COMMIT)/strace-$(STRACE_SHORTCOMMIT).tar.gz'
 	mv $@-t $@
 
 # Cross-compile bzip2.
