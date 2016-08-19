@@ -1,4 +1,4 @@
-From 8051f65f55d52ceb68293b64d22a3a97aca0d44e Mon Sep 17 00:00:00 2001
+From e6d4b3e29991b8694640518d6a9e12dfde3676d3 Mon Sep 17 00:00:00 2001
 From: "Richard W.M. Jones" <rjones@redhat.com>
 Date: Tue, 20 Jan 2015 23:31:22 -0800
 Subject: [PATCH] Build strace for RISC-V
@@ -12,7 +12,6 @@ Signed-off-by: Richard W.M. Jones <rjones@redhat.com>
  clone.c                        |  2 +-
  configure.ac                   |  5 +++++
  defs.h                         |  2 ++
- file.c                         |  4 ++--
  linux/riscv/arch_regs.c        |  3 +++
  linux/riscv/errnoent1.h        |  2 ++
  linux/riscv/get_error.c        | 10 ++++++++++
@@ -26,7 +25,7 @@ Signed-off-by: Richard W.M. Jones <rjones@redhat.com>
  linux/riscv/stat32.h           |  1 +
  linux/riscv/syscallent.h       |  1 +
  linux/riscv/syscallent1.h      |  1 +
- 18 files changed, 66 insertions(+), 3 deletions(-)
+ 17 files changed, 64 insertions(+), 1 deletion(-)
  create mode 100644 linux/riscv/arch_regs.c
  create mode 100644 linux/riscv/errnoent1.h
  create mode 100644 linux/riscv/get_error.c
@@ -114,28 +113,6 @@ index 6f2a844..070f2b3 100644
   || defined(S390) \
   || defined(SH) || defined(SH64) \
   || defined(SPARC) || defined(SPARC64) \
-diff --git a/file.c b/file.c
-index 2ff0ac7..24b10b1 100644
---- a/file.c
-+++ b/file.c
-@@ -148,7 +148,7 @@ SYS_FUNC(fstat)
- }
- 
- #if defined STAT32_PERSONALITY && !defined HAVE_STRUCT_STAT64
--# if defined AARCH64 || defined X86_64 || defined X32
-+# if defined AARCH64 || defined X86_64 || defined X32 || defined RISCV
- /*
-  * Linux x86_64 and x32 have unified `struct stat' but their i386 personality
-  * needs `struct stat64'.
-@@ -186,7 +186,7 @@ struct stat64 {
- #  endif
- ;
- #  define HAVE_STRUCT_STAT64	1
--# else /* !(AARCH64 || X86_64 || X32) */
-+# else /* !(AARCH64 || X86_64 || X32 || RISCV) */
- #  warning FIXME: check whether struct stat64 definition is needed for this architecture!
- # endif
- #endif /* STAT32_PERSONALITY && !HAVE_STRUCT_STAT64 */
 diff --git a/linux/riscv/arch_regs.c b/linux/riscv/arch_regs.c
 new file mode 100644
 index 0000000..40be17d
@@ -238,11 +215,11 @@ index 0000000..39891b8
 +#include "../signalent.h"
 diff --git a/linux/riscv/stat32.h b/linux/riscv/stat32.h
 new file mode 100644
-index 0000000..802610e
+index 0000000..b6fedf6
 --- /dev/null
 +++ b/linux/riscv/stat32.h
 @@ -0,0 +1 @@
-+#include "x86_64/stat32.h"
++/* no 32-bit stat */
 diff --git a/linux/riscv/syscallent.h b/linux/riscv/syscallent.h
 new file mode 100644
 index 0000000..7c416ef
