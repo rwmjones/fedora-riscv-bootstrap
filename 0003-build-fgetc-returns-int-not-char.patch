@@ -1,4 +1,4 @@
-From 0c44e5cdbdc525cc1bf1063b6c561efa23d06b0d Mon Sep 17 00:00:00 2001
+From ccda39208da78e7850f96837e6003e469195d812 Mon Sep 17 00:00:00 2001
 From: "Richard W.M. Jones" <rjones@redhat.com>
 Date: Wed, 10 Aug 2016 15:01:31 +0100
 Subject: [PATCH 3/4] build: fgetc returns int, not char.

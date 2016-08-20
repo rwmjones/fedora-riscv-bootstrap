@@ -1,4 +1,4 @@
-From 7a164577210693c1714c38398fe87270f62bb8c1 Mon Sep 17 00:00:00 2001
+From ef95bd0d6e6c8c0fb44fbf8b8d482d12e7e2c258 Mon Sep 17 00:00:00 2001
 From: "Richard W.M. Jones" <rjones@redhat.com>
 Date: Tue, 9 Aug 2016 18:21:57 +0100
 Subject: [PATCH 4/4] HACKS TO GET RPM TO CROSS-COMPILE

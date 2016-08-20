@@ -1,12 +1,18 @@
-From 331b0ac34a9767d1f0147daf3fd22b64e2e4e3af Mon Sep 17 00:00:00 2001
+From b21db8611a0ba7b708f1d9083c77a2de1f2967e6 Mon Sep 17 00:00:00 2001
 From: "Richard W.M. Jones" <rjones@redhat.com>
 Date: Thu, 11 Aug 2016 11:38:18 +0100
 Subject: [PATCH 2/4] rpmrc: Convert uname.machine == "riscv" to
  "riscv32"/"riscv64"/"riscv128".
 
-On RISC-V, the kernel returns uname.machine == "riscv" (for all bit
-sizes).  GNU is using "riscv64".  Convert the kernel uname machine
-type to a more suitable value.
+On RISC-V, the kernel can return uname.machine == "riscv" (for all bit
+sizes).  I say "can" return, because that is the default, but it is
+also possible to compile the kernel specially so it returns "riscv64"
+etc.
+
+GNU is using "riscv64".
+
+This commit converts the kernel uname machine type "riscv" to a more
+suitable value.
 
 This conversion is supposed to be done by the arch_canon table.
 However the arch_canon table is not populated until after the
