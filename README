@@ -66,6 +66,9 @@ What parts of Fedora are we aiming to build?
 The @Core packages (as RPMs), rpmbuild, gcc, and a bootable binary
 disk image.
 
+For the list of packages in @Core, see:
+https://github.com/rwmjones/fedora-riscv/blob/master/packages-in-core
+
 Only 64 bit RISC-V ("riscv64") will be targeted.
 
 Once those are done, we can declare victory.
@@ -198,6 +201,9 @@ built from RPMs (but note: not created by Anaconda, we'll use
 (4c) kernel.riscv64: The Linux kernel, compiled as an RPM on RISC-V.
 
 (4d) Continue compiling all other RPMs from @Core.
+
+For the list of packages in @Core, see:
+https://github.com/rwmjones/fedora-riscv/blob/master/packages-in-core
 
 As more packages are compiled, distribute them as RPMs and distribute
 updated bootable binary disk image.
