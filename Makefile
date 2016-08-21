@@ -81,7 +81,7 @@ FINDUTILS_VERSION  = 4.6.0
 SED_VERSION        = 4.2
 PATCH_VERSION      = 2.7.5
 HOSTNAME_VERSION   = 3.15
-GETTEXT_VERSION    = 0.19
+GETTEXT_VERSION    = 0.19.8
 LUA_VERSION        = 5.3.3
 XZ_VERSION         = 5.2.2
 GAWK_VERSION       = 4.1.3
@@ -95,6 +95,7 @@ AUTOMAKE_VERSION   = 1.15
 PERL_VERSION       = 5.24.0
 PERL_CROSS_VERSION = 1.0.3
 ELFUTILS_VERSION   = 0.166
+GIT_VERSION        = 2.9.3
 
 # When building the clean stage4, we don't have to build noarch RPMs,
 # we can just download them from Koji (the Fedora build system).
@@ -443,6 +444,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/bin/autoconf \
 	stage3-chroot/usr/bin/automake \
 	stage3-chroot/usr/bin/perl \
+	stage3-chroot/usr/bin/git \
 	stage3-chroot/init \
 	stage3-chroot/usr/lib/rpm/config.guess \
 	stage3-chroot/usr/lib/rpm/config.sub \
@@ -1141,6 +1143,26 @@ stage3-chroot/usr/bin/xz: xz-$(XZ_VERSION).tar.gz
 xz-$(XZ_VERSION).tar.gz:
 	rm -f $@ $@-t
 	wget -O $@-t http://tukaani.org/xz/xz-$(XZ_VERSION).tar.gz
+	mv $@-t $@
+
+# Cross-compile GNU git.
+stage3-chroot/usr/bin/git: git-$(GIT_VERSION).tar.gz
+	rm -rf git-$(GIT_VERSION)
+	tar -zxf $^
+	cd git-$(GIT_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	./configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64 \
+	    ac_cv_fread_reads_directories=no \
+	    ac_cv_snprintf_returns_bogus=no \
+	    LDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64
+	cd git-$(GIT_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make NO_PERL=1
+	cd git-$(GIT_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot NO_PERL=1
+
+git-$(GIT_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t https://www.kernel.org/pub/software/scm/git/git-$(GIT_VERSION).tar.gz
 	mv $@-t $@
 
 # Cross-compile GNU awk.
