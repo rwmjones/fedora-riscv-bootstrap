@@ -439,6 +439,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/init \
 	stage3-chroot/config.guess \
 	stage3-chroot/config.sub \
+	stage3-chroot/rpmbuild \
 	stage3-disk.img
 
 stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux: linux-$(KERNEL_VERSION).tar.xz
@@ -1416,10 +1417,16 @@ stage3-chroot/config.guess: config.guess
 stage3-chroot/config.sub: config.sub
 	install -m 0755 $^ $@
 
+# Create /rpmbuild inside the stage3 chroot.
+stage3-chroot/rpmbuild:
+	mkdir -p $@/{BUILD,BUILDROOT,RPMS/noarch,RPMS/riscv64,SOURCES,SPECS,SRPMS}
+
 # Create the stage3 disk image.
 # Note `-s +...' adds spare space to the disk image.
-stage3-disk.img: stage3-chroot
+stage3-disk.img: stage3-chroot/rpmbuild stage3-chroot
 	rm -f $@
+	cp stage3-built-rpms/RPMS/riscv64/*.rpm stage3-chroot/rpmbuild/RPMS/riscv64/
+	cp stage3-built-rpms/SRPMS/*.rpm stage3-chroot/rpmbuild/SRPMS/
 	cd stage3-chroot && virt-make-fs . ../$@ -t ext2 -F raw -s +20G
 
 # Upload the compressed disk image.
