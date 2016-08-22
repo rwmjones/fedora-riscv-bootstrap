@@ -434,10 +434,6 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/bin/autoconf \
 	stage3-chroot/usr/bin/automake \
 	stage3-chroot/usr/bin/perl \
-	stamp-redhat-rpmrc \
-	stamp-rpm-macros \
-	stamp-rpm-platform-riscv64-linux-macros \
-	stamp-disable-hardening-macros \
 	stage3-chroot/init \
 	stage3-chroot/config.guess \
 	stage3-chroot/config.sub \
@@ -1380,6 +1376,27 @@ stage3-chroot/usr/bin/rpm: rpm-$(RPM_SHORT_COMMIT).tar.gz db-$(BDB_VERSION).tar.
 	cd rpm-$(RPM_SHORT_COMMIT) && PATH=$(ROOT)/fixed-gcc:$$PATH make V=1
 	cd rpm-$(RPM_SHORT_COMMIT) && PATH=$(ROOT)/fixed-gcc:$$PATH make install DESTDIR=$(ROOT)/stage3-chroot
 	rm -f stage3-chroot/usr/lib64/*.la
+# Fix optflags in redhat-specific RPM configuration.
+	echo 'optflags: riscv64 %{__global_cflags}' >> $(ROOT)/stage3-chroot/usr/lib/rpm/redhat/rpmrc
+# Hack /usr/lib/rpm/macros until we have a natively build RPM.
+# These binaries might not be available in chroot, only in cross toolchain.
+	sed -i \
+            -e 's/riscv64-unknown-linux-gnu-ar/ar/g' \
+            -e 's/riscv64-unknown-linux-gnu-gcc/gcc/g' \
+            -e 's/riscv64-unknown-linux-gnu-g++/g++/g' \
+            -e 's/riscv64-unknown-linux-gnu-ranlib/ranlib/g' \
+            stage3-chroot/usr/lib/rpm/macros
+# RPM is missing riscv64 platform macros which leads to failures while
+# building packages (e.g. bzip2).
+	mkdir -p $(ROOT)/stage3-chroot/usr/lib/rpm/platform/riscv64-linux
+	cp rpm-platform-riscv64-linux-macros stage3-chroot/usr/lib/rpm/platform/riscv64-linux/macros
+# riscv64 toolchain has issues linking static binaries if hardedning is enabled.
+# This is caused by '-pie' flag on gcc link command (e.g. bzip2)
+# Until issue is resolved globally disable hardening.
+	sed -i \
+          -e 's/^%_hardened_build/#_hardened_build/' \
+          -e 's/\(^%_configure_libtool_hardening_hack\).*/\1\t0/' \
+          stage3-chroot/usr/lib/rpm/redhat/macros
 
 rpm-$(RPM_SHORT_COMMIT).tar.gz:
 	rm -f $@ $@-t
@@ -1390,43 +1407,6 @@ db-$(BDB_VERSION).tar.gz:
 	rm -f $@ $@-t
 	wget -O $@-t http://download.oracle.com/berkeley-db/db-$(BDB_VERSION).tar.gz
 	mv $@-t $@
-
-# Fix optflags in redhat-specific RPM configuration.
-stamp-redhat-rpmrc:
-	rm -f $@
-	echo 'optflags: riscv64 %{__global_cflags}' >> $(ROOT)/stage3-chroot/usr/lib/rpm/redhat/rpmrc
-	touch $@
-
-# Hack /usr/lib/rpm/macros until we have a natively build RPM
-# These binaries might not be available in chroot, only in cross toolchain
-stamp-rpm-macros:
-	rm -rf $@
-	sed -i \
-            -e 's/riscv64-unknown-linux-gnu-ar/ar/g' \
-            -e 's/riscv64-unknown-linux-gnu-gcc/gcc/g' \
-            -e 's/riscv64-unknown-linux-gnu-g++/g++/g' \
-            -e 's/riscv64-unknown-linux-gnu-ranlib/ranlib/g' \
-             $(ROOT)/stage3-chroot/usr/lib/rpm/macros
-	touch $@
-
-# RPM is missing riscv64 platform macros which leads to failures while
-# building packages (e.g. bzip2)
-stamp-rpm-platform-riscv64-linux-macros: rpm-platform-riscv64-linux-macros
-	rm -rf $@
-	mkdir -p $(ROOT)/stage3-chroot/usr/lib/rpm/platform/riscv64-linux
-	cp $(ROOT)/rpm-platform-riscv64-linux-macros $(ROOT)/stage3-chroot/usr/lib/rpm/platform/riscv64-linux/macros 
-	touch $@
-
-# riscv64 toolchain has issues linking static binaries if hardedning is enabled.
-# This is caused by '-pie' flag on gcc link command (e.g. bzip2)
-# Until issue is resolved globally disable hardening
-stamp-disable-hardening-macros:
-	rm -rf $@
-	sed -i \
-          -e 's/^%_hardened_build/#_hardened_build/' \
-          -e 's/\(^%_configure_libtool_hardening_hack\).*/\1\t0/' \
-          $(ROOT)/stage3-chroot/usr/lib/rpm/redhat/macros
-	touch $@
 
 # Add a custom poweroff program.
 # For some reason this only works in qemu, not spike.
