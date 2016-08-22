@@ -162,6 +162,15 @@ STAGE4_KOJI_FEDORA_RELEASE = f25
 
 all: stage1 stage2 stage3 stage4
 
+clean:
+	find -name '*~' -delete
+	rm -f stamp-*
+	rm -f */*.spec
+	rm -f stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
+	rm -rf stage3-chroot
+	rm -f stage3-disk.img
+	rm -f stage4-disk.img
+
 # Stage 1
 
 stage1: stage1-riscv-qemu/riscv-qemu-$(RISCV_QEMU_SHORTCOMMIT).tar.gz \
