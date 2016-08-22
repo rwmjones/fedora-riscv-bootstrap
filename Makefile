@@ -435,8 +435,8 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/bin/automake \
 	stage3-chroot/usr/bin/perl \
 	stage3-chroot/init \
-	stage3-chroot/config.guess \
-	stage3-chroot/config.sub \
+	stage3-chroot/usr/lib/rpm/config.guess \
+	stage3-chroot/usr/lib/rpm/config.sub \
 	stage3-chroot/rpmbuild \
 	stage3-disk.img
 
@@ -1401,6 +1401,9 @@ stage3-chroot/usr/bin/rpm: rpm-$(RPM_SHORT_COMMIT).tar.gz db-$(BDB_VERSION).tar.
           -e 's/^%_hardened_build/#_hardened_build/' \
           -e 's/\(^%_configure_libtool_hardening_hack\).*/\1\t0/' \
           stage3-chroot/usr/lib/rpm/redhat/macros
+# Make sure latest config.guess/config.sub get copied in (see below).
+	rm -f stage3-chroot/usr/lib/rpm/config.guess
+	rm -f stage3-chroot/usr/lib/rpm/config.sub
 
 rpm-$(RPM_SHORT_COMMIT).tar.gz:
 	rm -f $@ $@-t
@@ -1421,11 +1424,11 @@ stage3-chroot/usr/bin/poweroff: poweroff.c
 stage3-chroot/init: init.sh
 	install -m 0755 $^ $@
 
-# Copy latest config.guess and config.sub into the root of the chroot.
-# For some packages it may be required to update these files.
-stage3-chroot/config.guess: config.guess
+# Copy latest config.guess and config.sub into the RPM directory.
+# Using the RPM %configure macro copies this into every build.
+stage3-chroot/usr/lib/rpm/config.guess: config.guess
 	install -m 0755 $^ $@
-stage3-chroot/config.sub: config.sub
+stage3-chroot/usr/lib/rpm/config.sub: config.sub
 	install -m 0755 $^ $@
 
 # Create /rpmbuild inside the stage3 chroot.
