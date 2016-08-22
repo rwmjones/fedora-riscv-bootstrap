@@ -1,0 +1,95 @@
+From f53d4ceb4394158edd0d681c01214a278e99f00d Mon Sep 17 00:00:00 2001
+From: "Richard W.M. Jones" <rjones@redhat.com>
+Date: Mon, 22 Aug 2016 11:24:43 +0100
+Subject: [PATCH] HACKS TO GET RPM TO CROSS-COMPILE
+
+---
+ Makefile.am            | 2 +-
+ configure.ac           | 9 +++++++++
+ tools/sepdebugcrcfix.c | 2 ++
+ 3 files changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/Makefile.am b/Makefile.am
+index 08d8c8e..62d6fd2 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -173,7 +173,7 @@ elfdeps_LDADD +=	@WITH_LIBELF_LIB@ @WITH_POPT_LIB@
+ 
+ rpmlibexec_PROGRAMS +=	sepdebugcrcfix
+ sepdebugcrcfix_SOURCES = tools/sepdebugcrcfix.c
+-sepdebugcrcfix_LDADD =	@WITH_LIBELF_LIB@
++sepdebugcrcfix_LDADD =	@WITH_LIBELF_LIB@ -lz
+ endif
+ endif
+ 
+diff --git a/configure.ac b/configure.ac
+index e2d5ec3..096f5f8 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -226,6 +226,8 @@ AC_SEARCH_LIBS(dlopen, [dl])
+ 
+ #=================
+ # Check for libelf library. Prefer external, otherwise none.
++old_LIBS="$LIBS"
++LIBS="-lz"
+ WITH_LIBELF_LIB=
+ AC_CHECK_HEADER([libelf.h])
+ AC_CHECK_HEADERS([gelf.h], [
+@@ -237,6 +239,7 @@ AC_CHECK_HEADERS([gelf.h], [
+ ])
+ AC_SUBST(WITH_LIBELF_LIB)
+ AM_CONDITIONAL(LIBELF,[test "$WITH_LIBELF" = yes])
++LIBS="$old_LIBS"
+ 
+ AC_CHECK_HEADERS([dwarf.h], [
+   WITH_LIBDWARF=yes
+@@ -309,6 +312,8 @@ AC_SUBST(WITH_NSS_LIB)
+ WITH_MAGIC_INCLUDE=
+ WITH_MAGIC_LIB=
+ 
++old_LIBS="$LIBS"
++LIBS="-lz"
+ AC_CHECK_HEADER([magic.h], [
+     AC_CHECK_LIB(magic, magic_open, [
+       WITH_MAGIC_INCLUDE=
+@@ -319,6 +324,7 @@ AC_CHECK_HEADER([magic.h], [
+ ],[
+       AC_MSG_ERROR([missing required header magic.h]) 
+ ])
++LIBS="$old_LIBS"
+ 
+ AC_SUBST(WITH_MAGIC_INCLUDE)
+ AC_SUBST(WITH_MAGIC_LIB)
+@@ -369,6 +375,8 @@ AM_CONDITIONAL(WITH_ARCHIVE,[test "$with_archive" = yes])
+ 
+ #=================
+ # Check for elfutils libdw library with dwelf_elf_gnu_build_id.
++old_LIBS="$LIBS"
++LIBS="-lz -llzma -lelf"
+ AS_IF([test "$WITH_LIBELF" = yes],[
+   AC_CHECK_HEADERS([elfutils/libdwelf.h],[
+     AC_CHECK_LIB(dw, dwelf_elf_gnu_build_id, [
+@@ -381,6 +389,7 @@ AS_IF([test "$WITH_LIBELF" = yes],[
+   AC_SUBST(WITH_LIBDW_LIB)
+   AM_CONDITIONAL(LIBDW,[test "$WITH_LIBDW" = yes])
+ ])
++LIBS="$old_LIBS"
+ 
+ #=================
+ # Process --with/without-external-db
+diff --git a/tools/sepdebugcrcfix.c b/tools/sepdebugcrcfix.c
+index cd7fa02..8a5ba98 100644
+--- a/tools/sepdebugcrcfix.c
++++ b/tools/sepdebugcrcfix.c
+@@ -15,6 +15,8 @@
+ 
+ /* Version 2013-06-24.  */
+ 
++#include "system.h"
++
+ #define _GNU_SOURCE
+ #include <string.h>
+ #include <fcntl.h>
+-- 
+2.7.4
+
