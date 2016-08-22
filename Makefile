@@ -1437,6 +1437,7 @@ stage3-chroot/rpmbuild:
 stage3-disk.img: stage3-chroot/rpmbuild stage3-chroot
 	rm -f $@
 	cp stage3-built-rpms/RPMS/riscv64/*.rpm stage3-chroot/rpmbuild/RPMS/riscv64/
+	cp stage3-built-rpms/RPMS/noarch/*.rpm stage3-chroot/rpmbuild/RPMS/noarch/
 	cp stage3-built-rpms/SRPMS/*.rpm stage3-chroot/rpmbuild/SRPMS/
 	cd stage3-chroot && virt-make-fs . ../$@ -t ext2 -F raw -s +20G
 
