@@ -1145,7 +1145,7 @@ xz-$(XZ_VERSION).tar.gz:
 	wget -O $@-t http://tukaani.org/xz/xz-$(XZ_VERSION).tar.gz
 	mv $@-t $@
 
-# Cross-compile GNU git.
+# Cross-compile git.
 stage3-chroot/usr/bin/git: git-$(GIT_VERSION).tar.gz
 	rm -rf git-$(GIT_VERSION)
 	tar -zxf $^
