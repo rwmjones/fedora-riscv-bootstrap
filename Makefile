@@ -44,7 +44,7 @@ gzip zlib-devel file-devel popt-devel beecrypt-devel \
 rpm rpm-build rpm-devel libdb-utils libdb-devel nano \
 grep less strace bzip2-devel make diffutils findutils \
 sed patch hostname gettext-devel lua-devel xz-devel gawk \
-vim screen m4 flex bison autoconf automake perl
+vim screen m4 flex bison autoconf automake perl elfutils
 
 # Versions of cross-compiled packages.
 NCURSES_VERSION    = 6.0-20160730
@@ -94,6 +94,7 @@ AUTOCONF_VERSION   = 2.69
 AUTOMAKE_VERSION   = 1.15
 PERL_VERSION       = 5.24.0
 PERL_CROSS_VERSION = 1.0.3
+ELFUTILS_VERSION   = 0.166
 
 # When building the clean stage4, we don't have to build noarch RPMs,
 # we can just download them from Koji (the Fedora build system).
@@ -421,6 +422,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/bin/gettext \
 	stage3-chroot/usr/bin/lua \
 	stage3-chroot/usr/bin/xz \
+	stage3-chroot/usr/bin/eu-readelf \
 	stage3-chroot/usr/bin/rpm \
 	stage3-chroot/usr/bin/gawk \
 	stage3-chroot/usr/bin/vim \
@@ -1319,6 +1321,31 @@ perl-$(PERL_VERSION).tar.gz:
 perl-$(PERL_VERSION)-cross-$(PERL_CROSS_VERSION).tar.gz:
 	rm -rf $@ $@-t
 	wget -O $@-t https://github.com/arsv/perl-cross/releases/download/$(PERL_CROSS_VERSION)/perl-$(PERL_VERSION)-cross-$(PERL_CROSS_VERSION).tar.gz
+	mv $@-t $@
+
+# Cross-compile elfutils.
+stage3-chroot/usr/bin/eu-readelf: elfutils-$(ELFUTILS_VERSION).tar.bz2
+	rm -rf elfutils-$(ELFUTILS_VERSION)
+	bzcat $^ | tar xf -
+	cd elfutils-$(ELFUTILS_VERSION) && patch -p1 < ../elfutils-fix-linking.patch
+	cd elfutils-$(ELFUTILS_VERSION) && automake
+	cd elfutils-$(ELFUTILS_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	LDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64 \
+	./configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64 \
+	    --program-prefix=eu-
+	cd elfutils-$(ELFUTILS_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH && \
+	make LDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64
+	cd elfutils-$(ELFUTILS_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH && \
+	make install DESTDIR=$(ROOT)/stage3-chroot
+
+elfutils-$(ELFUTILS_VERSION).tar.bz2:
+	rm -f $@ $@-t
+	wget -O $@-t https://fedorahosted.org/releases/e/l/elfutils/$(ELFUTILS_VERSION)/elfutils-0.166.tar.bz2
 	mv $@-t $@
 
 # Cross-compile RPM / rpmbuild.

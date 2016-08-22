@@ -1,4 +1,5 @@
 *~
+*.tar.bz2
 *.tar.gz
 *.tar.lz
 *.tar.xz
@@ -32,6 +33,7 @@ stamp-*
 /bzip2-1.0.6/
 /coreutils-8.25/
 /diffutils-3.4/
+/elfutils-0.166/
 /file-5.28/
 /findutils-4.6.0/
 /flex-2.6.0/

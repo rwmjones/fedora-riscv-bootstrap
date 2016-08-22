@@ -1,0 +1,47 @@
+--- elfutils-0.166/src/Makefile.am	2016-01-12 12:49:19.000000000 +0000
++++ elfutils-0.166.riscv/src/Makefile.am	2016-08-22 11:13:18.258463406 +0100
+@@ -104,28 +104,28 @@
+ ar_no_Wstack_usage = yes
+ unstrip_no_Wstack_usage = yes
+ 
+-readelf_LDADD = $(libdw) $(libebl) $(libelf) $(libeu) $(argp_LDADD) -ldl
+-nm_LDADD = $(libdw) $(libebl) $(libelf) $(libeu) $(argp_LDADD) -ldl \
++readelf_LDADD = $(libdw) $(libebl) $(libelf) $(libeu) $(argp_LDADD) -ldl -llzma -lz
++nm_LDADD = $(libdw) $(libebl) $(libelf) $(libeu) $(argp_LDADD) -ldl -llzma -lz \
+ 	   $(demanglelib)
+-size_LDADD = $(libelf) $(libeu) $(argp_LDADD)
+-strip_LDADD = $(libebl) $(libelf) $(libeu) $(argp_LDADD) -ldl
+-ld_LDADD = $(libebl) $(libelf) $(libeu) $(argp_LDADD) -ldl
++size_LDADD = $(libelf) $(libeu) $(argp_LDADD) -llzma -lz
++strip_LDADD = $(libebl) $(libelf) $(libeu) $(argp_LDADD) -ldl -llzma -lz
++ld_LDADD = $(libebl) $(libelf) $(libeu) $(argp_LDADD) -ldl -llzma -lz
+ if NATIVE_LD
+ # -ldl is always needed for libebl.
+ ld_LDADD += libld_elf.a
+ endif
+ ld_LDFLAGS = -rdynamic
+-elflint_LDADD  = $(libebl) $(libelf) $(libeu) $(argp_LDADD) -ldl
+-findtextrel_LDADD = $(libdw) $(libelf) $(argp_LDADD)
+-addr2line_LDADD = $(libdw) $(libelf) $(argp_LDADD) $(demanglelib)
+-elfcmp_LDADD = $(libebl) $(libelf) $(argp_LDADD) -ldl
+-objdump_LDADD  = $(libasm) $(libebl) $(libelf) $(libeu) $(argp_LDADD) -ldl
+-ranlib_LDADD = libar.a $(libelf) $(libeu) $(argp_LDADD)
+-strings_LDADD = $(libelf) $(libeu) $(argp_LDADD)
+-ar_LDADD = libar.a $(libelf) $(libeu) $(argp_LDADD)
+-unstrip_LDADD = $(libebl) $(libelf) $(libdw) $(libeu) $(argp_LDADD) -ldl
+-stack_LDADD = $(libebl) $(libelf) $(libdw) $(libeu) $(argp_LDADD) -ldl $(demanglelib)
+-elfcompress_LDADD = $(libebl) $(libelf) $(libdw) $(libeu) $(argp_LDADD)
++elflint_LDADD  = $(libebl) $(libelf) $(libeu) $(argp_LDADD) -ldl -llzma -lz
++findtextrel_LDADD = $(libdw) $(libelf) $(argp_LDADD) -llzma -lz
++addr2line_LDADD = $(libdw) $(libelf) $(argp_LDADD) $(demanglelib) -llzma -lz
++elfcmp_LDADD = $(libebl) $(libelf) $(argp_LDADD) -ldl -llzma -lz
++objdump_LDADD  = $(libasm) $(libebl) $(libelf) $(libeu) $(argp_LDADD) -ldl -llzma -lz
++ranlib_LDADD = libar.a $(libelf) $(libeu) $(argp_LDADD) -llzma -lz
++strings_LDADD = $(libelf) $(libeu) $(argp_LDADD) -llzma -lz
++ar_LDADD = libar.a $(libelf) $(libeu) $(argp_LDADD) -llzma -lz
++unstrip_LDADD = $(libebl) $(libelf) $(libdw) $(libeu) $(argp_LDADD) -ldl -llzma -lz
++stack_LDADD = $(libebl) $(libelf) $(libdw) $(libeu) $(argp_LDADD) -ldl -llzma -lz $(demanglelib)
++elfcompress_LDADD = $(libebl) $(libelf) $(libdw) $(libeu) $(argp_LDADD) -llzma -lz
+ 
+ ldlex.o: ldscript.c
+ ldlex_no_Werror = yes
