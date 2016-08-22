@@ -1386,6 +1386,10 @@ stage3-chroot/usr/bin/rpm: rpm-$(RPM_SHORT_COMMIT).tar.gz db-$(BDB_VERSION).tar.
             -e 's/riscv64-unknown-linux-gnu-g++/g++/g' \
             -e 's/riscv64-unknown-linux-gnu-ranlib/ranlib/g' \
             stage3-chroot/usr/lib/rpm/macros
+# Kill build_ids.
+	sed -i \
+	    -e 's/^%_build_id_links.*/%_build_id_links none/' \
+	    stage3-chroot/usr/lib/rpm/macros
 # RPM is missing riscv64 platform macros which leads to failures while
 # building packages (e.g. bzip2).
 	mkdir -p $(ROOT)/stage3-chroot/usr/lib/rpm/platform/riscv64-linux
