@@ -44,7 +44,8 @@ gzip zlib-devel file-devel popt-devel beecrypt-devel \
 rpm rpm-build rpm-devel libdb-utils libdb-devel nano \
 grep less strace bzip2-devel make diffutils findutils \
 sed patch hostname gettext-devel lua-devel xz-devel gawk \
-vim screen m4 flex bison autoconf automake perl elfutils
+vim screen m4 flex bison autoconf automake perl elfutils \
+git
 
 # Versions of cross-compiled packages.
 NCURSES_VERSION    = 6.0-20160730
