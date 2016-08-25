@@ -1396,6 +1396,8 @@ stage3-chroot/usr/bin/rpm: rpm-$(RPM_SHORT_COMMIT).tar.gz db-$(BDB_VERSION).tar.
 	./configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64 \
+	    --sysconfdir=/etc --localstatedir=/var \
+	    --sharedstatedir=/var/lib \
 	    --disable-rpath \
 	    --with-vendor=redhat \
 	    --without-libarchive \
@@ -1422,10 +1424,6 @@ stage3-chroot/usr/bin/rpm: rpm-$(RPM_SHORT_COMMIT).tar.gz db-$(BDB_VERSION).tar.
 	sed -i \
 	    -e 's/^%_build_id_links.*/%_build_id_links none/' \
 	    stage3-chroot/usr/lib/rpm/macros
-# RPM is missing riscv64 platform macros which leads to failures while
-# building packages (e.g. bzip2).
-	mkdir -p $(ROOT)/stage3-chroot/usr/lib/rpm/platform/riscv64-linux
-	cp rpm-platform-riscv64-linux-macros stage3-chroot/usr/lib/rpm/platform/riscv64-linux/macros
 # riscv64 toolchain has issues linking static binaries if hardedning is enabled.
 # This is caused by '-pie' flag on gcc link command (e.g. bzip2)
 # Until issue is resolved globally disable hardening.
