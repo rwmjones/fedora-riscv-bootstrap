@@ -45,7 +45,7 @@ rpm rpm-build rpm-devel libdb-utils libdb-devel nano \
 grep less strace bzip2-devel make diffutils findutils \
 sed patch hostname gettext-devel lua-devel xz-devel gawk \
 vim screen m4 flex bison autoconf automake perl elfutils \
-git
+git chrpath
 
 # Versions of cross-compiled packages.
 NCURSES_VERSION    = 6.0-20160730
@@ -97,6 +97,7 @@ PERL_VERSION       = 5.24.0
 PERL_CROSS_VERSION = 1.0.3
 ELFUTILS_VERSION   = 0.166
 GIT_VERSION        = 2.9.3
+CHRPATH_VERSION    = 0.16
 
 # When building the clean stage4, we don't have to build noarch RPMs,
 # we can just download them from Koji (the Fedora build system).
@@ -446,6 +447,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/bin/automake \
 	stage3-chroot/usr/bin/perl \
 	stage3-chroot/usr/bin/git \
+	stage3-chroot/usr/bin/chrpath \
 	stage3-chroot/init \
 	stage3-chroot/usr/lib/rpm/config.guess \
 	stage3-chroot/usr/lib/rpm/config.sub \
@@ -1165,6 +1167,24 @@ git-$(GIT_VERSION).tar.gz:
 	rm -f $@ $@-t
 	wget -O $@-t https://www.kernel.org/pub/software/scm/git/git-$(GIT_VERSION).tar.gz
 	mv $@-t $@
+
+# Cross-compile chrpath.
+stage3-chroot/usr/bin/chrpath: chrpath-$(CHRPATH_VERSION).tar.gz
+	rm -rf chrpath-$(CHRPATH_VERSION)
+	tar -zxf $^
+	cd chrpath-$(CHRPATH_VERSION) && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	./configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64
+	cd chrpath-$(CHRPATH_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
+	cd chrpath-$(CHRPATH_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
+
+chrpath-$(CHRPATH_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t https://alioth.debian.org/frs/download.php/file/3979/chrpath-$(CHRPATH_VERSION).tar.gz
+	mv $@-t $@
+
 
 # Cross-compile GNU awk.
 stage3-chroot/usr/bin/gawk: gawk-$(GAWK_VERSION).tar.gz
