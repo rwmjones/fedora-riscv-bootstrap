@@ -467,6 +467,10 @@ stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux: linux-$(KERNEL_VERSION).tar.xz
 # https://github.com/palmer-dabbelt/riscv-gentoo-infra/blob/master/patches/linux/0001-riscv64_makefile.patch
 	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
 	patch -p1 < ../0001-riscv64_makefile.patch
+# Fix infinite loop when clearing memory
+# https://github.com/riscv/riscv-linux/commit/77148ef248f72bb96b5cacffc0a69bca445de214
+	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
+	patch -p1 < ../0001-Fix-infinite-loop-in-__clear_user.patch
 	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
 	make ARCH=riscv64 defconfig
 	( \
