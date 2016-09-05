@@ -1,6 +1,17 @@
 #!/bin/bash -
 # Init script installed in stage3 disk image.
 
+# Set up the PATH.  The GCC path is a hack because I wasn't able to
+# find the right flags for configuring GCC.
+PATH=/usr/libexec/gcc/riscv64-unknown-linux-gnu/6.1.0:\
+/usr/local/bin:\
+/usr/local/sbin:\
+/usr/bin:\
+/usr/sbin:\
+/bin:\
+/sbin
+export PATH
+
 # Root filesystem is mounted as ro, remount it as rw.
 mount.static -o remount,rw /
 
@@ -20,17 +31,6 @@ date `date -r /usr/bin +%m%d%H%M%Y`
 
 hostname stage3
 echo stage3.fedoraproject.org > /etc/hostname
-
-# Set up the PATH.  The GCC path is a hack because I wasn't able to
-# find the right flags for configuring GCC.
-PATH=/usr/libexec/gcc/riscv64-unknown-linux-gnu/6.1.0:\
-/usr/local/bin:\
-/usr/local/sbin:\
-/usr/bin:\
-/usr/sbin:\
-/bin:\
-/sbin
-export PATH
 
 echo
 echo "Welcome to the Fedora/RISC-V stage3 disk image"
