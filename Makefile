@@ -125,6 +125,7 @@ STAGE4_KOJI_NOARCH_NAMES = \
 	ghc-srpm-macros \
 	gnat-srpm-macros \
 	go-srpm-macros \
+	intltool \
 	iso-codes \
 	ncurses \
 	ocaml-srpm-macros \
