@@ -616,7 +616,7 @@ stage3-chroot/bin/ls: coreutils-$(COREUTILS_VERSION).tar.xz
 	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	./configure --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	-cd coreutils-$(COREUTILS_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
+	-cd coreutils-$(COREUTILS_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make -j1 -k
 	cd coreutils-$(COREUTILS_VERSION)/man && \
 	for f in $(COREUTILS_PROGRAMS); do touch $$f.1; done
 	cd coreutils-$(COREUTILS_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
