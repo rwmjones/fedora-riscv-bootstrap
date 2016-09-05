@@ -455,6 +455,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/bin/perl \
 	stage3-chroot/usr/bin/git \
 	stage3-chroot/init \
+	stage3-chroot/etc/profile.d/aliases.sh \
 	stage3-chroot/usr/lib/rpm/config.guess \
 	stage3-chroot/usr/lib/rpm/config.sub \
 	stage3-chroot/rpmbuild \
@@ -1464,6 +1465,10 @@ stage3-chroot/usr/bin/poweroff: poweroff.c
 
 # Create an /init script.
 stage3-chroot/init: init.sh
+	install -m 0755 $^ $@
+
+# Create a place to put useful command aliases.
+stage3-chroot/etc/profile.d/aliases.sh: aliases.sh
 	install -m 0755 $^ $@
 
 # Copy latest config.guess and config.sub into the RPM directory.

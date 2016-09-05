@@ -32,9 +32,6 @@ date `date -r /usr/bin +%m%d%H%M%Y`
 hostname stage3
 echo stage3.fedoraproject.org > /etc/hostname
 
-# Any useful aliases can go here.
-alias prep_systemd="rpm --nodeps -ivh /rpmbuild/RPMS/riscv64/{make,bash,libtool}* /rpmbuild/RPMS/noarch/intltool*"
-
 echo
 echo "Welcome to the Fedora/RISC-V stage3 disk image"
 echo "https://fedoraproject.org/wiki/Architectures/RISC-V"
@@ -44,7 +41,7 @@ PS1='stage3:\w\$ '
 export PS1
 
 # Run bash.
-bash -i
+bash -il
 
 # Sync disks and shut down.
 sync
