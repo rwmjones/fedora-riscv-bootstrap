@@ -4,6 +4,14 @@
 # Absolute path to the current directory.
 ROOT := $(shell pwd)
 
+# You can set STAGE3_DISK in your environment in order to
+# use multiple disks for doing builds of different packages
+# in parallel.  eg.
+# export STAGE3_DISK=systemd-disk.img
+# make stage3   # builds systemd-disk.img
+# make boot-stage3-in-qemu  # boots systemd-disk.img
+STAGE3_DISK ?= stage3-disk.img
+
 # Note these are chosen very specifically to ensure the different
 # versions work together.  Don't blindly update to the latest
 # versions.  See also:
@@ -170,7 +178,7 @@ clean:
 	rm -f */*.spec
 	rm -f stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
 	rm -rf stage3-chroot
-	rm -f stage3-disk.img
+	rm -f $(STAGE3_DISK)
 	rm -f stage4-disk.img
 
 # Stage 1
@@ -450,7 +458,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/lib/rpm/config.guess \
 	stage3-chroot/usr/lib/rpm/config.sub \
 	stage3-chroot/rpmbuild \
-	stage3-disk.img
+	$(STAGE3_DISK)
 
 stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux: linux-$(KERNEL_VERSION).tar.xz
 	rm -rf stage3-kernel/linux-$(KERNEL_VERSION)
@@ -1471,7 +1479,7 @@ stage3-chroot/rpmbuild:
 
 # Create the stage3 disk image.
 # Note `-s +...' adds spare space to the disk image.
-stage3-disk.img: stage3-chroot/rpmbuild stage3-chroot
+$(STAGE3_DISK):: stage3-chroot/rpmbuild stage3-chroot
 	rm -f $@
 	cp stage3-built-rpms/RPMS/riscv64/*.rpm stage3-chroot/rpmbuild/RPMS/riscv64/
 	cp stage3-built-rpms/RPMS/noarch/*.rpm stage3-chroot/rpmbuild/RPMS/noarch/
@@ -1480,6 +1488,14 @@ stage3-disk.img: stage3-chroot/rpmbuild stage3-chroot
 	cp stage4-koji-noarch-rpms/*.src.rpm stage3-chroot/rpmbuild/SRPMS/
 	cd stage3-chroot && virt-make-fs . ../$@ -t ext2 -F raw -s +20G
 
+# If a rule really wants stage3-disk.img, you have to unset the
+# environment variable.
+stage3-disk.img::
+	@if [ "$(STAGE3_DISK)" != stage3-disk.img ]; then \
+	  echo "unset STAGE3_DISK environment variable to continue"; \
+	  exit 1; \
+	fi
+
 # Upload the compressed disk image.
 upload-stage3: stage3-disk.img.xz
 	scp $^ tick:public_html/riscv/
@@ -1487,15 +1503,13 @@ stage3-disk.img.xz: stage3-disk.img
 	rm -f $@
 	xz --best -k $^
 
-DISK := stage3-disk.img
-
 # Helper which boots stage3 disk image in spike.
-boot-stage3-in-spike: stage3-disk.img stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
-	spike +disk=$(DISK) \
+boot-stage3-in-spike: $(STAGE3_DISK) stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
+	spike +disk=$(STAGE3_DISK) \
 	    /usr/bin/bbl stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
 
 # Helper which boots stage3 disk image in qemu.
-boot-stage3-in-qemu: stage3-disk.img stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
+boot-stage3-in-qemu: $(STAGE3_DISK) stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
 	qemu-system-riscv -m 4G -kernel /usr/bin/bbl \
 	    -append ./stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	    -drive file=$(DISK),format=raw -nographic
