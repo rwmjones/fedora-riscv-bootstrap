@@ -1512,7 +1512,7 @@ boot-stage3-in-spike: $(STAGE3_DISK) stage3-kernel/linux-$(KERNEL_VERSION)/vmlin
 boot-stage3-in-qemu: $(STAGE3_DISK) stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
 	qemu-system-riscv -m 4G -kernel /usr/bin/bbl \
 	    -append ./stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
-	    -drive file=$(DISK),format=raw -nographic
+	    -drive file=$(STAGE3_DISK),format=raw -nographic
 
 # Stage 4
 
