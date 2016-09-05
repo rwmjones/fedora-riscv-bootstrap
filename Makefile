@@ -138,6 +138,7 @@ STAGE4_KOJI_NOARCH_NAMES = \
 	ncurses \
 	ocaml-srpm-macros \
 	perl-Carp \
+	perl-Devel-CheckLib \
 	perl-Error \
 	perl-Exporter \
 	perl-Fedora-VSP \
