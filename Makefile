@@ -119,7 +119,6 @@ STAGE4_KOJI_NOARCH_NAMES = \
 	ca-certificates \
 	crypto-policies \
 	elfutils \
-	emacs \
 	fedora-release \
 	fedora-repos \
 	gettext \
