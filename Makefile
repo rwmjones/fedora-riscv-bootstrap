@@ -52,7 +52,7 @@ gzip zlib-devel file-devel popt-devel beecrypt-devel \
 rpm rpm-build rpm-devel libdb-utils libdb-devel nano \
 grep less strace bzip2-devel make diffutils findutils \
 sed patch hostname gettext-devel lua-devel xz-devel gawk \
-vim screen m4 flex bison autoconf automake perl elfutils \
+vim screen m4 flex bison autoconf automake elfutils \
 git
 
 # Versions of cross-compiled packages.
@@ -101,8 +101,6 @@ FLEX_VERSION       = 2.6.0
 BISON_VERSION      = 3.0.4
 AUTOCONF_VERSION   = 2.69
 AUTOMAKE_VERSION   = 1.15
-PERL_VERSION       = 5.24.0
-PERL_CROSS_VERSION = 1.0.3
 ELFUTILS_VERSION   = 0.166
 GIT_VERSION        = 2.9.3
 
@@ -453,7 +451,6 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/bin/poweroff \
 	stage3-chroot/usr/bin/autoconf \
 	stage3-chroot/usr/bin/automake \
-	stage3-chroot/usr/bin/perl \
 	stage3-chroot/usr/bin/git \
 	stage3-chroot/init \
 	stage3-chroot/etc/profile.d/aliases.sh \
@@ -1337,32 +1334,6 @@ stage3-chroot/usr/bin/automake: automake-$(AUTOMAKE_VERSION).tar.gz automake-por
 automake-$(AUTOMAKE_VERSION).tar.gz:
 	rm -rf $@ $@-t
 	wget -O $@-t http://ftp.gnu.org/gnu/automake/automake-$(AUTOMAKE_VERSION).tar.gz
-	mv $@-t $@
-
-# Cross-compile Perl
-# Let's use perl-cross which is not-upstreamed changes which allow building Perl
-# without already having Perl or SSH access to target system.
-stage3-chroot/usr/bin/perl: perl-$(PERL_VERSION).tar.gz perl-$(PERL_VERSION)-cross-$(PERL_CROSS_VERSION).tar.gz
-	rm -rf perl-$(PERL_VERSION)
-	tar zxf perl-$(PERL_VERSION).tar.gz
-	tar -zx --overwrite -f perl-$(PERL_VERSION)-cross-$(PERL_CROSS_VERSION).tar.gz
-	cd perl-$(PERL_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
-	./configure \
-	    --host=riscv64-unknown-linux-gnu \
-	    --target=riscv64-unknown-linux-gnu \
-	    --prefix=/usr
-	cd perl-$(PERL_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make
-	cd perl-$(PERL_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
-
-perl-$(PERL_VERSION).tar.gz:
-	rm -rf $@ $@-t
-	wget -O $@-t http://www.cpan.org/src/5.0/perl-$(PERL_VERSION).tar.gz
-	mv $@-t $@
-
-perl-$(PERL_VERSION)-cross-$(PERL_CROSS_VERSION).tar.gz:
-	rm -rf $@ $@-t
-	wget -O $@-t https://github.com/arsv/perl-cross/releases/download/$(PERL_CROSS_VERSION)/perl-$(PERL_VERSION)-cross-$(PERL_CROSS_VERSION).tar.gz
 	mv $@-t $@
 
 # Cross-compile elfutils.
