@@ -629,6 +629,8 @@ coreutils-$(COREUTILS_VERSION).tar.xz:
 
 # Cross-compile binutils.
 stage3-chroot/usr/bin/as: binutils-$(BINUTILS_X_VERSION).tar.gz
+# This file coming from host glibc-headers breaks the build.
+	rm -f stage3-chroot/usr/include/proc_service.h
 	rm -rf riscv-binutils-gdb-riscv-binutils-$(BINUTILS_X_VERSION)
 	zcat $^ | tar xf -
 	mkdir riscv-binutils-gdb-riscv-binutils-$(BINUTILS_X_VERSION)/build
