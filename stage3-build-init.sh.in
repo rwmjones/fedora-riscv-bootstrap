@@ -38,6 +38,7 @@ echo stage3.fedoraproject.org > /etc/hostname
 
 echo
 echo "This is the stage3 SRPM automatic builder"
+echo "@SRPM@"
 echo
 
 PS1='stage3:\w\$ '
@@ -62,10 +63,7 @@ set -e
 
 rpm -Uvh --nodeps /rpmbuild/RPMS/{noarch,riscv64}/*.rpm
 
-# Remove these RPMs so we can "see" if RPMs were built by the
-# command below.
-rm /rpmbuild/RPMS/{noarch,riscv64}/*.rpm
-
+# Do the build.
 rpmbuild --rebuild /var/tmp/@SRPM@ --nodeps
 
 # cleanup() is called automatically here.
