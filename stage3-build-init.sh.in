@@ -1,0 +1,71 @@
+#!/bin/bash -
+
+# Helper to build an SRPM in the stage3 environment.  DO NOT RUN
+# THIS SCRIPT DIRECTLY!  Follow the instructions at:
+#
+# https://fedoraproject.org/wiki/Architectures/RISC-V/Bootstrapping
+
+# Set up the PATH.  The GCC path is a hack because I wasn't able to
+# find the right flags for configuring GCC.
+PATH=/usr/libexec/gcc/riscv64-unknown-linux-gnu/6.1.0:\
+/usr/local/bin:\
+/usr/local/sbin:\
+/usr/bin:\
+/usr/sbin:\
+/bin:\
+/sbin
+export PATH
+
+# Root filesystem is mounted as ro, remount it as rw.
+mount.static -o remount,rw /
+
+# Mount standard filesystems.
+mount.static -t proc /proc /proc
+mount.static -t sysfs /sys /sys
+mount.static -t tmpfs -o "nosuid,size=20%,mode=0755" tmpfs /run
+mkdir -p /run/lock
+
+# XXX devtmpfs
+
+# Initialize dynamic linker cache.
+ldconfig /usr/lib64 /usr/lib /lib64 /lib
+
+# There is no hardware clock, just ensure the date is not miles out.
+date `date -r /var/tmp +%m%d%H%M%Y`
+
+hostname stage3
+echo stage3.fedoraproject.org > /etc/hostname
+
+echo
+echo "This is the stage3 SRPM automatic builder"
+echo
+
+PS1='stage3:\w\$ '
+export PS1
+
+# Cleanup function called on failure or exit.
+cleanup ()
+{
+    set +e
+    # Sync disks and shut down.
+    sync
+    sleep 5
+    sync
+    mount.static -o remount,ro / >&/dev/null
+    poweroff
+}
+trap cleanup INT QUIT TERM EXIT ERR
+
+# Start the automatic build process.
+set -x
+set -e
+
+rpm -Uvh --nodeps /rpmbuild/RPMS/{noarch,riscv64}/*.rpm
+
+# Remove these RPMs so we can "see" if RPMs were built by the
+# command below.
+rm /rpmbuild/RPMS/{noarch,riscv64}/*.rpm
+
+rpmbuild --rebuild /var/tmp/@SRPM@ --nodeps
+
+# cleanup() is called automatically here.

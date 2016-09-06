@@ -453,7 +453,6 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/bin/autoconf \
 	stage3-chroot/usr/bin/automake \
 	stage3-chroot/usr/bin/git \
-	stage3-chroot/init \
 	stage3-chroot/etc/profile.d/aliases.sh \
 	stage3-chroot/usr/lib/rpm/config.guess \
 	stage3-chroot/usr/lib/rpm/config.sub \
@@ -1438,10 +1437,6 @@ db-$(BDB_VERSION).tar.gz:
 stage3-chroot/usr/bin/poweroff: poweroff.c
 	$(ROOT)/fixed-gcc/riscv64-unknown-linux-gnu-gcc $^ -o $@
 
-# Create an /init script.
-stage3-chroot/init: init.sh
-	install -m 0755 $^ $@
-
 # Create a place to put useful command aliases.
 stage3-chroot/etc/profile.d/aliases.sh: aliases.sh
 	install -m 0755 $^ $@
@@ -1457,6 +1452,8 @@ stage3-chroot/usr/lib/rpm/config.sub: config.sub
 stage3-chroot/rpmbuild:
 	mkdir -p $@/{BUILD,BUILDROOT,RPMS/noarch,RPMS/riscv64,SOURCES,SPECS,SRPMS}
 
+INIT=init.sh
+
 # Create the stage3 disk image.
 # Note `-s +...' adds spare space to the disk image.
 $(STAGE3_DISK):: stage3-chroot/rpmbuild stage3-chroot
@@ -1466,6 +1463,7 @@ $(STAGE3_DISK):: stage3-chroot/rpmbuild stage3-chroot
 	cp stage3-built-rpms/SRPMS/*.rpm stage3-chroot/rpmbuild/SRPMS/
 	cp stage4-koji-noarch-rpms/*.noarch.rpm stage3-chroot/rpmbuild/RPMS/noarch/
 	cp stage4-koji-noarch-rpms/*.src.rpm stage3-chroot/rpmbuild/SRPMS/
+	cp $(INIT) stage3-chroot/init
 	cd stage3-chroot && virt-make-fs . ../$@ -t ext2 -F raw -s +20G
 
 # If a rule really wants stage3-disk.img, you have to unset the
@@ -1493,6 +1491,37 @@ boot-stage3-in-qemu: $(STAGE3_DISK) stage3-kernel/linux-$(KERNEL_VERSION)/vmlinu
 	qemu-system-riscv -m 4G -kernel /usr/bin/bbl \
 	    -append ./stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	    -drive file=$(STAGE3_DISK),format=raw -nographic
+
+ifneq ($(origin SRPM), undefined)
+
+# Rule for building SRPMs automatically.
+# For instructions, see:
+# https://fedoraproject.org/wiki/Architectures/RISC-V/Bootstrapping
+
+srpm_init=$(shell rpm -q --qf "%{NAME}\n" -p $(SRPM))-init.sh
+srpm_disk=$(shell rpm -q --qf "%{NAME}\n" -p $(SRPM))-disk.img
+
+stage3-build:
+	@if [ "$(STAGE3_DISK)" != stage3-disk.img ]; then \
+	  echo "unset STAGE3_DISK environment variable to continue"; \
+	  exit 1; \
+	fi
+	rm -f $(srpm_disk)
+	cp $(SRPM) stage3-chroot/var/tmp/
+	sed 's,@SRPM@,$(shell basename $(SRPM)),' \
+		< stage3-build-init.sh.in > $(srpm_init)
+	$(MAKE) STAGE3_DISK=$(srpm_disk) $(srpm_disk) INIT=$(srpm_init)
+	rm $(srpm_init)
+	$(MAKE) STAGE3_DISK=$(srpm_disk) boot-stage3-in-qemu
+	virt-copy-out -a flex-disk.img /rpmbuild ./
+	@echo Check log output, and RPMs in ./rpmbuild directory
+	@echo If they are correct then:
+	@echo 1. copy $(SRPM) to stage3-built-rpms/SRPMS/
+	@echo 2. copy RPMs from ./rpmbuild to stage3-built-rpms/RPMS/riscv64/
+	@echo 3. check in the SRPM and RPMs
+	@echo The disk image is still available for examination.
+
+endif
 
 # Stage 4
 
