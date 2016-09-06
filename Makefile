@@ -131,6 +131,7 @@ STAGE4_KOJI_NOARCH_NAMES = \
 	ghc-srpm-macros \
 	gnat-srpm-macros \
 	go-srpm-macros \
+	help2man \
 	intltool \
 	iso-codes \
 	ncurses \
