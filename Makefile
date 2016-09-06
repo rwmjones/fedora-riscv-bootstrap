@@ -1498,6 +1498,8 @@ ifneq ($(origin SRPM), undefined)
 # For instructions, see:
 # https://fedoraproject.org/wiki/Architectures/RISC-V/Bootstrapping
 
+STAGE3_BUILD_EMULATOR = qemu
+
 srpm_init=$(shell rpm -q --qf "%{NAME}\n" -p $(SRPM))-init.sh
 srpm_disk=$(shell rpm -q --qf "%{NAME}\n" -p $(SRPM))-disk.img
 
@@ -1512,7 +1514,7 @@ stage3-build:
 		< stage3-build-init.sh.in > $(srpm_init)
 	$(MAKE) STAGE3_DISK=$(srpm_disk) $(srpm_disk) INIT=$(srpm_init)
 	rm $(srpm_init)
-	$(MAKE) STAGE3_DISK=$(srpm_disk) boot-stage3-in-qemu
+	$(MAKE) STAGE3_DISK=$(srpm_disk) boot-stage3-in-$(STAGE3_BUILD_EMULATOR)
 	virt-copy-out -a $(srpm_disk) /rpmbuild ./
 	@echo Check log output, and RPMs in ./rpmbuild directory
 	@echo If they are correct then:
