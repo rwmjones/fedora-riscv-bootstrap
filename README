@@ -174,23 +174,11 @@ Bootstrapping, Stage 4
 
 We will build RPMs using "rpmbuild" on RISC-V itself (under emulation).
 
-The usual command is:
+Full details of this step are on the wiki:
 
-  rpmbuild --rebuild blah-xyz.src.rpm --define 'debug_package %{nil}'
+  https://fedoraproject.org/wiki/Architectures/RISC-V/Bootstrapping
 
-We will build enough RPMs so that stage 4 can run rpmbuild, gcc.
-Essentially it's the same list of packages as for (3b) above, so look
-in the Makefile for "stage3-chroot/..." rules, plus any dependencies.
-
-Some packages require non-upstream patches for RISC-V.  Hopefully
-only: kernel, glibc, binutils and gcc.
-
-Some packages require modifications to the spec file to reduce
-extraneous dependencies (eg. for generating documentation).
-
-noarch RPMs do not need to be rebuilt, they can be copied from Koji/x86.
-
-Status: ongoing, see stage3-prebuilt-rpms/*
+Status: ongoing, see stage3-built-rpms/*
 
 (4b) Recreate the filesystem from RPMs.
 
