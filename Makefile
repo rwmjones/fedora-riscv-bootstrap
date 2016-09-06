@@ -1513,13 +1513,13 @@ stage3-build:
 	$(MAKE) STAGE3_DISK=$(srpm_disk) $(srpm_disk) INIT=$(srpm_init)
 	rm $(srpm_init)
 	$(MAKE) STAGE3_DISK=$(srpm_disk) boot-stage3-in-qemu
-	virt-copy-out -a flex-disk.img /rpmbuild ./
+	virt-copy-out -a $(srpm_disk) /rpmbuild ./
 	@echo Check log output, and RPMs in ./rpmbuild directory
 	@echo If they are correct then:
 	@echo 1. copy $(SRPM) to stage3-built-rpms/SRPMS/
 	@echo 2. copy RPMs from ./rpmbuild to stage3-built-rpms/RPMS/riscv64/
 	@echo 3. check in the SRPM and RPMs
-	@echo The disk image is still available for examination.
+	@echo $(srpm_disk) is still available for examination.
 
 endif
 
