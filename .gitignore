@@ -9,6 +9,7 @@ stamp-*
 .gdb_history
 
 /fixed-gcc/
+/rpmbuild/
 
 /stage1-riscv-qemu/riscv-qemu.spec
 /stage1-riscv-fesvr/riscv-fesvr.spec
