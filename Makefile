@@ -140,8 +140,13 @@ STAGE4_KOJI_NOARCH_NAMES = \
 	perl-Devel-CheckLib \
 	perl-Error \
 	perl-Exporter \
+	perl-ExtUtils-CBuilder \
+	perl-ExtUtils-Command \
+	perl-ExtUtils-Install \
 	perl-ExtUtils-MakeMaker \
 	perl-ExtUtils-Manifest \
+	perl-ExtUtils-MM-Utils \
+	perl-ExtUtils-ParseXS \
 	perl-Fedora-VSP \
 	perl-File-Path \
 	perl-File-Temp \
@@ -153,6 +158,8 @@ STAGE4_KOJI_NOARCH_NAMES = \
 	perl-Pod-Usage \
 	perl-Term-ANSIColor \
 	perl-Term-Cap \
+	perl-Test-Harness \
+	perl-Test-Simple \
 	perl-Text-ParseWords \
 	perl-Text-Tabs+Wrap \
 	perl-Thread-Queue \
