@@ -141,6 +141,7 @@ STAGE4_KOJI_NOARCH_NAMES = \
 	perl-Error \
 	perl-Exporter \
 	perl-ExtUtils-MakeMaker \
+	perl-ExtUtils-Manifest \
 	perl-Fedora-VSP \
 	perl-File-Path \
 	perl-File-Temp \
