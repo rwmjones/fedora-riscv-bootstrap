@@ -116,8 +116,6 @@ GIT_VERSION        = 2.9.3
 # package names.  Some noarch packages can be dropped from this list
 # if they are judged unnecessary, or if they pull in too many arch-ful
 # dependencies.
-#
-# NB: After changing this list you MUST: 'rm stamp-koji-packages'
 STAGE4_KOJI_NOARCH_NAMES = \
 	autoconf \
 	automake \
@@ -1471,6 +1469,9 @@ $(STAGE3_DISK):: stage3-chroot/rpmbuild stage3-chroot
 	cp stage3-built-rpms/RPMS/riscv64/*.rpm stage3-chroot/rpmbuild/RPMS/riscv64/
 	cp stage3-built-rpms/RPMS/noarch/*.rpm stage3-chroot/rpmbuild/RPMS/noarch/
 	cp stage3-built-rpms/SRPMS/*.rpm stage3-chroot/rpmbuild/SRPMS/
+# Re-download the noarch packages and copy them into the disk image too.
+	rm -f stamp-koji-packages
+	$(MAKE) stamp-koji-packages
 	cp stage4-koji-noarch-rpms/*.noarch.rpm stage3-chroot/rpmbuild/RPMS/noarch/
 	cp stage4-koji-noarch-rpms/*.src.rpm stage3-chroot/rpmbuild/SRPMS/
 	cp $(INIT) stage3-chroot/init
