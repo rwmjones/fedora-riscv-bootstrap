@@ -68,7 +68,12 @@ mkdir /var/tmp/mnt
 mount.static -o loop /var/tmp/stage4-disk.img-t /var/tmp/mnt
 
 # Build the RPMs into the stage4 chroot.
-rpm -ivh --root /var/tmp/mnt `find /var/tmp/RPMS -name '*.rpm'`
+rpm -ivh --root /var/tmp/mnt \
+    /rpmbuild/RPMS/noarch/*.rpm /rpmbuild/RPMS/riscv64/*.rpm \
+    |& tee /var/tmp/output || {
+    < /var/tmp/output grep "is needed by" | awk '{print $1}' | sort -u
+    exit 1
+}
 
 sync
 umount /var/tmp/mnt

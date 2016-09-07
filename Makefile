@@ -1541,36 +1541,22 @@ endif
 stage4: stage4-disk.img
 
 # The clean stage4 disk image, built only from RPMs.
-stage4-disk.img: stage4-builder.img
+stage4-disk.img: stamp-stage4-builder
 	rm -f $@ $@-t
 	qemu-system-riscv -m 4G -kernel /usr/bin/bbl \
 	    -append ./stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
-	    -drive file=$<,format=raw -nographic
+	    -drive file=stage4-builder.img,format=raw -nographic
 	guestfish -a $< -i download /var/tmp/stage4-disk.img $@-t
 	mv $@-t $@
 
 # The "builder" is a variation of stage3-disk.img with a modified
 # /init script and containing all the RPMs built so far.  The /init
 # script takes the RPMs and tries to build stage4-disk.img from them.
-stage4-builder.img: stage3-disk.img \
-		stage4-disk.img-template.tar.gz \
-		stage3-built-rpms/RPMS \
-		stamp-koji-packages \
-		builder.sh
-	rm -f $@ $@-t
-	cp $< $@-t
-	guestfish -a $@-t -i \
-		upload builder.sh /init : \
-		chmod 0755 /init : \
-		mkdir-p /var/tmp/RPMS/noarch
-	virt-copy-in -a $@-t \
-		stage4-disk.img-template.tar.gz \
-		stage3-built-rpms/RPMS \
-		/var/tmp
-	virt-copy-in -a $@-t \
-		stage4-koji-noarch-rpms/*.noarch.rpm \
-		/var/tmp/RPMS/noarch
-	mv $@-t $@
+stamp-stage4-builder: builder.sh \
+		      stage3-chroot/var/tmp/stage4-disk.img-template.tar.gz
+	rm -f $@ stage4-builder.img
+	$(MAKE) STAGE3_DISK=stage4-builder.img stage4-builder.img INIT=$<
+	touch $@
 
 # Make an empty template for the stage4 disk image.
 # This just avoids having to upload mkfs tools to stage3.
@@ -1578,6 +1564,9 @@ stage4-builder.img: stage3-disk.img \
 # We have to use '.tar.gz' format here because it's the only format
 # that preserves sparseness properly (we could use 'xz' instead, but
 # that's really slow).
+stage3-chroot/var/tmp/stage4-disk.img-template.tar.gz: stage4-disk.img-template.tar.gz
+	cp $< $@
+
 stage4-disk.img-template.tar.gz: stage4-disk.img-template.tar
 	rm -f $@
 	gzip -9 -k $^
