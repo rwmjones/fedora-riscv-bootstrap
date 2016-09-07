@@ -166,7 +166,8 @@ STAGE4_KOJI_NOARCH_NAMES = \
 	redhat-rpm-config \
 	setup \
 	sgml-common \
-	tzdata
+	tzdata \
+	words
 
 STAGE4_KOJI_FEDORA_RELEASE = f25
 
