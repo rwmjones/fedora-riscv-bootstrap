@@ -733,7 +733,14 @@ stage3-chroot/usr/bin/gcc: gcc-$(GCC_X_VERSION).tar.gz
 	    --disable-libssp \
 	    --disable-libquadmath \
 	    --disable-nls \
-	    --disable-multilib
+	    --disable-multilib \
+	    --enable-__cxa_atexit \
+	    --disable-libunwind-exceptions \
+	    --enable-gnu-unique-object \
+	    --enable-linker-build-id \
+	    --with-linker-hash-style=gnu \
+	    --enable-initfini-array \
+	    --disable-libgcj
 	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build && gcc_cv_as_leb128=no PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE)
 	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build && make install DESTDIR=$(ROOT)/stage3-chroot
 	rm -f stage3-chroot/usr/lib64/*.la
