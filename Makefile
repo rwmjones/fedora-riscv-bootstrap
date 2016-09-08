@@ -103,6 +103,7 @@ AUTOCONF_VERSION   = 2.69
 AUTOMAKE_VERSION   = 1.15
 ELFUTILS_VERSION   = 0.166
 GIT_VERSION        = 2.9.3
+JSONCPP_VERSION    = 1.7.4
 
 # When building the clean stage4, we don't have to build noarch RPMs,
 # we can just download them from Koji (the Fedora build system).
@@ -463,6 +464,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/bin/autoconf \
 	stage3-chroot/usr/bin/automake \
 	stage3-chroot/usr/bin/git \
+	stage3-chroot/usr/lib64/libjsoncpp.so \
 	stage3-chroot/etc/profile.d/aliases.sh \
 	stage3-chroot/usr/lib/rpm/config.guess \
 	stage3-chroot/usr/lib/rpm/config.sub \
@@ -1371,6 +1373,40 @@ stage3-chroot/usr/bin/eu-readelf: elfutils-$(ELFUTILS_VERSION).tar.bz2
 elfutils-$(ELFUTILS_VERSION).tar.bz2:
 	rm -f $@ $@-t
 	wget -O $@-t https://fedorahosted.org/releases/e/l/elfutils/$(ELFUTILS_VERSION)/elfutils-0.166.tar.bz2
+	mv $@-t $@
+
+# Cross-compile jsoncpp.  This is a dependency of native cmake, but it
+# requires cmake to build, so to break the circular dependency we need
+# to cross-compile it first.
+stage3-chroot/usr/lib64/libjsoncpp.so: jsoncpp-$(JSONCPP_VERSION).tar.gz
+	rm -rf jsoncpp-$(JSONCPP_VERSION)
+	zcat $^ | tar xf -
+	cd jsoncpp-$(JSONCPP_VERSION) && mkdir build
+	cd jsoncpp-$(JSONCPP_VERSION)/build && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	LDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64 \
+	cmake .. \
+	    -DCMAKE_C_COMPILER=riscv64-unknown-linux-gnu-gcc \
+	    -DCMAKE_INSTALL_PREFIX:PATH=/usr \
+	    -DINCLUDE_INSTALL_DIR:PATH=/usr/include \
+	    -DJSONCPP_WITH_WARNING_AS_ERROR=OFF \
+	    -DJSONCPP_WITH_PKGCONFIG_SUPPORT=ON \
+	    -DBUILD_SHARED_LIBS=ON
+#	    -DLIB_INSTALL_DIR:PATH=/usr/lib64
+#	    -DBUILD_STATIC_LIBS=OFF
+#	    -DJSONCPP_WITH_CMAKE_PACKAGE=ON
+#	    -DSYSCONF_INSTALL_DIR:PATH=/etc
+#	    -DSHARE_INSTALL_PREFIX:PATH=/usr/share
+	cd jsoncpp-$(JSONCPP_VERSION)/build && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH && $(MAKE)
+	cd jsoncpp-$(JSONCPP_VERSION)/build && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH && \
+	make install DESTDIR=$(ROOT)/stage3-chroot
+	mv stage3-chroot/usr/lib/libjsoncpp.{a,so}* stage3-chroot/usr/lib64/
+
+jsoncpp-$(JSONCPP_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t 'https://github.com/open-source-parsers/jsoncpp/archive/$(JSONCPP_VERSION).tar.gz#/jsoncpp-$(JSONCPP_VERSION).tar.gz'
 	mv $@-t $@
 
 # Cross-compile RPM / rpmbuild.
