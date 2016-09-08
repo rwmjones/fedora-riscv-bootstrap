@@ -136,23 +136,48 @@ STAGE4_KOJI_NOARCH_NAMES = \
 	iso-codes \
 	ncurses \
 	ocaml-srpm-macros \
+	perl-Archive-Tar \
+	perl-Archive-Zip \
+	perl-B-Debug \
+	perl-CPAN \
+	perl-CPAN-Meta \
+	perl-CPAN-Meta-Requirements \
+	perl-CPAN-Meta-YAML \
 	perl-Carp \
+	perl-Config-Perl-V \
 	perl-Devel-CheckLib \
+	perl-Digest \
+	perl-Env \
 	perl-Error \
 	perl-Exporter \
 	perl-ExtUtils-CBuilder \
 	perl-ExtUtils-Command \
 	perl-ExtUtils-Install \
+	perl-ExtUtils-MM-Utils \
 	perl-ExtUtils-MakeMaker \
 	perl-ExtUtils-Manifest \
-	perl-ExtUtils-MM-Utils \
 	perl-ExtUtils-ParseXS \
 	perl-Fedora-VSP \
+	perl-File-Fetch \
+	perl-File-HomeDir \
 	perl-File-Path \
 	perl-File-Temp \
+	perl-Filter-Simple \
 	perl-Getopt-Long \
 	perl-HTTP-Tiny \
+	perl-IO-Compress \
+	perl-IO-Socket-IP \
+	perl-IPC-System-Simple \
+	perl-JSON-PP \
+	perl-Locale-Codes \
+	perl-Locale-Maketext \
+	perl-Math-BigInt \
+	perl-Module-Load-Conditional \
+	perl-Module-Metadata \
+	perl-Perl-OSType \
+	perl-PerlIO-via-QuotedPrint \
 	perl-Pod-Escapes \
+	perl-Pod-Parser \
 	perl-Pod-Perldoc \
 	perl-Pod-Simple \
 	perl-Pod-Usage \
@@ -160,51 +185,26 @@ STAGE4_KOJI_NOARCH_NAMES = \
 	perl-Term-Cap \
 	perl-Test-Harness \
 	perl-Test-Simple \
+	perl-Text-Balanced \
+	perl-Text-Diff \
+	perl-Text-Glob \
 	perl-Text-ParseWords \
 	perl-Text-Tabs+Wrap \
 	perl-Text-Unidecode \
 	perl-Thread-Queue \
 	perl-Time-Local \
+	perl-URI \
 	perl-Unicode-EastAsianWidth \
+	perl-autodie \
 	perl-constant \
+	perl-experimental \
 	perl-generators \
+	perl-libnet \
+	perl-local-lib \
 	perl-parent \
+	perl-perlfaq \
 	perl-podlators \
 	perl-srpm-macros \
-	perl-Archive-Tar \
-	perl-autodie \
-	perl-B-Debug \
-	perl-Config-Perl-V \
-	perl-CPAN \
-	perl-CPAN-Meta \
-	perl-CPAN-Meta-Requirements \
-	perl-CPAN-Meta-YAML \
-	perl-Digest \
-	perl-Env \
-	perl-experimental \
-	perl-File-Fetch \
-	perl-Filter-Simple \
-	perl-IO-Compress \
-	perl-IO-Socket-IP \
-	perl-JSON-PP \
-	perl-libnet \
-	perl-Locale-Codes \
-	perl-Locale-Maketext \
-	perl-Math-BigInt \
-	perl-Module-Load-Conditional \
-	perl-Module-Metadata \
-	perl-perlfaq \
-	perl-PerlIO-via-QuotedPrint \
-	perl-Perl-OSType \
-	perl-Pod-Parser \
-	perl-Text-Balanced \
-	perl-Archive-Zip \
-	perl-File-HomeDir \
-	perl-IPC-System-Simple \
-	perl-local-lib \
-	perl-Text-Diff \
-	perl-Text-Glob \
-	perl-URI \
 	python-pip \
 	python-rpm-macros \
 	python-setuptools \
