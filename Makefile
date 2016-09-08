@@ -469,6 +469,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/lib/rpm/config.guess \
 	stage3-chroot/usr/lib/rpm/config.sub \
 	stage3-chroot/rpmbuild \
+	stage3-chroot/rpmbuild/RPMS/noarch/kernel-headers-$(KERNEL_VERSION)-1.fc25.noarch.rpm \
 	$(STAGE3_DISK)
 
 stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux: linux-$(KERNEL_VERSION).tar.xz
@@ -522,6 +523,17 @@ linux-$(KERNEL_VERSION).tar.xz:
 	rm -f $@ $@-t
 	wget -O $@-t https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-$(KERNEL_VERSION).tar.xz
 	mv $@-t $@
+
+# Build the phony kernel-headers RPM.
+stage3-chroot/rpmbuild/RPMS/noarch/kernel-headers-$(KERNEL_VERSION)-1.fc25.noarch.rpm: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
+	rm -rf kernel-headers
+	mkdir -p kernel-headers/usr
+	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
+	make ARCH=riscv64 headers_install INSTALL_HDR_PATH=$(ROOT)/kernel-headers/usr
+	sed -e 's,@ROOT@,$(ROOT),g' -e 's,@KERNEL_VERSION@,$(KERNEL_VERSION),g' < kernel-headers.spec.in > kernel-headers.spec
+	mkdir -p stage3-chroot/rpmbuild/RPMS/noarch
+	rpmbuild -ba kernel-headers.spec --define "_topdir $(ROOT)/stage3-chroot/rpmbuild"
+	rm -rf kernel-headers
 
 # Build an original (x86-64) chroot using supermin.  We then aim to
 # rebuild (using cross-compiled versions) every ELF binary in this

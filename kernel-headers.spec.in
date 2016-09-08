@@ -1,0 +1,24 @@
+Summary:  RISC-V kernel headers interim package
+Name:     kernel-headers
+Version:  @KERNEL_VERSION@
+Release:  1.fc25
+License:  GPLv2
+BuildArch: noarch
+
+%description
+This is an interim kernel-headers package generated for the
+Fedora/RISC-V stage3 bootstrap.
+
+Eventually we will build this from the real kernel package,
+but for now we need this to satisfy dependencies in glibc RPM.
+
+%install
+mkdir -p $RPM_BUILD_ROOT%{_includedir}
+cp -a @ROOT@/kernel-headers/usr/include/* $RPM_BUILD_ROOT%{_includedir}/
+find $RPM_BUILD_ROOT%{_includedir} -name .install -delete
+find $RPM_BUILD_ROOT%{_includedir} -name ..install.cmd -delete
+
+%files
+%{_includedir}/*
+
+%changelog
