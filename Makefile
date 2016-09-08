@@ -1257,7 +1257,7 @@ gawk-$(GAWK_VERSION).tar.gz:
 
 # Cross-compile vim.
 stage3-chroot/usr/bin/vim: vim-$(VIM_VERSION).tar.gz
-	rm -rf vim-$(VIM_VERSION)
+	rm -rf vim74
 	bzcat $^ | tar xf -
 	cd vim74/src && \
 	PATH=$(ROOT)/fixed-gcc:$$PATH \
