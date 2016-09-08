@@ -170,6 +170,33 @@ STAGE4_KOJI_NOARCH_NAMES = \
 	perl-parent \
 	perl-podlators \
 	perl-srpm-macros \
+	perl-Archive-Tar \
+	perl-autodie \
+	perl-B-Debug \
+	perl-Config-Perl-V \
+	perl-CPAN \
+	perl-CPAN-Meta \
+	perl-CPAN-Meta-Requirements \
+	perl-CPAN-Meta-YAML \
+	perl-Digest \
+	perl-Env \
+	perl-experimental \
+	perl-File-Fetch \
+	perl-Filter-Simple \
+	perl-IO-Compress \
+	perl-IO-Socket-IP \
+	perl-JSON-PP \
+	perl-libnet \
+	perl-Locale-Codes \
+	perl-Locale-Maketext \
+	perl-Math-BigInt \
+	perl-Module-Load-Conditional \
+	perl-Module-Metadata \
+	perl-perlfaq \
+	perl-PerlIO-via-QuotedPrint \
+	perl-Perl-OSType \
+	perl-Pod-Parser \
+	perl-Text-Balanced \
 	python-pip \
 	python-rpm-macros \
 	python-setuptools \
@@ -177,7 +204,8 @@ STAGE4_KOJI_NOARCH_NAMES = \
 	setup \
 	sgml-common \
 	tzdata \
-	words
+	words \
+	fpc-srpm-macros
 
 STAGE4_KOJI_FEDORA_RELEASE = f25
 
