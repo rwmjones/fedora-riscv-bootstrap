@@ -126,6 +126,7 @@ STAGE4_KOJI_NOARCH_NAMES = \
 	elfutils \
 	fedora-release \
 	fedora-repos \
+	fpc-srpm-macros \
 	gettext \
 	ghc-srpm-macros \
 	gnat-srpm-macros \
@@ -204,8 +205,7 @@ STAGE4_KOJI_NOARCH_NAMES = \
 	setup \
 	sgml-common \
 	tzdata \
-	words \
-	fpc-srpm-macros
+	words
 
 STAGE4_KOJI_FEDORA_RELEASE = f25
 
