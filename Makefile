@@ -160,8 +160,10 @@ STAGE4_KOJI_NOARCH_NAMES = \
 	perl-Test-Simple \
 	perl-Text-ParseWords \
 	perl-Text-Tabs+Wrap \
+	perl-Text-Unidecode \
 	perl-Thread-Queue \
 	perl-Time-Local \
+	perl-Unicode-EastAsianWidth \
 	perl-constant \
 	perl-generators \
 	perl-parent \
