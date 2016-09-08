@@ -198,6 +198,13 @@ STAGE4_KOJI_NOARCH_NAMES = \
 	perl-Perl-OSType \
 	perl-Pod-Parser \
 	perl-Text-Balanced \
+	perl-Archive-Zip \
+	perl-File-HomeDir \
+	perl-IPC-System-Simple \
+	perl-local-lib \
+	perl-Text-Diff \
+	perl-Text-Glob \
+	perl-URI \
 	python-pip \
 	python-rpm-macros \
 	python-setuptools \
