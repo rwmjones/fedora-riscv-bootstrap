@@ -61,9 +61,10 @@ trap cleanup INT QUIT TERM EXIT ERR
 set -x
 set -e
 
-rpm -Uvh --nodeps /rpmbuild/RPMS/{noarch,riscv64}/*.rpm
+rpm -Uvh --nodeps /rpmbuild/RPMS/{noarch,riscv64}/*.rpm ||:
 
 # Do the build.
 rpmbuild --rebuild /var/tmp/@SRPM@ --nodeps
+touch /buildok
 
 # cleanup() is called automatically here.

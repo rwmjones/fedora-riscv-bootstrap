@@ -1476,6 +1476,8 @@ $(STAGE3_DISK):: stage3-chroot/rpmbuild stage3-chroot
 	$(MAKE) stamp-koji-packages
 	cp stage4-koji-noarch-rpms/*.noarch.rpm stage3-chroot/rpmbuild/RPMS/noarch/
 	cp stage4-koji-noarch-rpms/*.src.rpm stage3-chroot/rpmbuild/SRPMS/
+# Temporarily remove glibc langpacks.  Lots of them, not necessary to install.
+	rm stage3-chroot/rpmbuild/RPMS/riscv64/glibc-langpack-*.rpm
 	cp $(INIT) stage3-chroot/init
 	cd stage3-chroot && virt-make-fs . ../$@ -t ext2 -F raw -s +20G
 
@@ -1528,12 +1530,13 @@ stage3-build:
 	$(MAKE) STAGE3_DISK=$(srpm_disk) $(srpm_disk) INIT=$(srpm_init)
 	rm $(srpm_init)
 	$(MAKE) STAGE3_DISK=$(srpm_disk) boot-stage3-in-$(STAGE3_BUILD_EMULATOR)
+	@guestfish -a $(srpm_disk) --ro -i stat /buildok || { echo "Build failed -- see error messages above."; exit 1 }
 	virt-copy-out -a $(srpm_disk) /rpmbuild ./
+	cp $(SRPM) stage3-build-rpms/SRPMS/
 	@echo Check log output, and RPMs in ./rpmbuild directory
 	@echo If they are correct then:
-	@echo 1. copy $(SRPM) to stage3-built-rpms/SRPMS/
-	@echo 2. copy RPMs from ./rpmbuild to stage3-built-rpms/RPMS/riscv64/
-	@echo 3. check in the SRPM and RPMs
+	@echo 1. copy RPMs from ./rpmbuild to stage3-built-rpms/RPMS/riscv64/
+	@echo 2. check in the SRPM and RPMs
 	@echo $(srpm_disk) is still available for examination.
 
 endif
