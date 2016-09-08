@@ -59,7 +59,7 @@ stamp-*
 /perl-5.24.0/
 /popt-1.16/
 /readline-6.3/
-/riscv-binutils-gdb-riscv-binutils-2.26/
+/riscv-binutils-gdb-riscv-binutils-2.27/
 /riscv-gcc-riscv-gcc-6.1.0/
 /strace-4b69c4736cb9b44e0bd7bef16f7f8602b5d2f113/
 /rpm-9571218/
