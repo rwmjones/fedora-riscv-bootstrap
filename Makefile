@@ -215,6 +215,7 @@ clean:
 	find -name '*~' -delete
 	rm -f stamp-*
 	rm -f */*.spec
+	rm -f fixed-gcc/*
 	rm -f stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
 	rm -rf stage3-chroot
 	rm -f $(STAGE3_DISK)
