@@ -119,6 +119,7 @@ JSONCPP_VERSION    = 1.7.4
 # dependencies.
 STAGE4_KOJI_NOARCH_NAMES = \
 	autoconf \
+	autoconf-archive \
 	automake \
 	basesystem \
 	ca-certificates \
