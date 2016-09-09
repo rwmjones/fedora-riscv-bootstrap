@@ -208,7 +208,6 @@ STAGE4_KOJI_NOARCH_NAMES = \
 	python-pip \
 	python-rpm-macros \
 	python-setuptools \
-	redhat-rpm-config \
 	setup \
 	sgml-common \
 	tzdata \
