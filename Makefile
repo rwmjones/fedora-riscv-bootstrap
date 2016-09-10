@@ -168,13 +168,16 @@ STAGE4_KOJI_NOARCH_NAMES = \
 	perl-HTTP-Tiny \
 	perl-IO-Compress \
 	perl-IO-Socket-IP \
+	perl-IPC-Cmd \
 	perl-IPC-System-Simple \
 	perl-JSON-PP \
 	perl-Locale-Codes \
 	perl-Locale-Maketext \
 	perl-Math-BigInt \
+	perl-Module-Load \
 	perl-Module-Load-Conditional \
 	perl-Module-Metadata \
+	perl-Params-Check \
 	perl-Perl-OSType \
 	perl-PerlIO-via-QuotedPrint \
 	perl-Pod-Escapes \
