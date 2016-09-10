@@ -206,6 +206,7 @@ STAGE4_KOJI_NOARCH_NAMES = \
 	perl-perlfaq \
 	perl-podlators \
 	perl-srpm-macros \
+	publicsuffix-list \
 	python-pip \
 	python-rpm-macros \
 	python-setuptools \
