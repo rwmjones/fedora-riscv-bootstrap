@@ -2,12 +2,16 @@
 
 Name:           riscv-qemu
 Version:        2.5.0
-Release:        0.2.git@SHORTCOMMIT@%{?dist}
+Release:        0.3.git@SHORTCOMMIT@%{?dist}
 Summary:        RISC-V fork of QEMU
 License:        GPLv2+ and LGPLv2+ and BSD
 
 URL:            https://github.com/riscv/riscv-qemu
 Source0:        https://github.com/riscv/%{name}/archive/@COMMIT@/%{name}-@SHORTCOMMIT@.tar.gz
+
+# https://github.com/riscv/riscv-qemu/pull/19
+# Don't fault on unaligned accesses.
+Patch1:         19.patch
 
 # These were just copied from qemu.spec, they are probably not
 # all required.
@@ -76,6 +80,7 @@ This is the RISC-V fork of QEMU.
 
 %prep
 %setup -q -n %{name}-@COMMIT@
+%patch1 -p1
 
 
 %build

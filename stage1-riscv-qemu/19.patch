@@ -1,0 +1,121 @@
+From 397224db687deaf194306411527896bc4f9aca7a Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Jonathan=20Neusch=C3=A4fer?= <j.neuschaefer@gmx.net>
+Date: Sat, 26 Mar 2016 00:20:39 +0100
+Subject: [PATCH 1/2] .travis.yml: Test riscv-softmmu
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Jonathan Neuschäfer <j.neuschaefer@gmx.net>
+---
+ .travis.yml | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/.travis.yml b/.travis.yml
+index 6ca0260..5579042 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -36,7 +36,7 @@ env:
+     - TARGETS=sparc-softmmu,sparc64-softmmu,sparc-linux-user,sparc32plus-linux-user,sparc64-linux-user
+     - TARGETS=unicore32-softmmu,unicore32-linux-user
+     # Group remaining softmmu only targets into one build
+-    - TARGETS=lm32-softmmu,moxie-softmmu,tricore-softmmu,xtensa-softmmu,xtensaeb-softmmu
++    - TARGETS=lm32-softmmu,moxie-softmmu,tricore-softmmu,xtensa-softmmu,xtensaeb-softmmu,riscv-softmmu
+ git:
+   # we want to do this ourselves
+   submodules: false
+@@ -54,7 +54,7 @@ matrix:
+   include:
+     # Make check target (we only do this once)
+     - env:
+-        - TARGETS=alpha-softmmu,arm-softmmu,aarch64-softmmu,cris-softmmu,i386-softmmu,x86_64-softmmu,m68k-softmmu,microblaze-softmmu,microblazeel-softmmu,mips-softmmu,mips64-softmmu,mips64el-softmmu,mipsel-softmmu,or32-softmmu,ppc-softmmu,ppc64-softmmu,ppcemb-softmmu,s390x-softmmu,sh4-softmmu,sh4eb-softmmu,sparc-softmmu,sparc64-softmmu,unicore32-softmmu,unicore32-linux-user,lm32-softmmu,moxie-softmmu,tricore-softmmu,xtensa-softmmu,xtensaeb-softmmu
++        - TARGETS=alpha-softmmu,arm-softmmu,aarch64-softmmu,cris-softmmu,i386-softmmu,x86_64-softmmu,m68k-softmmu,microblaze-softmmu,microblazeel-softmmu,mips-softmmu,mips64-softmmu,mips64el-softmmu,mipsel-softmmu,or32-softmmu,ppc-softmmu,ppc64-softmmu,ppcemb-softmmu,s390x-softmmu,sh4-softmmu,sh4eb-softmmu,sparc-softmmu,sparc64-softmmu,unicore32-softmmu,unicore32-linux-user,lm32-softmmu,moxie-softmmu,tricore-softmmu,xtensa-softmmu,xtensaeb-softmmu,riscv-softmmu
+           TEST_CMD="make check"
+       compiler: gcc
+     # Debug related options
+
+From 2d30cc801c98249b0abdb0382b0a7f19f432f16a Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Jonathan=20Neusch=C3=A4fer?= <j.neuschaefer@gmx.net>
+Date: Sat, 26 Mar 2016 06:18:35 +0100
+Subject: [PATCH 2/2] riscv: Don't trap unaligned memory accesses
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The RISC-V Instruction Set Manual, Volume I, Version 2.0 states:
+
+> The base ISA supports misaligned accesses, but these might run extremely
+> slowly depending on the implementation.
+
+And:
+
+> We do not mandate atomicity for misaligned accesses so simple
+> implementations can just use a machine trap and software handler to
+> handle misaligned accesses.
+
+Let's just allow misaligned accesses for regular load/store operations.
+
+Signed-off-by: Jonathan Neuschäfer <j.neuschaefer@gmx.net>
+---
+ target-riscv/cpu.c       |  1 -
+ target-riscv/cpu.h       |  2 --
+ target-riscv/op_helper.c | 21 ---------------------
+ 3 files changed, 24 deletions(-)
+
+diff --git a/target-riscv/cpu.c b/target-riscv/cpu.c
+index fa6db95..3a5b1e4 100644
+--- a/target-riscv/cpu.c
++++ b/target-riscv/cpu.c
+@@ -115,7 +115,6 @@ static void riscv_cpu_class_init(ObjectClass *c, void *data)
+     cc->handle_mmu_fault = riscv_cpu_handle_mmu_fault;
+ #else
+     cc->do_unassigned_access = riscv_cpu_unassigned_access;
+-    cc->do_unaligned_access = riscv_cpu_do_unaligned_access;
+     cc->get_phys_page_debug = riscv_cpu_get_phys_page_debug;
+     // TODO to support migration:
+     // cc->vmsd = &vmstate_riscv_cpu;
+diff --git a/target-riscv/cpu.h b/target-riscv/cpu.h
+index 3979f06..147d9d4 100644
+--- a/target-riscv/cpu.h
++++ b/target-riscv/cpu.h
+@@ -11,8 +11,6 @@
+ 
+ #define RISCV_START_PC 0x200
+ 
+-#define ALIGNED_ONLY
+-
+ #include "config.h"
+ #include "qemu-common.h"
+ #include "riscv-defs.h"
+diff --git a/target-riscv/op_helper.c b/target-riscv/op_helper.c
+index 5736ec8..f163eaf 100644
+--- a/target-riscv/op_helper.c
++++ b/target-riscv/op_helper.c
+@@ -1006,27 +1006,6 @@ void helper_tlb_flush(CPURISCVState *env)
+ 
+ #if !defined(CONFIG_USER_ONLY)
+ 
+-void riscv_cpu_do_unaligned_access(CPUState *cs, target_ulong addr,
+-                                int rw, int is_user, uintptr_t retaddr)
+-{
+-    RISCVCPU *cpu = RISCV_CPU(cs);
+-    CPURISCVState *env = &cpu->env;
+-    printf("addr: %016lx\n", addr);
+-    if (rw & 0x2) {
+-        fprintf(stderr, "unaligned inst fetch not handled here\n");
+-        exit(1);
+-    } else if (rw == 0x1) {
+-        printf("Store\n");
+-        cs->exception_index = NEW_RISCV_EXCP_STORE_AMO_ADDR_MIS;
+-        env->csr[NEW_CSR_MBADADDR] = addr;
+-    } else {
+-        printf("Load\n");
+-        cs->exception_index = NEW_RISCV_EXCP_LOAD_ADDR_MIS;
+-        env->csr[NEW_CSR_MBADADDR] = addr;
+-    }
+-    do_raise_exception_err(env, cs->exception_index, retaddr);
+-}
+-
+ /* called by qemu's softmmu to fill the qemu tlb */
+ void tlb_fill(CPUState *cs, target_ulong addr, int is_write, int mmu_idx,
+               uintptr_t retaddr)
