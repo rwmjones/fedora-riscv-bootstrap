@@ -62,6 +62,8 @@ set -x
 set -e
 
 rpm -Uvh --nodeps /rpmbuild/RPMS/{noarch,riscv64}/*.rpm ||:
+rm -f /var/lib/rpm/__db*
+rpm --rebuilddb ||:
 
 # Do the build.
 rpmbuild --rebuild /var/tmp/@SRPM@ --nodeps
