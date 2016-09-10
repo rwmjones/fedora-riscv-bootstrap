@@ -1625,7 +1625,10 @@ stage3-build:
 	$(MAKE) STAGE3_DISK=$(srpm_disk) $(srpm_disk) INIT=$(srpm_init)
 	rm $(srpm_init)
 	$(MAKE) STAGE3_DISK=$(srpm_disk) boot-stage3-in-$(STAGE3_BUILD_EMULATOR)
-	@guestfish -a $(srpm_disk) --ro -i stat /buildok || { echo "Build failed -- see error messages above."; exit 1 }
+	@if ! guestfish -a $(srpm_disk) --ro -i stat /buildok; then \
+	    echo "Build failed -- see error messages above."; \
+	    exit 1; \
+	fi
 	virt-copy-out -a $(srpm_disk) /rpmbuild ./
 	cp $(SRPM) stage3-build-rpms/SRPMS/
 	@echo Check log output, and RPMs in ./rpmbuild directory
