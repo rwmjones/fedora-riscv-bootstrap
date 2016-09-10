@@ -125,6 +125,8 @@ STAGE4_KOJI_NOARCH_NAMES = \
 	elfutils \
 	fedora-release \
 	fedora-repos \
+	fontawesome-fonts \
+	fontawesome-fonts-web \
 	fpc-srpm-macros \
 	gettext \
 	ghc-srpm-macros \
@@ -133,6 +135,7 @@ STAGE4_KOJI_NOARCH_NAMES = \
 	help2man \
 	intltool \
 	iso-codes \
+	lato-fonts \
 	ncurses \
 	ocaml-srpm-macros \
 	perl-Archive-Tar \
@@ -208,9 +211,31 @@ STAGE4_KOJI_NOARCH_NAMES = \
 	perl-podlators \
 	perl-srpm-macros \
 	publicsuffix-list \
+	python-docutils \
 	python-pip \
+	python-pygments \
 	python-rpm-macros \
 	python-setuptools \
+	python-sphinx \
+	python-sphinx-locale \
+	python2-imagesize \
+	python2-mock \
+	python2-snowballstemmer \
+	python2-sphinx \
+	python2-sphinx-theme-alabaster \
+	python2-sphinx_rtd_theme \
+	python3-babel \
+	python3-docutils \
+	python3-funcsigs \
+	python3-imagesize \
+	python3-mock \
+	python3-pbr \
+	python3-pygments \
+	python3-snowballstemmer \
+	python3-sphinx \
+	python3-sphinx \
+	python3-sphinx-theme-alabaster \
+	python3-sphinx_rtd_theme \
 	setup \
 	sgml-common \
 	tzdata \
