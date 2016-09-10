@@ -1629,7 +1629,7 @@ stage3-build:
 	    exit 1; \
 	fi
 	virt-copy-out -a $(srpm_disk) /rpmbuild ./
-	cp $(SRPM) stage3-build-rpms/SRPMS/
+	cp $(SRPM) stage3-built-rpms/SRPMS/
 	@echo Check log output, and RPMs in ./rpmbuild directory
 	@echo If they are correct then:
 	@echo 1. copy RPMs from ./rpmbuild to stage3-built-rpms/RPMS/riscv64/
