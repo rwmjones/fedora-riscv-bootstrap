@@ -1704,7 +1704,7 @@ stage4-disk.img: stamp-stage4-builder
 # The "builder" is a variation of stage3-disk.img with a modified
 # /init script and containing all the RPMs built so far.  The /init
 # script takes the RPMs and tries to build stage4-disk.img from them.
-stamp-stage4-builder: builder.sh \
+stamp-stage4-builder: stage4-build-init.sh \
 		      stage3-chroot/var/tmp/stage4-disk.img-template.tar.gz
 	rm -f $@ stage4-builder.img
 	$(MAKE) STAGE3_DISK=stage4-builder.img stage4-builder.img INIT=$<
