@@ -538,7 +538,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/rpmbuild \
 	stage3-chroot/rpmbuild/RPMS/noarch/kernel-headers-$(KERNEL_VERSION)-1.fc25.noarch.rpm \
 	stage3-tdnf/tdnf-$(TDNF_VERSION)-1.fc25.src.rpm \
-	stage3-chroot/etc/yum.repos.d/local.conf \
+	stage3-chroot/etc/yum.repos.d/local.repo \
 	$(STAGE3_DISK)
 
 stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux: linux-$(KERNEL_VERSION).tar.xz
@@ -1591,7 +1591,7 @@ stage3-chroot/etc/profile.d/aliases.sh: aliases.sh
 	install -m 0755 $^ $@
 
 # Create a yum repo pointing to the RPMs in /rpmbuild.
-stage3-chroot/etc/yum.repos.d/local.conf: stage3-tdnf/local.conf
+stage3-chroot/etc/yum.repos.d/local.repo: stage3-tdnf/local.repo
 	install -m 0755 $^ $@
 
 # Copy latest config.guess and config.sub into the RPM directory.
@@ -1620,7 +1620,7 @@ $(STAGE3_DISK):: stage3-chroot/rpmbuild stage3-chroot
 	cp stage4-koji-noarch-rpms/*.noarch.rpm stage3-chroot/rpmbuild/RPMS/noarch/
 	cp stage4-koji-noarch-rpms/*.src.rpm stage3-chroot/rpmbuild/SRPMS/
 # Create a repository for use by tdnf.  This is pointed to by
-# /etc/yum.repos.d/local.conf
+# /etc/yum.repos.d/local.repo
 	cd stage3-chroot/rpmbuild/RPMS && createrepo .
 	cp $(INIT) stage3-chroot/init
 	cd stage3-chroot && virt-make-fs . ../$@ -t ext2 -F raw -s +20G
