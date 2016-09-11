@@ -538,6 +538,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/rpmbuild \
 	stage3-chroot/rpmbuild/RPMS/noarch/kernel-headers-$(KERNEL_VERSION)-1.fc25.noarch.rpm \
 	stage3-tdnf/tdnf-$(TDNF_VERSION)-1.fc25.src.rpm \
+	stage3-chroot/etc/yum.repos.d/local.conf \
 	$(STAGE3_DISK)
 
 stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux: linux-$(KERNEL_VERSION).tar.xz
@@ -1589,6 +1590,10 @@ stage3-chroot/usr/bin/poweroff: poweroff.c
 stage3-chroot/etc/profile.d/aliases.sh: aliases.sh
 	install -m 0755 $^ $@
 
+# Create a yum repo pointing to the RPMs in /rpmbuild.
+stage3-chroot/etc/yum.repos.d/local.conf: stage3-tdnf/local.conf
+	install -m 0755 $^ $@
+
 # Copy latest config.guess and config.sub into the RPM directory.
 # Using the RPM %configure macro copies this into every build.
 stage3-chroot/usr/lib/rpm/config.guess: config.guess
@@ -1614,8 +1619,9 @@ $(STAGE3_DISK):: stage3-chroot/rpmbuild stage3-chroot
 	$(MAKE) stamp-koji-packages
 	cp stage4-koji-noarch-rpms/*.noarch.rpm stage3-chroot/rpmbuild/RPMS/noarch/
 	cp stage4-koji-noarch-rpms/*.src.rpm stage3-chroot/rpmbuild/SRPMS/
-# Temporarily remove glibc langpacks.  Lots of them, not necessary to install.
-	rm stage3-chroot/rpmbuild/RPMS/riscv64/glibc-langpack-*.rpm
+# Create a repository for use by tdnf.  This is pointed to by
+# /etc/yum.repos.d/local.conf
+	cd stage3-chroot/rpmbuild/RPMS && createrepo .
 	cp $(INIT) stage3-chroot/init
 	cd stage3-chroot && virt-make-fs . ../$@ -t ext2 -F raw -s +20G
 
