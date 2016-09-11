@@ -498,6 +498,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/bin/gcc \
 	stage3-chroot/usr/lib64/libstdc++.so \
 	stage3-chroot/usr/lib64/libgomp.so \
+	stage3-chroot/usr/lib64/libatomic.so \
 	stage3-chroot/usr/bin/mount \
 	stage3-chroot/usr/bin/tar \
 	stage3-chroot/usr/bin/gzip \
@@ -843,6 +844,7 @@ stage3-chroot/usr/bin/gcc: gcc-$(GCC_X_VERSION).tar.gz
 # See next rule for why we do this ...
 	rm -f stage3-chroot/usr/lib64/libstdc++*
 	rm -f stage3-chroot/usr/lib64/libgomp*
+	rm -f stage3-chroot/usr/lib64/libatomic*
 
 # libstdc++ isn't built correctly.  I believe it installs an x86
 # executable into /usr/lib64 and ignores the --libdir parameter
@@ -879,6 +881,23 @@ stage3-chroot/usr/lib64/libgomp.so: stage3-chroot/usr/bin/gcc
 	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	$(MAKE)
 	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build/riscv64-unknown-linux-gnu/libgomp && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	make install DESTDIR=$(ROOT)/stage3-chroot
+
+# We don't have cross-compiled libatomic for riscv64, but libgcc_s.so refers to symbols from this library
+stage3-chroot/usr/lib64/libatomic.so: stage3-chroot/usr/bin/gcc
+	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build/riscv64-unknown-linux-gnu/libatomic && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	../../../libatomic/configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64
+	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build/riscv64-unknown-linux-gnu/libatomic && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	make clean
+	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build/riscv64-unknown-linux-gnu/libatomic && \
+	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	$(MAKE)
+	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build/riscv64-unknown-linux-gnu/libatomic && \
 	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	make install DESTDIR=$(ROOT)/stage3-chroot
 
