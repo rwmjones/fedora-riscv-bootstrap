@@ -34,6 +34,10 @@ mkdir -p $RPM_BUILD_ROOT
 make install DESTDIR=$RPM_BUILD_ROOT
 rm $RPM_BUILD_ROOT%{_libdir}/libtdnfclient.la
 
+%post -p /sbin/ldconfig
+
+%postun -p /sbin/ldconfig
+
 %files
 %{_bindir}/tdnf
 %dir %{_sysconfdir}/tdnf
