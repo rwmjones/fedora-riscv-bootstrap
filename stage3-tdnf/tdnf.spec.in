@@ -33,6 +33,7 @@ make
 mkdir -p $RPM_BUILD_ROOT
 make install DESTDIR=$RPM_BUILD_ROOT
 rm $RPM_BUILD_ROOT%{_libdir}/libtdnfclient.la
+mkdir -p $RPM_BUILD_ROOT/var/cache/tdnf
 
 %post -p /sbin/ldconfig
 
@@ -49,6 +50,7 @@ rm $RPM_BUILD_ROOT%{_libdir}/libtdnfclient.la
 %{_libdir}/libtdnfclient.so
 %{_libdir}/libtdnfclient.so.0
 %{_libdir}/libtdnfclient.so.0.0.0
+%dir /var/cache/tdnf
 
 
 %changelog
