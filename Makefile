@@ -56,7 +56,7 @@ vim screen m4 flex bison autoconf automake elfutils \
 git
 
 # Versions of cross-compiled packages.
-NCURSES_VERSION    = 6.0-20160730
+NCURSES_VERSION    = 6.0-20160910
 READLINE_VERSION   = 6.3
 BASH_VERSION       = 4.3
 COREUTILS_VERSION  = 8.25
