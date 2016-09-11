@@ -1,0 +1,40 @@
+From 7ba0d5472a6697936fab45a5b80afcfcd0e8c78a Mon Sep 17 00:00:00 2001
+From: "Richard W.M. Jones" <rjones@redhat.com>
+Date: Thu, 8 Sep 2016 12:26:01 +0100
+Subject: [PATCH] Modify calls to hy_sack_create for hawkey 0.6.3.
+
+Signed-off-by: Richard W.M. Jones <rjones@redhat.com>
+---
+ client/api.c  | 2 +-
+ client/init.c | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/client/api.c b/client/api.c
+index 7781e82..2611efd 100644
+--- a/client/api.c
++++ b/client/api.c
+@@ -77,7 +77,7 @@ TDNFCheckLocalPackages(
+     }
+     fprintf(stdout, "Checking all packages from: %s\n", pszLocalPath);
+ 
+-    hSack = hy_sack_create(NULL, NULL, NULL, 0);
++    hSack = hy_sack_create(NULL, NULL, NULL, NULL, 0);
+     if(!hSack)
+     {
+         dwError = ERROR_TDNF_INVALID_PARAMETER;
+diff --git a/client/init.c b/client/init.c
+index 8259871..682c907 100644
+--- a/client/init.c
++++ b/client/init.c
+@@ -69,7 +69,7 @@ TDNFInitSack(
+ 
+     pszHawkeyCacheDir = pTdnf->pConf->pszCacheDir;
+ 
+-    hSack = hy_sack_create(pszHawkeyCacheDir, NULL, pTdnf->pArgs->pszInstallRoot, 0);
++    hSack = hy_sack_create(pszHawkeyCacheDir, NULL, pTdnf->pArgs->pszInstallRoot, NULL, 0);
+     if(!hSack)
+     {
+         dwError = ERROR_TDNF_INVALID_PARAMETER;
+-- 
+2.9.3
+

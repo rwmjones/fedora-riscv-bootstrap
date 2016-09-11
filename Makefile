@@ -105,6 +105,10 @@ ELFUTILS_VERSION   = 0.166
 GIT_VERSION        = 2.9.3
 JSONCPP_VERSION    = 1.7.4
 
+# There is no Tiny DNF (tdnf) RPM in Fedora, so we build our own
+# starting from this version:
+TDNF_VERSION       = 1.0.9
+
 # When building the clean stage4, we don't have to build noarch RPMs,
 # we can just download them from Koji (the Fedora build system).
 #
@@ -533,6 +537,7 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/usr/lib/rpm/config.sub \
 	stage3-chroot/rpmbuild \
 	stage3-chroot/rpmbuild/RPMS/noarch/kernel-headers-$(KERNEL_VERSION)-1.fc25.noarch.rpm \
+	stage3-tdnf/tdnf-$(TDNF_VERSION)-1.fc25.src.rpm \
 	$(STAGE3_DISK)
 
 stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux: linux-$(KERNEL_VERSION).tar.xz
@@ -597,6 +602,21 @@ stage3-chroot/rpmbuild/RPMS/noarch/kernel-headers-$(KERNEL_VERSION)-1.fc25.noarc
 	mkdir -p stage3-chroot/rpmbuild/RPMS/noarch
 	rpmbuild -ba kernel-headers.spec --define "_topdir $(ROOT)/stage3-chroot/rpmbuild"
 	rm -rf kernel-headers
+
+# Tiny DNF, not in Fedora.
+stage3-tdnf/tdnf-$(TDNF_VERSION)-1.fc25.src.rpm: stage3-tdnf/tdnf.spec stage3-tdnf/tdnf-$(TDNF_VERSION).tar.gz
+	rm -f $@
+	cd stage3-tdnf && rpmbuild -bs --define "_sourcedir `pwd`" --define "_srcrpmdir `pwd`" tdnf.spec
+
+stage3-tdnf/tdnf.spec: stage3-tdnf/tdnf.spec.in
+	rm -f $@ $@-t
+	sed 's/@TDNF_VERSION@/$(TDNF_VERSION)/g' < $^ > $@-t
+	mv $@-t $@
+
+stage3-tdnf/tdnf-$(TDNF_VERSION).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t https://github.com/vmware/tdnf/archive/v$(TDNF_VERSION).tar.gz
+	mv $@-t $@
 
 # Build an original (x86-64) chroot using supermin.  We then aim to
 # rebuild (using cross-compiled versions) every ELF binary in this

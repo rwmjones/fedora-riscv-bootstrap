@@ -1,0 +1,50 @@
+%global debug_package %{nil}
+
+Summary:  Tiny DNF
+Name:     tdnf
+Version:  @TDNF_VERSION@
+Release:  1.fc25
+License:  GPLv2
+
+BuildRequires: librepo-devel
+BuildRequires: hawkey-devel
+BuildRequires: glib2-devel
+BuildRequires: rpm-devel
+BuildRequires: autoconf, automake, libtool
+
+# https://github.com/vmware/%{name}/archive/v%{version}.tar.gz
+Source0:  %{name}-%{version}.tar.gz
+
+Patch1:  0001-Modify-calls-to-hy_sack_create-for-hawkey-0.6.3.patch
+
+%description
+Tiny DNF.
+
+%prep
+%setup -q
+%patch1 -p1
+
+%build
+autoreconf -f -i
+%configure
+make
+
+%install
+mkdir -p $RPM_BUILD_ROOT
+make install DESTDIR=$RPM_BUILD_ROOT
+rm $RPM_BUILD_ROOT%{_libdir}/libtdnfclient.la
+
+%files
+%{_bindir}/tdnf
+%dir %{_sysconfdir}/tdnf
+%config(noreplace) %{_sysconfdir}/tdnf/tdnf.conf
+%{_includedir}/tdnfclient.h
+%{_includedir}/tdnferror.h
+%{_includedir}/tdnftypes.h
+%{_libdir}/libtdnfclient.a
+%{_libdir}/libtdnfclient.so
+%{_libdir}/libtdnfclient.so.0
+%{_libdir}/libtdnfclient.so.0.0.0
+
+
+%changelog
