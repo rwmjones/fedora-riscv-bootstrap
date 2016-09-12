@@ -67,7 +67,7 @@ rm -f /var/lib/rpm/__db*
 rpm --initdb ||:
 
 # Do the build.
-rpmbuild --rebuild /var/tmp/@SRPM@ --nodeps
+rpmbuild --rebuild /var/tmp/@SRPM@ --nodeps --rpmfcdebug
 touch /buildok
 
 # cleanup() is called automatically here.
