@@ -57,17 +57,21 @@ cleanup ()
 }
 trap cleanup INT QUIT TERM EXIT ERR
 
-# Start the automatic build process.
-set -x
-set -e
+if test ! -f /rpmsdone; then
+  # On the first run, we need to install all the RPMs and then reboot.
+  rpm -Uvh --nodeps /rpmbuild/RPMS/{noarch,riscv64}/*.rpm ||:
+  rm -f /var/lib/rpm/__db*
+  rpm --initdb ||:
 
-rpm -Uvh --nodeps /rpmbuild/RPMS/{noarch,riscv64}/*.rpm ||:
-ldconfig ||:
-rm -f /var/lib/rpm/__db*
-rpm --initdb ||:
+  touch /rpmsdone
+else
+  # On the second run, we do the actual build.
+  set -x
+  set -e
 
-# Do the build.
-rpmbuild --rebuild /var/tmp/@SRPM@ --nodeps --rpmfcdebug
-touch /buildok
+  rpmbuild --rebuild /var/tmp/@SRPM@ --nodeps --rpmfcdebug
+
+  touch /buildok
+fi
 
 # cleanup() is called automatically here.

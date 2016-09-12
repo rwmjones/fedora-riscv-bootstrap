@@ -1692,6 +1692,13 @@ stage3-build:
 		< stage3-build-init.sh.in > $(srpm_init)
 	$(MAKE) STAGE3_DISK=$(srpm_disk) $(srpm_disk) INIT=$(srpm_init)
 	rm $(srpm_init)
+# Boot the first time to install the RPMs.
+	$(MAKE) STAGE3_DISK=$(srpm_disk) boot-stage3-in-$(STAGE3_BUILD_EMULATOR)
+	@if ! guestfish -a $(srpm_disk) --ro -i stat /rpmsdone; then \
+	    echo "Build failed -- see error messages above."; \
+	    exit 1; \
+	fi
+# Boot the second time to build the SRPM.
 	$(MAKE) STAGE3_DISK=$(srpm_disk) boot-stage3-in-$(STAGE3_BUILD_EMULATOR)
 	@if ! guestfish -a $(srpm_disk) --ro -i stat /buildok; then \
 	    echo "Build failed -- see error messages above."; \
