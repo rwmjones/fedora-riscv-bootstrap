@@ -49,125 +49,67 @@ cleanup ()
 }
 trap cleanup INT QUIT TERM EXIT ERR
 
-# Start the automatic build process.
-set -x
-set -e
+if test ! -f /rpmsdone; then
+    set -x
 
-rm -f /var/tmp/stage4-disk.img
-rm -f /var/tmp/stage4-disk.img-t
-rm -rf /var/tmp/mnt
+    # On the first run, we need to install the new RPM and any
+    # immediate dependencies.
+    rpm --nodeps -Uvh /rpmbuild/RPMS/riscv64/{tdnf,librepo,hawkey,expat,libsolv,libcurl,gpgme,libassuan,openssl-libs,nss,nss-util,nspr,glib2,libgpg-error,pcre,libdb,rpm,rpm-libs,popt,libcap,libacl,lua,bzip2-libs,libattr,nss-softokn,nss-softokn-freebl,sqlite-libs}-[0-9]*.rpm
+    ldconfig
+    rm -f /var/lib/rpm/__db*
+    rpm --initdb
 
-# Unpack the empty template disk image and loop-back mount it.
-tar -C /var/tmp -zxSf /var/tmp/stage4-disk.img-template.tar.gz
-mv /var/tmp/stage4-disk.img-template /var/tmp/stage4-disk.img-t
+    touch /rpmsdone
+else
+    # On the second run, we do the actual build.
+    set -e
+    #set -x
 
-mkdir /var/tmp/mnt
-mount.static -o loop /var/tmp/stage4-disk.img-t /var/tmp/mnt
+    rm -f /var/tmp/stage4-disk.img
+    rm -f /var/tmp/stage4-disk.img-t
+    rm -rf /var/tmp/mnt
 
-# Don't install any -devel packages.
-rm -f /rpmbuild/RPMS/*/*-devel-*.rpm
+    # Unpack the empty template disk image and loop-back mount it.
+    tar -C /var/tmp -zxSf /var/tmp/stage4-disk.img-template.tar.gz
+    mv /var/tmp/stage4-disk.img-template /var/tmp/stage4-disk.img-t
 
-# Blacklist RPMs which have missing dependencies.
-rm -f /rpmbuild/RPMS/*/{\
-acl,\
-bc,\
-compat-libmpc,\
-curl,\
-cyrus-sasl,\
-dbus*,\
-doxygen-latex,\
-elfutils,\
-expect,\
-emacs-gettext,\
-emacs-terminal,\
-fontawesome-fonts*,\
-gettext,\
-gettext-libs,\
-git*,\
-glib2-tests,\
-gmp-c++,\
-gnupg2,\
-gnupg2-smime,\
-gperf,\
-groff,\
-groff-base,\
-groff-doc,\
-groff-perl,\
-groff-x11,\
-krb5-server,\
-lato-fonts,\
-libacl,\
-libcurl,\
-libdb-cxx,\
-libedit,\
-libmpc,\
-libtool,\
-libutempter,\
-nano,\
-nscd,\
-nss-sysvinit,\
-nss-tools,\
-openldap*,\
-openssl-perl,\
-p11-kit-trust,\
-pcre-cpp,\
-pcre-tools,\
-perl-Archive-Zip,\
-perl-CPAN,\
-perl-ExtUtils*,\
-perl-File-Fetch,\
-perl-File-HomeDir,\
-perl-Filter,\
-perl-Filter-Simple,\
-perl-Git-SVN,\
-perl-IO-Compress,\
-perl-IPC-Cmd,\
-perl-Module-Load-Conditional,\
-perl-Net-Ping,\
-perl-Pod-Perldoc,\
-perl-URI,\
-perl-core,\
-python-debug,\
-python-docutils,\
-python-pygments,\
-python-sphinx-doc,\
-python-sphinx-latex,\
-python2-sphinx,\
-python3-docutils,\
-python3-sphinx,\
-rpm-cron,\
-rsync,\
-rsync,\
-screen,\
-sqlite,\
-sqlite-analyzer,\
-sqlite-tcl,\
-system-python-libs,\
-texinfo-tex,\
-util-linux,\
-uuidd\
-}-[0-9]*.rpm
+    mkdir /var/tmp/mnt
+    mount.static -o loop /var/tmp/stage4-disk.img-t /var/tmp/mnt
 
-# Build the RPMs into the stage4 chroot.
-rpm -ivh --root /var/tmp/mnt \
-    /rpmbuild/RPMS/noarch/*.rpm /rpmbuild/RPMS/riscv64/*.rpm \
-    |& tee /var/tmp/output
-if grep -sq "error: " /var/tmp/output; then
-    set +e
-    set +x
-    echo '*** Missing dependencies ***'
-    grep "is needed by" < /var/tmp/output | awk '{print $1}' | sort -u
-    echo '*** Packages with unsatisfied dependencies ***'
-    grep "is needed by" < /var/tmp/output | awk '{print $5}' | sort -u
-    exit 1
+    # Iteratively install RPMs, removing any with failed dependencies.
+    while true; do
+        echo Running rpm on current package set ...
+        rpm -Uvh --root /var/tmp/mnt/ \
+            /rpmbuild/RPMS/noarch/*.rpm /rpmbuild/RPMS/riscv64/*.rpm \
+            >& /var/tmp/output ||:
+        # If RPM didn't print "error", then it succeeded:
+        if ! grep -sq "error: " /var/tmp/output; then break; fi
+
+        pkgs_to_delete=$(
+            grep 'is needed by' </var/tmp/output |
+                awk '{print $NF}' |
+                sort -u)
+        # No packages left to delete, RPM probably failed for some other reason:
+        if [ "x$pkgs_to_delete" = "x" ]; then break; fi
+
+        for pkg in $pkgs_to_delete; do
+            echo Removing $pkg
+            # We have to remove the epoch, since it's not part of the filename.
+            rpm=$(echo $pkg.rpm | sed 's/-[0-9]\+:/-/g')
+            find /rpmbuild -name $rpm -delete
+        done
+    done
+
+    # Display the output from the final, hopefully successful, RPM command.
+    cat /var/tmp/output
+
+    sync
+    umount /var/tmp/mnt
+
+    # Disk image is built, so move it to the final filename.
+    # guestfish downloads this, but if it doesn't exist, guestfish
+    # fails indicating the earlier error.
+    mv /var/tmp/stage4-disk.img-t /var/tmp/stage4-disk.img
 fi
-
-sync
-umount /var/tmp/mnt
-
-# Disk image is built, so move it to the final filename.
-# guestfish downloads this, but if it doesn't exist, guestfish
-# fails indicating the earlier error.
-mv /var/tmp/stage4-disk.img-t /var/tmp/stage4-disk.img
 
 # cleanup() is called automatically here.

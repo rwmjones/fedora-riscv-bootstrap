@@ -1694,13 +1694,13 @@ stage3-build:
 	rm $(srpm_init)
 # Boot the first time to install the RPMs.
 	$(MAKE) STAGE3_DISK=$(srpm_disk) boot-stage3-in-$(STAGE3_BUILD_EMULATOR)
-	@if ! guestfish -a $(srpm_disk) --ro -i stat /rpmsdone; then \
+	@if ! guestfish --ro -a $(srpm_disk) -i stat /rpmsdone; then \
 	    echo "Build failed -- see error messages above."; \
 	    exit 1; \
 	fi
 # Boot the second time to build the SRPM.
 	$(MAKE) STAGE3_DISK=$(srpm_disk) boot-stage3-in-$(STAGE3_BUILD_EMULATOR)
-	@if ! guestfish -a $(srpm_disk) --ro -i stat /buildok; then \
+	@if ! guestfish --ro -a $(srpm_disk) --ro -i stat /buildok; then \
 	    echo "Build failed -- see error messages above."; \
 	    exit 1; \
 	fi
@@ -1721,10 +1721,15 @@ stage4: stage4-disk.img
 # The clean stage4 disk image, built only from RPMs.
 stage4-disk.img: stamp-stage4-builder
 	rm -f $@ $@-t
-	qemu-system-riscv -m 4G -kernel /usr/bin/bbl \
-	    -append ./stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
-	    -drive file=stage4-builder.img,format=raw -nographic
-	guestfish -a $< -i download /var/tmp/stage4-disk.img $@-t
+# Boot the first time to install the RPMs.
+	$(MAKE) STAGE3_DISK=stage4-builder.img boot-stage3-in-qemu
+	@if ! guestfish --ro -a stage4-builder.img -i stat /rpmsdone; then \
+	    echo "Build failed -- see error messages above."; \
+	    exit 1; \
+	fi
+# Boot the second time to build the stage4.
+	$(MAKE) STAGE3_DISK=stage4-builder.img boot-stage3-in-qemu
+	guestfish --ro -a stage4-builder.img -i download /var/tmp/stage4-disk.img $@-t
 	mv $@-t $@
 
 # The "builder" is a variation of stage3-disk.img with a modified
