@@ -153,6 +153,11 @@ rpm -ivh --root /var/tmp/mnt \
     /rpmbuild/RPMS/noarch/*.rpm /rpmbuild/RPMS/riscv64/*.rpm \
     |& tee /var/tmp/output
 if grep -sq "error: " /var/tmp/output; then
+    set +e
+    set +x
+    echo '*** Missing dependencies ***'
+    grep "is needed by" < /var/tmp/output | awk '{print $1}' | sort -u
+    echo '*** Packages with unsatisfied dependencies ***'
     grep "is needed by" < /var/tmp/output | awk '{print $5}' | sort -u
     exit 1
 fi
