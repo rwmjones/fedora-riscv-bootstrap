@@ -54,7 +54,7 @@ if test ! -f /rpmsdone; then
 
     # On the first run, we need to install the new RPM and any
     # immediate dependencies.
-    rpm --nodeps -Uvh /rpmbuild/RPMS/riscv64/{tdnf,librepo,hawkey,expat,libsolv,libcurl,gpgme,libassuan,openssl-libs,nss,nss-util,nspr,glib2,libgpg-error,pcre,libdb,rpm,rpm-libs,popt,libcap,libacl,lua,bzip2-libs,libattr,nss-softokn,nss-softokn-freebl,sqlite-libs}-[0-9]*.rpm
+    rpm --nodeps -Uvh /rpmbuild/RPMS/riscv64/{tdnf,librepo,hawkey,expat,libsolv,libcurl,gpgme,libassuan,openssl-libs,nss,nss-util,nspr,glib2,libgpg-error,pcre,libdb,rpm,rpm-libs,popt,libcap,libacl,lua,bzip2-libs,libattr,nss-softokn,nss-softokn-freebl,sqlite-libs,lsof,libselinux,libsepol}-[0-9]*.rpm
     ldconfig
     rm -f /var/lib/rpm/__db*
     rpm --initdb
@@ -104,6 +104,12 @@ else
     # Display the output from the final, hopefully successful, RPM command.
     cat /var/tmp/output
 
+    sync
+    kill -HUP `lsof -t /var/tmp/mnt` ||:
+    sleep 5
+    sync
+    kill -9 `lsof -t /var/tmp/mnt` ||:
+    sleep 1
     sync
     umount /var/tmp/mnt
 
