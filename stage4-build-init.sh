@@ -93,7 +93,8 @@ else
         if [ "x$pkgs_to_delete" = "x" ]; then break; fi
 
         for pkg in $pkgs_to_delete; do
-            echo Removing $pkg
+            echo Removing $pkg because:
+            grep "is needed by $pkg" /var/tmp/output ||:
             # We have to remove the epoch, since it's not part of the filename.
             rpm=$(echo $pkg.rpm | sed 's/-[0-9]\+:/-/g')
             find /rpmbuild -name $rpm -delete
