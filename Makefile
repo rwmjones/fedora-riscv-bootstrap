@@ -1798,5 +1798,13 @@ boot-stage4-in-qemu: stage4-disk.img stage3-kernel/linux-$(KERNEL_VERSION)/vmlin
 	    -append ./stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	    -drive file=stage4-disk.img,format=raw -nographic
 
+# Upload the compressed stage4 disk image.
+upload-stage4: stage4-disk.img.xz stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
+	scp $^ tick:public_html/riscv/
+stage4-disk.img.xz: stage4-disk.img-pristine
+	rm -f $@ $@-t
+	xz --best -k $^ --stdout > $@-t
+	mv $@-t $@
+
 # Don't run the builds in parallel because they are implicitly ordered.
 .NOTPARALLEL:
