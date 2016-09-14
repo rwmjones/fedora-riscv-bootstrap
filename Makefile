@@ -1719,7 +1719,7 @@ endif
 stage4: stage4-disk.img
 
 # The clean stage4 disk image, built only from RPMs.
-stage4-disk.img: stamp-stage4-builder
+stage4-disk.img: stamp-stage4-builder stage3-chroot/usr/bin/poweroff
 	rm -f $@ $@-t
 # Boot the first time to install the RPMs.
 	$(MAKE) STAGE3_DISK=stage4-builder.img boot-stage3-in-qemu
@@ -1730,6 +1730,15 @@ stage4-disk.img: stamp-stage4-builder
 # Boot the second time to build the stage4.
 	$(MAKE) STAGE3_DISK=stage4-builder.img boot-stage3-in-qemu
 	guestfish --ro -a stage4-builder.img -i download /var/tmp/stage4-disk.img $@-t
+# Temporarily add an /init script and a poweroff command.
+# We will remove these when we have built systemd.  However we
+# will also have to recompile the kernel to remove the hard-coded
+# init=/init command line.
+	guestfish -a $@-t -i \
+	    upload stage4-temporary-init.sh /init : \
+	    chmod 0755 /init : \
+	    upload stage3-chroot/usr/bin/poweroff /usr/bin/poweroff : \
+	    chmod 0755 /usr/bin/poweroff
 	mv $@-t $@
 
 # The "builder" is a variation of stage3-disk.img with a modified

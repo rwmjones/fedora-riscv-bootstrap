@@ -26,6 +26,7 @@ stamp-*
 /stage3-tdnf/tdnf.spec
 /stage3-tdnf/tdnf-1.0.9-1.fc25.src.rpm
 /stage4-builder.img
+/stage4-disk.img
 /stage4-disk.img-template
 /stage4-disk.img-template.tar
 /stage4-koji-noarch-rpms/
