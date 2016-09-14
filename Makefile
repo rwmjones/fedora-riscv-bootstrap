@@ -1719,7 +1719,10 @@ endif
 stage4: stage4-disk.img
 
 # The clean stage4 disk image, built only from RPMs.
-stage4-disk.img: stamp-stage4-builder stage3-chroot/usr/bin/poweroff
+stage4-disk.img: stage4-disk.img-pristine
+	cp $< $@
+
+stage4-disk.img-pristine: stamp-stage4-builder stage3-chroot/usr/bin/poweroff
 	rm -f $@ $@-t
 # Boot the first time to install the RPMs.
 	$(MAKE) STAGE3_DISK=stage4-builder.img boot-stage3-in-qemu
@@ -1786,6 +1789,12 @@ stamp-koji-packages:
 	rm -f stage4-koji-noarch-rpms/fedora-release-[a-z]*
 	rm -f stage4-koji-noarch-rpms/emacs-gettext-*
 	touch $@
+
+# Helper which boots stage4 disk image in qemu.
+boot-stage4-in-qemu: stage4-disk.img stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
+	qemu-system-riscv -m 4G -kernel /usr/bin/bbl \
+	    -append ./stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
+	    -drive file=stage4-disk.img,format=raw -nographic
 
 # Don't run the builds in parallel because they are implicitly ordered.
 .NOTPARALLEL:
