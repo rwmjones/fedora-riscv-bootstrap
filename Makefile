@@ -1742,6 +1742,8 @@ stage4-disk.img-pristine: stamp-stage4-builder stage3-chroot/usr/bin/poweroff
 	    chmod 0755 /init : \
 	    upload stage3-chroot/usr/bin/poweroff /usr/bin/poweroff : \
 	    chmod 0755 /usr/bin/poweroff
+# Sparsify it.
+	virt-sparsify --inplace $@-t
 	mv $@-t $@
 
 # The "builder" is a variation of stage3-disk.img with a modified
