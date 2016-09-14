@@ -26,6 +26,9 @@ mkdir -p /run/lock
 # Initialize dynamic linker cache.
 ldconfig /usr/lib64 /usr/lib /lib64 /lib
 
+# Fix owner of umount binary.
+chown root.root /usr/bin/umount
+
 # There is no hardware clock, just ensure the date is not miles out.
 date `date -r /usr/bin +%m%d%H%M%Y`
 
