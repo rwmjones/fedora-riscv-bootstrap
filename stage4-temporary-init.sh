@@ -3,13 +3,7 @@
 # Once we have systemd packaged, this will be removed.
 
 # Set up the PATH.
-PATH=\
-/usr/local/bin:\
-/usr/local/sbin:\
-/usr/bin:\
-/usr/sbin:\
-/bin:\
-/sbin
+PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 export PATH
 
 # Root filesystem is mounted as ro, remount it as rw.
