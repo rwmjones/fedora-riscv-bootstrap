@@ -131,6 +131,7 @@ STAGE4_KOJI_NOARCH_NAMES = \
 	fedora-repos \
 	fontawesome-fonts \
 	fontawesome-fonts-web \
+	fontpackages \
 	fpc-srpm-macros \
 	gettext \
 	ghc-srpm-macros \
