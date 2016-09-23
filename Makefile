@@ -241,6 +241,7 @@ STAGE4_KOJI_NOARCH_NAMES = \
 	python3-sphinx \
 	python3-sphinx-theme-alabaster \
 	python3-sphinx_rtd_theme \
+	rpmdevtools \
 	setup \
 	sgml-common \
 	tzdata \
