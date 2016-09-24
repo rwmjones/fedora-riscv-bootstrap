@@ -72,6 +72,9 @@ else
     rm -f /var/tmp/stage4-disk.img-t
     rm -rf /var/tmp/mnt
 
+    # Don't install debuginfo packages in the stage4 image.
+    rm /rpmbuild/RPMS/*/*-debuginfo-*.rpm
+
     # Unpack the empty template disk image and loop-back mount it.
     tar -C /var/tmp -zxSf /var/tmp/stage4-disk.img-template.tar.gz
     mv /var/tmp/stage4-disk.img-template /var/tmp/stage4-disk.img-t
