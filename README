@@ -1,3 +1,23 @@
+THIS REPOSITORY IS NOW OBSOLETE!
+
+We are now using an autobuilder to build all packages for
+Fedora/RISC-V.  For information, read:
+
+https://fedoraproject.org/wiki/Architectures/RISC-V/Building
+
+The old README is preserved below so you can read how we bootstrapped
+Fedora/RISC-V.
+
+======================================================================
+
+======================================================================
+
+======================================================================
+
+======================================================================
+
+======================================================================
+
 A plan for Fedora/RISC-V
 ----------------------------------------------------------------------
 by Richard W.M. Jones (rjones@redhat.com)
