@@ -3,7 +3,7 @@
 Summary:  Tiny DNF
 Name:     tdnf
 Version:  @TDNF_VERSION@
-Release:  1.fc25
+Release:  2.fc25
 License:  GPLv2
 
 BuildRequires: librepo-devel
@@ -34,6 +34,10 @@ mkdir -p $RPM_BUILD_ROOT
 make install DESTDIR=$RPM_BUILD_ROOT
 rm $RPM_BUILD_ROOT%{_libdir}/libtdnfclient.la
 mkdir -p $RPM_BUILD_ROOT/var/cache/tdnf
+
+# Set distroverpkg in tdnf.conf to avoid
+# "distroverpkg config entry is set to a package that is not installed"
+echo 'distroverpkg=fedora-release' >> $RPM_BUILD_ROOT%{_sysconfdir}/tdnf/tdnf.conf
 
 %post -p /sbin/ldconfig
 
