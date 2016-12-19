@@ -11,7 +11,7 @@
 
 Name:           riscv-gnu-toolchain
 Version:        0
-Release:        0.7.git@SHORTCOMMIT@%{?dist}
+Release:        0.6.git@SHORTCOMMIT@%{?dist}
 Summary:        RISC-V GNU cross-toolchain, containing binutils and GCC
 License:        GPLv2+ and LGPLv2+ and BSD
 
@@ -26,9 +26,6 @@ Source4:        ftp://sourceware.org/pub/newlib/newlib-@NEWLIB_VERSION@.tar.gz
 # Patches to fix file locking, thanks Manuel A. Fernandez Montecelo.
 Patch1:         0001-Provide-bits-fcntl.h-for-RISC-V.patch
 Patch2:         0002-Add-structs-flock-and-flock64-to-bits-fcntl.h.patch
-
-# Enable Ada language.
-Patch3:         enable-ada.patch
 
 # XXX These BuildRequires are just culled from the GCC spec
 # and probably overestimate the real requirements.
@@ -61,7 +58,6 @@ includes binutils and GCC.
 %setup -q -n %{name}-@COMMIT@
 %patch1 -p1
 %patch2 -p1
-%patch3 -p1
 
 
 %build
