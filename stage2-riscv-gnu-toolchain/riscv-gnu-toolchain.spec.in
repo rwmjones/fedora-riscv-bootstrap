@@ -11,7 +11,7 @@
 
 Name:           riscv-gnu-toolchain
 Version:        0
-Release:        0.6.git@SHORTCOMMIT@%{?dist}
+Release:        0.8.git@SHORTCOMMIT@%{?dist}
 Summary:        RISC-V GNU cross-toolchain, containing binutils and GCC
 License:        GPLv2+ and LGPLv2+ and BSD
 
