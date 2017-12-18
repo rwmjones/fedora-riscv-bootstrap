@@ -4,356 +4,39 @@
 # Absolute path to the current directory.
 ROOT := $(shell pwd)
 
-# You can set STAGE3_DISK in your environment in order to
-# use multiple disks for doing builds of different packages
-# in parallel.  eg.
-# export STAGE3_DISK=systemd-disk.img
-# make stage3   # builds systemd-disk.img
-# make boot-stage3-in-qemu  # boots systemd-disk.img
-STAGE3_DISK ?= stage3-disk.img
-
-# Note these are chosen very specifically to ensure the different
-# versions work together.  Don't blindly update to the latest
-# versions.  See also:
-# https://github.com/riscv/riscv-pk/issues/18#issuecomment-206115996
-RISCV_QEMU_COMMIT               = 94f5eb73091fb4fe272db3e943f173ecc0f78ffd
-RISCV_QEMU_SHORTCOMMIT          = 94f5eb73
-RISCV_FESVR_COMMIT              = 0f34d7ad311f78455a674224225f5b3056efba1d
-RISCV_FESVR_SHORTCOMMIT         = 0f34d7ad
-RISCV_ISA_SIM_COMMIT            = 3bfc00ef2a1b1f0b0472a39a866261b00f67027e
-RISCV_ISA_SIM_SHORTCOMMIT       = 3bfc00ef
-RISCV_GNU_TOOLCHAIN_COMMIT      = 728afcddcb0526a0f6560c4032da82805f054d58
-RISCV_GNU_TOOLCHAIN_SHORTCOMMIT = 728afcdd
-RISCV_PK_COMMIT                 = 85ae17aa149b9ea114bdd70cc30ea7e73813fb48
-RISCV_PK_SHORTCOMMIT            = 85ae17aa
-
-# For the correct versions, see
-# riscv-gnu-toolchain/Makefile.in *_version variables
-BINUTILS_VERSION = 2.25.1
-GLIBC_VERSION    = 2.22
-GCC_VERSION      = 5.3.0
-NEWLIB_VERSION   = 2.2.0
-
-# https://github.com/riscv/riscv-linux
-KERNEL_VERSION   = 4.1.26
-KERNEL_BRANCH    = linux-4.1.y-riscv
-
-# A local copy of Linux git repo so you don't have to keep downloading
-# git commits (optional).
-LOCAL_LINUX_GIT_COPY = $(HOME)/d/linux
-
-# The root packages (plus their dependencies) that we want to in the
-# stage 3 chroot.  This must include all the cross-compiled packages
-# below, and may also include any noarch package we like.
-STAGE3_PACKAGES = iso-codes \
-ncurses-devel readline-devel bash coreutils gmp-devel \
-mpfr-devel libmpc-devel binutils gcc gcc-c++ util-linux tar \
-gzip zlib-devel file-devel popt-devel beecrypt-devel \
-rpm rpm-build rpm-devel libdb-utils libdb-devel nano \
-grep less strace bzip2-devel make diffutils findutils \
-sed patch hostname gettext-devel lua-devel xz-devel gawk \
-vim screen m4 flex bison autoconf automake elfutils \
-git
-
-# Versions of cross-compiled packages.
-NCURSES_VERSION    = 6.0-20160910
-READLINE_VERSION   = 6.3
-BASH_VERSION       = 4.3
-COREUTILS_VERSION  = 8.25
-GMP_VERSION        = 6.1.1
-MPFR_VERSION       = 3.1.4
-MPC_VERSION        = 1.0.3
-BINUTILS_X_VERSION = 2.27
-GCC_X_VERSION      = 6.1.0
-UTIL_LINUX_VERSION = 2.28
-TAR_VERSION        = 1.29
-GZIP_VERSION       = 1.8
-ZLIB_VERSION       = 1.2.8
-# Needs to match the version of 'file' installed (on host), otherwise:
-#   "Cannot use the installed version of file (xx) to cross-compile file yy"
-# Also note that 5.25 is definitely broken (segfaults in libmagic:magic_close).
-FILE_VERSION       = 5.28
-POPT_VERSION       = 1.16
-BEECRYPT_VERSION   = 4.2.1
-RPM_COMMIT         = 95712183458748ea6cafebac1bdd5daa097d9bee
-RPM_SHORT_COMMIT   = 9571218
-BDB_VERSION        = 4.5.20
-NANO_VERSION       = 2.6.2
-GREP_VERSION       = 2.25
-LESS_VERSION       = 481
-STRACE_COMMIT      = 4b69c4736cb9b44e0bd7bef16f7f8602b5d2f113
-STRACE_SHORT_COMMIT = 4b69c473
-BZIP2_VERSION      = 1.0.6
-MAKE_VERSION       = 4.1
-DIFFUTILS_VERSION  = 3.4
-FINDUTILS_VERSION  = 4.6.0
-SED_VERSION        = 4.2
-PATCH_VERSION      = 2.7.5
-HOSTNAME_VERSION   = 3.15
-GETTEXT_VERSION    = 0.19.8
-LUA_VERSION        = 5.3.3
-XZ_VERSION         = 5.2.2
-GAWK_VERSION       = 4.1.3
-VIM_VERSION        = 7.4
-SCREEN_VERSION     = 4.4.0
-M4_VERSION         = 1.4.17
-FLEX_VERSION       = 2.6.0
-BISON_VERSION      = 3.0.4
-AUTOCONF_VERSION   = 2.69
-AUTOMAKE_VERSION   = 1.15
-ELFUTILS_VERSION   = 0.166
-GIT_VERSION        = 2.9.3
-JSONCPP_VERSION    = 1.7.4
-
-# There is no Tiny DNF (tdnf) RPM in Fedora, so we build our own
-# starting from this version:
-TDNF_VERSION       = 1.0.9
-
-# When building the clean stage4, we don't have to build noarch RPMs,
-# we can just download them from Koji (the Fedora build system).
-#
-# To construct this list, run:
-#
-# supermin -v -v -v --prepare -o /tmp/supermin.d $(STAGE3_PACKAGES) >&/tmp/log
-#
-# then find the full list of packages near the end of the log file,
-# and cut out only the noarch packages.  Convert the names to source
-# package names.  Some noarch packages can be dropped from this list
-# if they are judged unnecessary, or if they pull in too many arch-ful
-# dependencies.
-STAGE4_KOJI_NOARCH_NAMES = \
-	autoconf-archive \
-	basesystem \
-	ca-certificates \
-	crypto-policies \
-	elfutils \
-	fedora-release \
-	fedora-repos \
-	fontawesome-fonts \
-	fontawesome-fonts-web \
-	fontpackages \
-	fpc-srpm-macros \
-	gettext \
-	ghc-srpm-macros \
-	gnat-srpm-macros \
-	go-srpm-macros \
-	help2man \
-	intltool \
-	iso-codes \
-	lato-fonts \
-	ncurses \
-	ocaml-srpm-macros \
-	perl-Archive-Tar \
-	perl-Archive-Zip \
-	perl-B-Debug \
-	perl-CPAN \
-	perl-CPAN-Meta \
-	perl-CPAN-Meta-Requirements \
-	perl-CPAN-Meta-YAML \
-	perl-Carp \
-	perl-Config-Perl-V \
-	perl-Devel-CheckLib \
-	perl-Digest \
-	perl-Env \
-	perl-Error \
-	perl-Exporter \
-	perl-ExtUtils-CBuilder \
-	perl-ExtUtils-Command \
-	perl-ExtUtils-Install \
-	perl-ExtUtils-MM-Utils \
-	perl-ExtUtils-MakeMaker \
-	perl-ExtUtils-Manifest \
-	perl-ExtUtils-ParseXS \
-	perl-Fedora-VSP \
-	perl-File-Fetch \
-	perl-File-HomeDir \
-	perl-File-Path \
-	perl-File-Temp \
-	perl-Filter-Simple \
-	perl-Getopt-Long \
-	perl-HTTP-Tiny \
-	perl-IO-Compress \
-	perl-IO-Socket-IP \
-	perl-IPC-Cmd \
-	perl-IPC-System-Simple \
-	perl-JSON-PP \
-	perl-Locale-Codes \
-	perl-Locale-Maketext \
-	perl-Math-BigInt \
-	perl-Module-Load \
-	perl-Module-Load-Conditional \
-	perl-Module-Metadata \
-	perl-Params-Check \
-	perl-Perl-OSType \
-	perl-PerlIO-via-QuotedPrint \
-	perl-Pod-Escapes \
-	perl-Pod-Parser \
-	perl-Pod-Perldoc \
-	perl-Pod-Simple \
-	perl-Pod-Usage \
-	perl-Term-ANSIColor \
-	perl-Term-Cap \
-	perl-Test-Harness \
-	perl-Test-Simple \
-	perl-Text-Balanced \
-	perl-Text-Diff \
-	perl-Text-Glob \
-	perl-Text-ParseWords \
-	perl-Text-Tabs+Wrap \
-	perl-Text-Unidecode \
-	perl-Thread-Queue \
-	perl-Time-Local \
-	perl-URI \
-	perl-Unicode-EastAsianWidth \
-	perl-autodie \
-	perl-constant \
-	perl-experimental \
-	perl-generators \
-	perl-libnet \
-	perl-local-lib \
-	perl-parent \
-	perl-perlfaq \
-	perl-podlators \
-	perl-srpm-macros \
-	publicsuffix-list \
-	python-docutils \
-	python-pip \
-	python-pygments \
-	python-rpm-macros \
-	python-setuptools \
-	python-sphinx \
-	python-sphinx-locale \
-	python2-imagesize \
-	python2-mock \
-	python2-snowballstemmer \
-	python2-sphinx \
-	python2-sphinx-theme-alabaster \
-	python2-sphinx_rtd_theme \
-	python3-babel \
-	python3-docutils \
-	python3-funcsigs \
-	python3-imagesize \
-	python3-mock \
-	python3-pbr \
-	python3-pygments \
-	python3-snowballstemmer \
-	python3-sphinx \
-	python3-sphinx \
-	python3-sphinx-theme-alabaster \
-	python3-sphinx_rtd_theme \
-	rpmdevtools \
-	setup \
-	sgml-common \
-	tzdata \
-	words
-
-STAGE4_KOJI_FEDORA_RELEASE = f25
+# Add host tools to the path.
+PATH := $(ROOT)/bin:$(PATH)
 
 all: stage1 stage2 stage3 stage4
 
 clean:
 	find -name '*~' -delete
 	rm -f stamp-*
-	rm -f */*.spec
+	rm -rf host-tools
 	rm -f fixed-gcc/*
 	rm -f stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
 	rm -rf stage3-chroot
 	rm -f $(STAGE3_DISK)
 	rm -f stage4-disk.img
 
+#----------------------------------------------------------------------
 # Stage 1
 
-stage1: stage1-riscv-qemu/riscv-qemu-$(RISCV_QEMU_SHORTCOMMIT).tar.gz \
-	stage1-riscv-qemu/riscv-qemu.spec \
-	stamp-riscv-qemu-installed \
-	stage1-riscv-fesvr/riscv-fesvr-$(RISCV_FESVR_SHORTCOMMIT).tar.gz \
-	stage1-riscv-fesvr/riscv-fesvr.spec \
-	stamp-riscv-fesvr-installed \
-	stage1-riscv-isa-sim/riscv-isa-sim-$(RISCV_ISA_SIM_SHORTCOMMIT).tar.gz \
-	stage1-riscv-isa-sim/riscv-isa-sim.spec \
-	stamp-riscv-isa-sim-installed
+stage1: host-tools/bin/qemu-system-riscv64
 
-stage1-riscv-qemu/riscv-qemu-$(RISCV_QEMU_SHORTCOMMIT).tar.gz:
-	rm -f $@ $@-t
-	wget -O $@-t 'https://github.com/riscv/riscv-qemu/archive/$(RISCV_QEMU_COMMIT)/riscv-qemu-$(RISCV_QEMU_SHORTCOMMIT).tar.gz'
-	mv $@-t $@
+host-tools/bin/qemu-system-riscv64:
+	cd riscv-qemu && \
+	./configure --prefix=$(ROOT)/host-tools --sysconfdir=$(ROOT)/host-tools/etc --target-list="riscv64-softmmu" --disable-werror --disable-xen --disable-tpm
+	cd riscv-qemu && \
+	$(MAKE)
+	cd riscv-qemu && \
+	$(MAKE) install
 
-stage1-riscv-qemu/riscv-qemu.spec: stage1-riscv-qemu/riscv-qemu.spec.in
-	sed -e 's/@COMMIT@/$(RISCV_QEMU_COMMIT)/g' \
-	    -e 's/@SHORTCOMMIT@/$(RISCV_QEMU_SHORTCOMMIT)/g' \
-	    < $^ > $@-t
-	mv $@-t $@
-
-stamp-riscv-qemu-installed:
-	rm -f $@
-	@rpm -q riscv-qemu >/dev/null || { \
-	  echo "ERROR: You must install riscv-qemu:"; \
-	  echo; \
-	  echo "       dnf copr enable rjones/riscv"; \
-	  echo "       dnf install riscv-qemu"; \
-	  echo; \
-	  echo "OR: you can build it yourself from the stage1-riscv-qemu directory."; \
-	  echo; \
-	  exit 1; \
-	}
-	@qemu-system-riscv --version || { \
-	  echo "ERROR: qemu-system-riscv is not working."; \
-	  echo "Make sure you installed the riscv-qemu package."; \
-	  exit 1; \
-	}
-	touch $@
-
-stage1-riscv-fesvr/riscv-fesvr-$(RISCV_FESVR_SHORTCOMMIT).tar.gz:
-	rm -f $@ $@-t
-	wget -O $@-t 'https://github.com/riscv/riscv-fesvr/archive/$(RISCV_FESVR_COMMIT)/riscv-fesvr-$(RISCV_FESVR_SHORTCOMMIT).tar.gz'
-	mv $@-t $@
-
-stage1-riscv-fesvr/riscv-fesvr.spec: stage1-riscv-fesvr/riscv-fesvr.spec.in
-	sed -e 's/@COMMIT@/$(RISCV_FESVR_COMMIT)/g' \
-	    -e 's/@SHORTCOMMIT@/$(RISCV_FESVR_SHORTCOMMIT)/g' \
-	    < $^ > $@-t
-	mv $@-t $@
-
-stamp-riscv-fesvr-installed:
-	rm -f $@
-	@rpm -q riscv-fesvr >/dev/null || { \
-	  echo "ERROR: You must install riscv-fesvr:"; \
-	  echo; \
-	  echo "       dnf copr enable rjones/riscv"; \
-	  echo "       dnf install riscv-fesvr"; \
-	  echo; \
-	  echo "OR: you can build it yourself from the stage1-riscv-fesvr directory."; \
-	  echo; \
-	  exit 1; \
-	}
-	touch $@
-
-stage1-riscv-isa-sim/riscv-isa-sim-$(RISCV_ISA_SIM_SHORTCOMMIT).tar.gz:
-	rm -f $@ $@-t
-	wget -O $@-t 'https://github.com/riscv/riscv-isa-sim/archive/$(RISCV_ISA_SIM_COMMIT)/riscv-isa-sim-$(RISCV_ISA_SIM_SHORTCOMMIT).tar.gz'
-	mv $@-t $@
-
-stage1-riscv-isa-sim/riscv-isa-sim.spec: stage1-riscv-isa-sim/riscv-isa-sim.spec.in
-	sed -e 's/@COMMIT@/$(RISCV_ISA_SIM_COMMIT)/g' \
-	    -e 's/@SHORTCOMMIT@/$(RISCV_ISA_SIM_SHORTCOMMIT)/g' \
-	    < $^ > $@-t
-	mv $@-t $@
-
-stamp-riscv-isa-sim-installed:
-	rm -f $@
-	@rpm -q riscv-isa-sim >/dev/null || { \
-	  echo "ERROR: You must install riscv-isa-sim:"; \
-	  echo; \
-	  echo "       dnf copr enable rjones/riscv"; \
-	  echo "       dnf install riscv-isa-sim"; \
-	  echo; \
-	  echo "OR: you can build it yourself from the stage1-riscv-isa-sim directory."; \
-	  echo; \
-	  exit 1; \
-	}
-	touch $@
-
+#----------------------------------------------------------------------
 # Stage 2
+
+RISCV_TOOLS_COMMIT              = 51ddc18e881328054eff42acd0fd6b1863c38cf6
+RISCV_TOOLS_SHORTCOMMIT         = 51ddc18e
 
 stage2: stage2-riscv-gnu-toolchain/riscv-gnu-toolchain-$(RISCV_GNU_TOOLCHAIN_SHORTCOMMIT).tar.gz \
 	stage2-riscv-gnu-toolchain/binutils-$(BINUTILS_VERSION).tar.gz \
@@ -482,7 +165,94 @@ stamp-riscv-pk-installed:
 	}
 	touch $@
 
+#----------------------------------------------------------------------
 # Stage 3
+
+# You can set STAGE3_DISK in your environment in order to
+# use multiple disks for doing builds of different packages
+# in parallel.  eg.
+# export STAGE3_DISK=systemd-disk.img
+# make stage3   # builds systemd-disk.img
+# make boot-stage3-in-qemu  # boots systemd-disk.img
+STAGE3_DISK ?= stage3-disk.img
+
+RISCV_PK_COMMIT                 = 0ff33906ff8fe4252613e5735ba6e886fd27d9c1
+RISCV_PK_SHORTCOMMIT            = 0ff33906
+
+# https://github.com/riscv/riscv-linux
+KERNEL_VERSION   = 4.15-rc3
+KERNEL_BRANCH    = riscv-next
+
+# A local copy of Linux git repo so you don't have to keep downloading
+# git commits (optional).
+LOCAL_LINUX_GIT_COPY = $(HOME)/d/linux
+
+# The root packages (plus their dependencies) that we want to in the
+# stage 3 chroot.  This must include all the cross-compiled packages
+# below, and may also include any noarch package we like.
+STAGE3_PACKAGES = iso-codes \
+ncurses-devel readline-devel bash coreutils gmp-devel \
+mpfr-devel libmpc-devel binutils gcc gcc-c++ util-linux tar \
+gzip zlib-devel file-devel popt-devel beecrypt-devel \
+rpm rpm-build rpm-devel libdb-utils libdb-devel nano \
+grep less strace bzip2-devel make diffutils findutils \
+sed patch hostname gettext-devel lua-devel xz-devel gawk \
+vim screen m4 flex bison autoconf automake elfutils \
+git
+
+# Versions of cross-compiled packages.
+NCURSES_VERSION    = 6.0-20160910
+READLINE_VERSION   = 6.3
+BASH_VERSION       = 4.3
+COREUTILS_VERSION  = 8.25
+GMP_VERSION        = 6.1.1
+MPFR_VERSION       = 3.1.4
+MPC_VERSION        = 1.0.3
+BINUTILS_X_VERSION = 2.27
+GCC_X_VERSION      = 6.1.0
+UTIL_LINUX_VERSION = 2.28
+TAR_VERSION        = 1.29
+GZIP_VERSION       = 1.8
+ZLIB_VERSION       = 1.2.8
+# Needs to match the version of 'file' installed (on host), otherwise:
+#   "Cannot use the installed version of file (xx) to cross-compile file yy"
+# Also note that 5.25 is definitely broken (segfaults in libmagic:magic_close).
+FILE_VERSION       = 5.32
+POPT_VERSION       = 1.16
+BEECRYPT_VERSION   = 4.2.1
+RPM_COMMIT         = 95712183458748ea6cafebac1bdd5daa097d9bee
+RPM_SHORT_COMMIT   = 9571218
+BDB_VERSION        = 4.5.20
+NANO_VERSION       = 2.6.2
+GREP_VERSION       = 2.25
+LESS_VERSION       = 481
+STRACE_COMMIT      = 4b69c4736cb9b44e0bd7bef16f7f8602b5d2f113
+STRACE_SHORT_COMMIT = 4b69c473
+BZIP2_VERSION      = 1.0.6
+MAKE_VERSION       = 4.1
+DIFFUTILS_VERSION  = 3.4
+FINDUTILS_VERSION  = 4.6.0
+SED_VERSION        = 4.2
+PATCH_VERSION      = 2.7.5
+HOSTNAME_VERSION   = 3.15
+GETTEXT_VERSION    = 0.19.8
+LUA_VERSION        = 5.3.3
+XZ_VERSION         = 5.2.2
+GAWK_VERSION       = 4.1.3
+VIM_VERSION        = 7.4
+SCREEN_VERSION     = 4.4.0
+M4_VERSION         = 1.4.17
+FLEX_VERSION       = 2.6.0
+BISON_VERSION      = 3.0.4
+AUTOCONF_VERSION   = 2.69
+AUTOMAKE_VERSION   = 1.15
+ELFUTILS_VERSION   = 0.166
+GIT_VERSION        = 2.9.3
+JSONCPP_VERSION    = 1.7.4
+
+# There is no Tiny DNF (tdnf) RPM in Fedora, so we build our own
+# starting from this version:
+TDNF_VERSION       = 1.0.9
 
 stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot-original/etc/fedora-release \
@@ -1716,7 +1486,148 @@ stage3-build:
 
 endif
 
+#----------------------------------------------------------------------
 # Stage 4
+
+# When building the clean stage4, we don't have to build noarch RPMs,
+# we can just download them from Koji (the Fedora build system).
+#
+# To construct this list, run:
+#
+# supermin -v -v -v --prepare -o /tmp/supermin.d $(STAGE3_PACKAGES) >&/tmp/log
+#
+# then find the full list of packages near the end of the log file,
+# and cut out only the noarch packages.  Convert the names to source
+# package names.  Some noarch packages can be dropped from this list
+# if they are judged unnecessary, or if they pull in too many arch-ful
+# dependencies.
+STAGE4_KOJI_NOARCH_NAMES = \
+	autoconf-archive \
+	basesystem \
+	ca-certificates \
+	crypto-policies \
+	elfutils \
+	fedora-release \
+	fedora-repos \
+	fontawesome-fonts \
+	fontawesome-fonts-web \
+	fontpackages \
+	fpc-srpm-macros \
+	gettext \
+	ghc-srpm-macros \
+	gnat-srpm-macros \
+	go-srpm-macros \
+	help2man \
+	intltool \
+	iso-codes \
+	lato-fonts \
+	ncurses \
+	ocaml-srpm-macros \
+	perl-Archive-Tar \
+	perl-Archive-Zip \
+	perl-B-Debug \
+	perl-CPAN \
+	perl-CPAN-Meta \
+	perl-CPAN-Meta-Requirements \
+	perl-CPAN-Meta-YAML \
+	perl-Carp \
+	perl-Config-Perl-V \
+	perl-Devel-CheckLib \
+	perl-Digest \
+	perl-Env \
+	perl-Error \
+	perl-Exporter \
+	perl-ExtUtils-CBuilder \
+	perl-ExtUtils-Command \
+	perl-ExtUtils-Install \
+	perl-ExtUtils-MM-Utils \
+	perl-ExtUtils-MakeMaker \
+	perl-ExtUtils-Manifest \
+	perl-ExtUtils-ParseXS \
+	perl-Fedora-VSP \
+	perl-File-Fetch \
+	perl-File-HomeDir \
+	perl-File-Path \
+	perl-File-Temp \
+	perl-Filter-Simple \
+	perl-Getopt-Long \
+	perl-HTTP-Tiny \
+	perl-IO-Compress \
+	perl-IO-Socket-IP \
+	perl-IPC-Cmd \
+	perl-IPC-System-Simple \
+	perl-JSON-PP \
+	perl-Locale-Codes \
+	perl-Locale-Maketext \
+	perl-Math-BigInt \
+	perl-Module-Load \
+	perl-Module-Load-Conditional \
+	perl-Module-Metadata \
+	perl-Params-Check \
+	perl-Perl-OSType \
+	perl-PerlIO-via-QuotedPrint \
+	perl-Pod-Escapes \
+	perl-Pod-Parser \
+	perl-Pod-Perldoc \
+	perl-Pod-Simple \
+	perl-Pod-Usage \
+	perl-Term-ANSIColor \
+	perl-Term-Cap \
+	perl-Test-Harness \
+	perl-Test-Simple \
+	perl-Text-Balanced \
+	perl-Text-Diff \
+	perl-Text-Glob \
+	perl-Text-ParseWords \
+	perl-Text-Tabs+Wrap \
+	perl-Text-Unidecode \
+	perl-Thread-Queue \
+	perl-Time-Local \
+	perl-URI \
+	perl-Unicode-EastAsianWidth \
+	perl-autodie \
+	perl-constant \
+	perl-experimental \
+	perl-generators \
+	perl-libnet \
+	perl-local-lib \
+	perl-parent \
+	perl-perlfaq \
+	perl-podlators \
+	perl-srpm-macros \
+	publicsuffix-list \
+	python-docutils \
+	python-pip \
+	python-pygments \
+	python-rpm-macros \
+	python-setuptools \
+	python-sphinx \
+	python-sphinx-locale \
+	python2-imagesize \
+	python2-mock \
+	python2-snowballstemmer \
+	python2-sphinx \
+	python2-sphinx-theme-alabaster \
+	python2-sphinx_rtd_theme \
+	python3-babel \
+	python3-docutils \
+	python3-funcsigs \
+	python3-imagesize \
+	python3-mock \
+	python3-pbr \
+	python3-pygments \
+	python3-snowballstemmer \
+	python3-sphinx \
+	python3-sphinx \
+	python3-sphinx-theme-alabaster \
+	python3-sphinx_rtd_theme \
+	rpmdevtools \
+	setup \
+	sgml-common \
+	tzdata \
+	words
+
+STAGE4_KOJI_FEDORA_RELEASE = f25
 
 stage4: stage4-disk.img
 

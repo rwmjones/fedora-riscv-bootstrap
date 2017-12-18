@@ -9,6 +9,7 @@ stamp-*
 .gdb_history
 
 /fixed-gcc/
+/host-tools/
 /rpmbuild/
 
 /kernel-headers.spec
