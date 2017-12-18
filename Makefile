@@ -5,7 +5,7 @@
 ROOT := $(shell pwd)
 
 # Add host tools to the path.
-PATH := $(ROOT)/bin:$(PATH)
+PATH := $(ROOT)/host-tools/bin:$(PATH)
 
 all: stage1 stage2 stage3 stage4
 
@@ -56,17 +56,6 @@ host-tools/bin/riscv64-unknown-elf-gcc:
 # make stage3   # builds systemd-disk.img
 # make boot-stage3-in-qemu  # boots systemd-disk.img
 STAGE3_DISK ?= stage3-disk.img
-
-RISCV_PK_COMMIT                 = 0ff33906ff8fe4252613e5735ba6e886fd27d9c1
-RISCV_PK_SHORTCOMMIT            = 0ff33906
-
-# https://github.com/riscv/riscv-linux
-KERNEL_VERSION   = 4.15-rc3
-KERNEL_BRANCH    = riscv-next
-
-# A local copy of Linux git repo so you don't have to keep downloading
-# git commits (optional).
-LOCAL_LINUX_GIT_COPY = $(HOME)/d/linux
 
 # The root packages (plus their dependencies) that we want to in the
 # stage 3 chroot.  This must include all the cross-compiled packages
@@ -135,7 +124,8 @@ JSONCPP_VERSION    = 1.7.4
 # starting from this version:
 TDNF_VERSION       = 1.0.9
 
-stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
+stage3: riscv-linux/vmlinux \
+	host-tools/riscv64-unknown-elf/bin/bbl \
 	stage3-chroot-original/etc/fedora-release \
 	stage3-chroot/etc/fedora-release \
 	stage3-chroot/lib64/libc.so.6 \
@@ -195,57 +185,39 @@ stage3: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
 	stage3-chroot/etc/yum.repos.d/local.repo \
 	$(STAGE3_DISK)
 
-stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux: linux-$(KERNEL_VERSION).tar.xz
-	rm -rf stage3-kernel/linux-$(KERNEL_VERSION)
-	cd stage3-kernel && tar -Jxf ../$^
-	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
-	git init && \
-	git remote add -t $(KERNEL_BRANCH) origin https://github.com/riscv/riscv-linux.git && \
-	( git remote add local $(LOCAL_LINUX_GIT_COPY); git fetch local; : ) && \
-	git fetch && \
-	git checkout -f -t origin/$(KERNEL_BRANCH)
-	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
-	make mrproper
-# So we can build with ARCH=riscv64:
-# https://github.com/palmer-dabbelt/riscv-gentoo-infra/blob/master/patches/linux/0001-riscv64_makefile.patch
-	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
-	patch -p1 < ../0001-riscv64_makefile.patch
-# Fix infinite loop when clearing memory
-# https://github.com/riscv/riscv-linux/commit/77148ef248f72bb96b5cacffc0a69bca445de214
-	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
-	patch -p1 < ../0001-Fix-infinite-loop-in-__clear_user.patch
-	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
-	make ARCH=riscv64 defconfig
-	( \
-	echo CONFIG_CMDLINE=\"root=/dev/htifblk0 init=/init\"; \
-	echo CONFIG_CROSS_COMPILE=riscv64-unknown-elf-; \
-	echo CONFIG_FILE_LOCKING=y; \
-	echo CONFIG_NET_CORE=y; \
-	echo CONFIG_NETDEVICES=y; \
-	echo CONFIG_VIRTIO=y; \
-	echo CONFIG_VIRTIO_MMIO=y; \
-	echo CONFIG_VIRTIO_MMIO_CMDLINE_DEVICES=y; \
-	echo CONFIG_VIRTIO_NET=y; \
-	echo CONFIG_VIRTIO_BLK=y; \
-	echo CONFIG_VIRTIO_CONSOLE=y; \
-	echo CONFIG_SCSI_VIRTIO=y; \
-	echo CONFIG_SYSFS=y; \
-	echo CONFIG_BLK_DEV=y; \
-	echo CONFIG_BLK_DEV_LOOP=y; \
-	echo CONFIG_EXT4_FS=y; \
-	) >> stage3-kernel/linux-$(KERNEL_VERSION)/.config
-	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
-	make ARCH=riscv64 olddefconfig
-	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
-	$(MAKE) ARCH=riscv64 vmlinux
-	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
-	make ARCH=riscv64 headers_install INSTALL_HDR_PATH=$(ROOT)/stage3-chroot/usr
+riscv-linux/vmlinux: riscv-linux/arch/riscv/include/asm/serial.h riscv-linux/.config
+	cd riscv-linux && \
+	$(MAKE) ARCH=riscv CROSS_COMPILE=riscv64-unknown-elf- vmlinux
+	cd riscv-linux && \
+	$(MAKE) ARCH=riscv CROSS_COMPILE=riscv64-unknown-elf- headers_install INSTALL_HDR_PATH=$(ROOT)/stage3-chroot/usr
 	ls -l $@
 
-linux-$(KERNEL_VERSION).tar.xz:
-	rm -f $@ $@-t
-	wget -O $@-t https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-$(KERNEL_VERSION).tar.xz
-	mv $@-t $@
+# See https://github.com/riscv/riscv-qemu/commit/039dbd521277bc0aab672203a1a199e4519094da
+riscv-linux/arch/riscv/include/asm/serial.h: asm-serial.h
+	rm -f $@
+	cp asm-serial.h riscv-linux/arch/riscv/include/asm/serial.h
+
+riscv-linux/.config: kernel-config
+	rm -f $@
+	cd riscv-linux && \
+	$(MAKE) ARCH=riscv CROSS_COMPILE=riscv64-unknown-elf- defconfig
+	cat $< >> $@
+	cd riscv-linux && \
+	$(MAKE) ARCH=riscv CROSS_COMPILE=riscv64-unknown-elf- olddefconfig
+
+# Build the bbl with embedded kernel.
+host-tools/riscv64-unknown-elf/bin/bbl: riscv-linux/vmlinux
+	rm -rf riscv-pk/build
+	mkdir -p riscv-pk/build
+	cd riscv-pk/build && \
+	RISCV=$(ROOT)/host-tools \
+	../configure --prefix=$(ROOT)/host-tools --host=riscv64-unknown-elf --with-payload=$(ROOT)/$<
+	cd riscv-pk/build && \
+	RISCV=$(ROOT)/host-tools \
+	$(MAKE)
+	cd riscv-pk/build && \
+	RISCV=$(ROOT)/host-tools \
+	$(MAKE) install
 
 # Build the phony kernel-headers RPM.
 stage3-chroot/rpmbuild/RPMS/noarch/kernel-headers-$(KERNEL_VERSION)-1.fc25.noarch.rpm: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux

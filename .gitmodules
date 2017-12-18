@@ -4,3 +4,9 @@
 [submodule "riscv-tools"]
 	path = riscv-tools
 	url = https://github.com/riscv/riscv-tools
+[submodule "riscv-pk"]
+	path = riscv-pk
+	url = https://github.com/riscv/riscv-pk
+[submodule "riscv-linux"]
+	path = riscv-linux
+	url = https://github.com/riscv/riscv-linux
