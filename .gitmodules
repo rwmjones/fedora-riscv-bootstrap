@@ -1,3 +1,6 @@
 [submodule "riscv-qemu"]
 	path = riscv-qemu
 	url = https://github.com/riscv/riscv-qemu
+[submodule "riscv-tools"]
+	path = riscv-tools
+	url = https://github.com/riscv/riscv-tools

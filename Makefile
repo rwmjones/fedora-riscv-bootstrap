@@ -13,7 +13,6 @@ clean:
 	find -name '*~' -delete
 	rm -f stamp-*
 	rm -rf host-tools
-	rm -f fixed-gcc/*
 	rm -f stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
 	rm -rf stage3-chroot
 	rm -f $(STAGE3_DISK)
@@ -35,135 +34,17 @@ host-tools/bin/qemu-system-riscv64:
 #----------------------------------------------------------------------
 # Stage 2
 
-RISCV_TOOLS_COMMIT              = 51ddc18e881328054eff42acd0fd6b1863c38cf6
-RISCV_TOOLS_SHORTCOMMIT         = 51ddc18e
+stage2: riscv-tools/riscv-pk/README.md host-tools/bin/riscv64-unknown-elf-gcc
 
-stage2: stage2-riscv-gnu-toolchain/riscv-gnu-toolchain-$(RISCV_GNU_TOOLCHAIN_SHORTCOMMIT).tar.gz \
-	stage2-riscv-gnu-toolchain/binutils-$(BINUTILS_VERSION).tar.gz \
-	stage2-riscv-gnu-toolchain/gcc-$(GCC_VERSION).tar.gz \
-	stage2-riscv-gnu-toolchain/glibc-$(GLIBC_VERSION).tar.gz \
-	stage2-riscv-gnu-toolchain/newlib-$(NEWLIB_VERSION).tar.gz \
-	stage2-riscv-gnu-toolchain/riscv-gnu-toolchain.spec \
-	stamp-riscv-gnu-toolchain-installed \
-	fixed-gcc/riscv64-unknown-linux-gnu-cc \
-	fixed-gcc/riscv64-unknown-linux-gnu-gcc \
-	fixed-gcc/riscv64-unknown-linux-gnu-c++ \
-	fixed-gcc/riscv64-unknown-linux-gnu-g++ \
-	stage2-riscv-pk/riscv-pk-$(RISCV_PK_SHORTCOMMIT).tar.gz \
-	stage2-riscv-pk/riscv-pk.spec \
-	stamp-riscv-pk-installed
+riscv-tools/riscv-pk/README.md:
+	cd riscv-tools && \
+	git submodule update --init --recursive
 
-stage2-riscv-gnu-toolchain/riscv-gnu-toolchain-$(RISCV_GNU_TOOLCHAIN_SHORTCOMMIT).tar.gz:
-	rm -f $@ $@-t
-	wget -O $@-t https://github.com/lowRISC/riscv-gnu-toolchain/archive/$(RISCV_GNU_TOOLCHAIN_COMMIT)/riscv-gnu-toolchain-$(RISCV_GNU_TOOLCHAIN_SHORTCOMMIT).tar.gz
-	mv $@-t $@
-
-stage2-riscv-gnu-toolchain/binutils-$(BINUTILS_VERSION).tar.gz:
-	rm -f $@ $@-t
-	wget -O $@-t http://mirrors.kernel.org/gnu/binutils/binutils-$(BINUTILS_VERSION).tar.gz
-	mv $@-t $@
-
-# GCC 5 no longer compiles with GCC 6 unless we patch it.
-# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=69959
-stage2-riscv-gnu-toolchain/gcc-$(GCC_VERSION).tar.gz:
-	rm -f $@ $@-t
-	wget -O $@-t http://mirrors.kernel.org/gnu/gcc/gcc-$(GCC_VERSION)/gcc-$(GCC_VERSION).tar.gz
-	zcat $@-t | tar xf -
-	cd gcc-$(GCC_VERSION) && patch -p0 < ../stage2-riscv-gnu-toolchain/gcc-5-fix-compilation-with-gcc-6.patch
-	tar zcf $@-t gcc-$(GCC_VERSION)
-	rm -r gcc-$(GCC_VERSION)
-	mv $@-t $@
-
-stage2-riscv-gnu-toolchain/glibc-$(GLIBC_VERSION).tar.gz:
-	rm -f $@ $@-t
-	wget -O $@-t http://mirrors.kernel.org/gnu/glibc/glibc-$(GLIBC_VERSION).tar.gz
-	mv $@-t $@
-
-stage2-riscv-gnu-toolchain/newlib-$(NEWLIB_VERSION).tar.gz:
-	rm -f $@ $@-t
-	wget -O $@-t ftp://sourceware.org/pub/newlib/newlib-$(NEWLIB_VERSION).tar.gz
-	mv $@-t $@
-
-stage2-riscv-gnu-toolchain/riscv-gnu-toolchain.spec: stage2-riscv-gnu-toolchain/riscv-gnu-toolchain.spec.in
-	sed -e 's/@COMMIT@/$(RISCV_GNU_TOOLCHAIN_COMMIT)/g' \
-	    -e 's/@SHORTCOMMIT@/$(RISCV_GNU_TOOLCHAIN_SHORTCOMMIT)/g' \
-	    -e 's/@BINUTILS_VERSION@/$(BINUTILS_VERSION)/g' \
-	    -e 's/@GCC_VERSION@/$(GCC_VERSION)/g' \
-	    -e 's/@GLIBC_VERSION@/$(GLIBC_VERSION)/g' \
-	    -e 's/@NEWLIB_VERSION@/$(NEWLIB_VERSION)/g' \
-	    < $^ > $@-t
-	mv $@-t $@
-
-stamp-riscv-gnu-toolchain-installed:
-	rm -f $@
-	@rpm -q riscv-gnu-toolchain >/dev/null || { \
-	  echo "ERROR: You must install riscv-gnu-toolchain:"; \
-	  echo; \
-	  echo "       dnf copr enable rjones/riscv"; \
-	  echo "       dnf install riscv-gnu-toolchain"; \
-	  echo; \
-	  echo "OR: you can build it yourself from the stage2-riscv-gnu-toolchain directory."; \
-	  echo; \
-	  exit 1; \
-	}
-	@riscv64-unknown-elf-gcc --version || { \
-	  echo "ERROR: riscv64-unknown-elf-gcc (cross compiler) is not working."; \
-	  echo "Make sure you installed the riscv-gnu-toolchain package."; \
-	  exit 1; \
-	}
-	touch $@
-
-# The versions of riscv64-unknown-linux-{gcc,g++} in the
-# riscv-gnu-toolchain RPM are (possibly) broken in that they require an
-# explicit --sysroot parameter.
-#
-# Work around that by setting $PATH to contain fixed-gcc subdirectory.
-#
-# Note this should only be used when building stage3.
-fixed-gcc/riscv64-unknown-linux-gnu-cc:
-	mkdir -p fixed-gcc
-	echo '/usr/bin/riscv64-unknown-linux-gnu-gcc --sysroot=$(ROOT)/stage3-chroot "$$@"' > $@
-	chmod 0755 $@
-
-fixed-gcc/riscv64-unknown-linux-gnu-gcc:
-	mkdir -p fixed-gcc
-	echo '/usr/bin/riscv64-unknown-linux-gnu-gcc --sysroot=$(ROOT)/stage3-chroot "$$@"' > $@
-	chmod 0755 $@
-
-fixed-gcc/riscv64-unknown-linux-gnu-c++:
-	mkdir -p fixed-gcc
-	echo '/usr/bin/riscv64-unknown-linux-gnu-g++ --sysroot=$(ROOT)/stage3-chroot "$$@"' > $@
-	chmod 0755 $@
-
-fixed-gcc/riscv64-unknown-linux-gnu-g++:
-	mkdir -p fixed-gcc
-	echo '/usr/bin/riscv64-unknown-linux-gnu-g++ --sysroot=$(ROOT)/stage3-chroot "$$@"' > $@
-	chmod 0755 $@
-
-stage2-riscv-pk/riscv-pk-$(RISCV_PK_SHORTCOMMIT).tar.gz:
-	rm -f $@ $@-t
-	wget -O $@-t https://github.com/lowRISC/riscv-pk/archive/$(RISCV_PK_COMMIT)/riscv-pk-$(RISCV_PK_SHORTCOMMIT).tar.gz
-	mv $@-t $@
-
-stage2-riscv-pk/riscv-pk.spec: stage2-riscv-pk/riscv-pk.spec.in
-	sed -e 's/@COMMIT@/$(RISCV_PK_COMMIT)/g' \
-	    -e 's/@SHORTCOMMIT@/$(RISCV_PK_SHORTCOMMIT)/g' \
-	    < $^ > $@-t
-	mv $@-t $@
-
-stamp-riscv-pk-installed:
-	rm -f $@
-	@rpm -q riscv-pk >/dev/null || { \
-	  echo "ERROR: You must install riscv-pk:"; \
-	  echo; \
-	  echo "       dnf copr enable rjones/riscv"; \
-	  echo "       dnf install riscv-pk"; \
-	  echo; \
-	  echo "OR: you can build it yourself from the stage2-riscv-pk directory."; \
-	  echo; \
-	  exit 1; \
-	}
-	touch $@
+host-tools/bin/riscv64-unknown-elf-gcc:
+	cd riscv-tools && \
+	RISCV=$(ROOT)/host-tools \
+	MAKEFLAGS=-j`nproc` \
+	./build.sh
 
 #----------------------------------------------------------------------
 # Stage 3
