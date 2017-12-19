@@ -34,7 +34,9 @@ host-tools/bin/qemu-system-riscv64:
 #----------------------------------------------------------------------
 # Stage 2
 
-stage2: riscv-tools/riscv-pk/README.md host-tools/bin/riscv64-unknown-elf-gcc
+stage2: riscv-tools/riscv-pk/README.md \
+	host-tools/bin/riscv64-unknown-elf-gcc \
+	host-tools/bin/riscv64-unknown-linux-gnu-gcc
 
 riscv-tools/riscv-pk/README.md:
 	cd riscv-tools && \
@@ -45,6 +47,14 @@ host-tools/bin/riscv64-unknown-elf-gcc:
 	RISCV=$(ROOT)/host-tools \
 	MAKEFLAGS=-j`nproc` \
 	./build.sh
+
+host-tools/bin/riscv64-unknown-linux-gnu-gcc:
+	cd riscv-tools/riscv-gnu-toolchain && \
+	./configure --prefix=$(ROOT)/host-tools
+	cd riscv-tools/riscv-gnu-toolchain && \
+	$(MAKE) linux
+	cd riscv-tools/riscv-gnu-toolchain && \
+	$(MAKE) install
 
 #----------------------------------------------------------------------
 # Stage 3
