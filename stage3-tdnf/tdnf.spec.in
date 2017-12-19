@@ -3,7 +3,7 @@
 Summary:  Tiny DNF
 Name:     tdnf
 Version:  @TDNF_VERSION@
-Release:  2.fc25
+Release:  2.fc27
 License:  GPLv2
 
 BuildRequires: librepo-devel

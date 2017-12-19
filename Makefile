@@ -13,7 +13,7 @@ clean:
 	find -name '*~' -delete
 	rm -f stamp-*
 	rm -rf host-tools
-	rm -f stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
+	rm -f riscv-linux/vmlinux
 	rm -rf stage3-chroot
 	rm -f $(STAGE3_DISK)
 	rm -f stage4-disk.img
@@ -49,12 +49,31 @@ host-tools/bin/riscv64-unknown-elf-gcc:
 	./build.sh
 
 host-tools/bin/riscv64-unknown-linux-gnu-gcc:
+	rm -f host-tools/bin/riscv64-unknown-linux-gnu-*
+	cd riscv-tools/riscv-gnu-toolchain && \
+	$(MAKE) clean
 	cd riscv-tools/riscv-gnu-toolchain && \
 	./configure --prefix=$(ROOT)/host-tools
 	cd riscv-tools/riscv-gnu-toolchain && \
 	$(MAKE) linux
-	cd riscv-tools/riscv-gnu-toolchain && \
-	$(MAKE) install
+# The versions of riscv64-unknown-linux-{gcc,g++} built above
+# are (possibly) broken in that they require an explicit --sysroot
+# parameter.
+#
+# Work around that using a wrapper.
+#
+# Note this should only be used when building stage3.
+	cd host-tools/bin && \
+	for f in gcc g++; do \
+	  t=riscv64-unknown-linux-gnu-$$f; \
+	  mv $$t $$t.real; \
+	  echo $(ROOT)/host-tools/bin/$$t.real --sysroot=$(ROOT)/stage3-chroot '"$$@"' > $$t; \
+	  chmod 0755 $$t; \
+	done
+	cd host-tools/bin && \
+	ln -sf riscv64-unknown-linux-gnu-gcc riscv64-unknown-linux-gnu-cc
+	cd host-tools/bin && \
+	ln -sf riscv64-unknown-linux-gnu-g++ riscv64-unknown-linux-gnu-c++
 
 #----------------------------------------------------------------------
 # Stage 3
@@ -81,19 +100,19 @@ vim screen m4 flex bison autoconf automake elfutils \
 git
 
 # Versions of cross-compiled packages.
-NCURSES_VERSION    = 6.0-20160910
+NCURSES_VERSION    = 6.0-20171216
 READLINE_VERSION   = 6.3
 BASH_VERSION       = 4.3
 COREUTILS_VERSION  = 8.25
-GMP_VERSION        = 6.1.1
-MPFR_VERSION       = 3.1.4
+GMP_VERSION        = 6.1.2
+MPFR_VERSION       = 3.1.6
 MPC_VERSION        = 1.0.3
-BINUTILS_X_VERSION = 2.27
-GCC_X_VERSION      = 6.1.0
-UTIL_LINUX_VERSION = 2.28
+BINUTILS_X_VERSION = 2.29
+GCC_X_VERSION      = 7.2.0
+UTIL_LINUX_VERSION = 2.31
 TAR_VERSION        = 1.29
 GZIP_VERSION       = 1.8
-ZLIB_VERSION       = 1.2.8
+ZLIB_VERSION       = 1.2.11
 # Needs to match the version of 'file' installed (on host), otherwise:
 #   "Cannot use the installed version of file (xx) to cross-compile file yy"
 # Also note that 5.25 is definitely broken (segfaults in libmagic:magic_close).
@@ -110,13 +129,13 @@ STRACE_COMMIT      = 4b69c4736cb9b44e0bd7bef16f7f8602b5d2f113
 STRACE_SHORT_COMMIT = 4b69c473
 BZIP2_VERSION      = 1.0.6
 MAKE_VERSION       = 4.1
-DIFFUTILS_VERSION  = 3.4
+DIFFUTILS_VERSION  = 3.6
 FINDUTILS_VERSION  = 4.6.0
 SED_VERSION        = 4.2
 PATCH_VERSION      = 2.7.5
-HOSTNAME_VERSION   = 3.15
+HOSTNAME_VERSION   = 3.18
 GETTEXT_VERSION    = 0.19.8
-LUA_VERSION        = 5.3.3
+LUA_VERSION        = 5.3.4
 XZ_VERSION         = 5.2.2
 GAWK_VERSION       = 4.1.3
 VIM_VERSION        = 7.4
@@ -126,7 +145,7 @@ FLEX_VERSION       = 2.6.0
 BISON_VERSION      = 3.0.4
 AUTOCONF_VERSION   = 2.69
 AUTOMAKE_VERSION   = 1.15
-ELFUTILS_VERSION   = 0.166
+ELFUTILS_VERSION   = 0.170
 GIT_VERSION        = 2.9.3
 JSONCPP_VERSION    = 1.7.4
 
@@ -190,8 +209,8 @@ stage3: riscv-linux/vmlinux \
 	stage3-chroot/usr/lib/rpm/config.guess \
 	stage3-chroot/usr/lib/rpm/config.sub \
 	stage3-chroot/rpmbuild \
-	stage3-chroot/rpmbuild/RPMS/noarch/kernel-headers-$(KERNEL_VERSION)-1.fc25.noarch.rpm \
-	stage3-tdnf/tdnf-$(TDNF_VERSION)-1.fc25.src.rpm \
+	stage3-chroot/rpmbuild/RPMS/noarch/kernel-headers-1-1.fc27.noarch.rpm \
+	stage3-tdnf/tdnf-$(TDNF_VERSION)-2.fc27.src.rpm \
 	stage3-chroot/etc/yum.repos.d/local.repo \
 	$(STAGE3_DISK)
 
@@ -230,18 +249,18 @@ host-tools/riscv64-unknown-elf/bin/bbl: riscv-linux/vmlinux
 	$(MAKE) install
 
 # Build the phony kernel-headers RPM.
-stage3-chroot/rpmbuild/RPMS/noarch/kernel-headers-$(KERNEL_VERSION)-1.fc25.noarch.rpm: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
+stage3-chroot/rpmbuild/RPMS/noarch/kernel-headers-1-1.fc27.noarch.rpm: riscv-linux/vmlinux
 	rm -rf kernel-headers
 	mkdir -p kernel-headers/usr
-	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
-	make ARCH=riscv64 headers_install INSTALL_HDR_PATH=$(ROOT)/kernel-headers/usr
-	sed -e 's,@ROOT@,$(ROOT),g' -e 's,@KERNEL_VERSION@,$(KERNEL_VERSION),g' < kernel-headers.spec.in > kernel-headers.spec
+	cd riscv-linux && \
+	make ARCH=riscv CROSS_COMPILE=riscv64-unknown-elf- headers_install INSTALL_HDR_PATH=$(ROOT)/kernel-headers/usr
+	sed -e 's,@ROOT@,$(ROOT),g' < kernel-headers.spec.in > kernel-headers.spec
 	mkdir -p stage3-chroot/rpmbuild/RPMS/noarch
 	rpmbuild -ba kernel-headers.spec --define "_topdir $(ROOT)/stage3-chroot/rpmbuild"
 	rm -rf kernel-headers
 
 # Tiny DNF, not in Fedora.
-stage3-tdnf/tdnf-$(TDNF_VERSION)-1.fc25.src.rpm: stage3-tdnf/tdnf.spec stage3-tdnf/tdnf-$(TDNF_VERSION).tar.gz
+stage3-tdnf/tdnf-$(TDNF_VERSION)-2.fc27.src.rpm: stage3-tdnf/tdnf.spec stage3-tdnf/tdnf-$(TDNF_VERSION).tar.gz
 	rm -f $@
 	cd stage3-tdnf && rpmbuild -bs --define "_sourcedir `pwd`" --define "_srcrpmdir `pwd`" tdnf.spec
 
@@ -260,8 +279,8 @@ stage3-tdnf/tdnf-$(TDNF_VERSION).tar.gz:
 # chroot.
 stage3-chroot-original/etc/fedora-release:
 	rm -rf stage3-chroot-original-t stage3-chroot-original tmp-supermin.d
-	supermin --prepare $(STAGE3_PACKAGES) -o tmp-supermin.d
-	supermin --build -f chroot tmp-supermin.d -o stage3-chroot-original-t
+	supermin -v --prepare $(STAGE3_PACKAGES) -o tmp-supermin.d
+	supermin -v --build -f chroot tmp-supermin.d -o stage3-chroot-original-t
 	rm -r tmp-supermin.d
 	mv stage3-chroot-original-t stage3-chroot-original
 	@echo -n "Total files in chroot: "
@@ -287,44 +306,44 @@ stage3-chroot/etc/fedora-release: stage3-chroot-original/etc/fedora-release
 stage3-chroot/lib64/libc.so.6:
 	mkdir -p stage3-chroot/usr/lib/audit
 	mkdir -p stage3-chroot/usr/lib/gconv
-	for f in `cd /usr/sysroot && find -type f -o -type l`; do \
-	    cp -d /usr/sysroot/$$f stage3-chroot/$$f; \
+	mkdir -p stage3-chroot/usr/lib/ldscripts
+	for f in `cd host-tools/sysroot && find -type f -o -type l`; do \
+	    cp -d host-tools/sysroot/$$f stage3-chroot/$$f; \
 	done
 	cd stage3-chroot/lib64 && for f in ../lib/*; do ln -sf $$f; done
 	rm -f stage3-chroot/usr/include/asm/ptrace.h
 
 # Copy in the correct Linux header files.
-stage3-chroot/usr/include/asm/ptrace.h: stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
-	cd stage3-kernel/linux-$(KERNEL_VERSION) && \
-	make ARCH=riscv64 headers_install INSTALL_HDR_PATH=$(ROOT)/stage3-chroot/usr
+stage3-chroot/usr/include/asm/ptrace.h: riscv-linux/vmlinux
+	cd riscv-linux && \
+	make ARCH=riscv CROSS_COMPILE=riscv64-unknown-elf- headers_install INSTALL_HDR_PATH=$(ROOT)/stage3-chroot/usr
 
 # Cross-compile ncurses.
 stage3-chroot/usr/bin/tic: ncurses-$(NCURSES_VERSION).tgz
 	tar zxf $^
 	cd ncurses-$(NCURSES_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	./configure --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64 \
 	    --with-shared \
 	    --with-termlib=tinfo \
 	    --enable-widec
-	cd ncurses-$(NCURSES_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE)
-	cd ncurses-$(NCURSES_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make install DESTDIR=$(ROOT)/stage3-chroot
+	cd ncurses-$(NCURSES_VERSION) && $(MAKE)
+	cd ncurses-$(NCURSES_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
 
 ncurses-$(NCURSES_VERSION).tgz:
 	rm -f $@ $@-t
-	wget -O $@-t ftp://invisible-island.net/ncurses/current/ncurses-$(NCURSES_VERSION).tgz
+	wget -O $@-t https://invisible-mirror.net/archives/ncurses/current/ncurses-$(NCURSES_VERSION).tgz
 	mv $@-t $@
 
 # Cross-compile readline.
 stage3-chroot/usr/lib64/libhistory.so.6: readline-$(READLINE_VERSION).tar.gz
+	rm -rf readline-$(READLINE_VERSION)
 	tar zxf $^
 	cd readline-$(READLINE_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	bash_cv_wcwidth_broken=no \
 	./configure --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	cd readline-$(READLINE_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE)
+	cd readline-$(READLINE_VERSION) && $(MAKE)
 	cd readline-$(READLINE_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
 	rm -f stage3-chroot/usr/lib64/*.la
 
@@ -335,12 +354,12 @@ readline-$(READLINE_VERSION).tar.gz:
 
 # Cross-compile bash.
 stage3-chroot/bin/bash: bash-$(BASH_VERSION).tar.gz
+	rm -rf bash-$(BASH_VERSION)
 	tar zxf $^
 	cd bash-$(BASH_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	./configure --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	cd bash-$(BASH_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE)
+	cd bash-$(BASH_VERSION) && $(MAKE)
 	cd bash-$(BASH_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
 
 bash-$(BASH_VERSION).tar.gz:
@@ -357,13 +376,12 @@ stage3-chroot/bin/ls: coreutils-$(COREUTILS_VERSION).tar.xz
 	rm -rf coreutils-$(COREUTILS_VERSION)
 	tar Jxf $^
 	cd coreutils-$(COREUTILS_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	./configure --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	-cd coreutils-$(COREUTILS_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make -j1 -k
+	-cd coreutils-$(COREUTILS_VERSION) && make -j1 -k
 	cd coreutils-$(COREUTILS_VERSION)/man && \
 	for f in $(COREUTILS_PROGRAMS); do touch $$f.1; done
-	cd coreutils-$(COREUTILS_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE)
+	cd coreutils-$(COREUTILS_VERSION) && $(MAKE)
 	cd coreutils-$(COREUTILS_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
 
 coreutils-$(COREUTILS_VERSION).tar.xz:
@@ -373,18 +391,22 @@ coreutils-$(COREUTILS_VERSION).tar.xz:
 
 # Cross-compile binutils.
 stage3-chroot/usr/bin/as: binutils-$(BINUTILS_X_VERSION).tar.gz
-# This file coming from host glibc-headers breaks the build.
-	rm -f stage3-chroot/usr/include/proc_service.h
 	rm -rf riscv-binutils-gdb-riscv-binutils-$(BINUTILS_X_VERSION)
 	zcat $^ | tar xf -
+# This patch works around https://github.com/riscv/riscv-binutils-gdb/issues/96
+# It completely breaks gdb, but we don't care for stage3.
+	cd riscv-binutils-gdb-riscv-binutils-$(BINUTILS_X_VERSION) && \
+	patch -p1 < ../riscv-binutils-gdb-riscv-binutils-2.29-break-gdb.patch
 	mkdir riscv-binutils-gdb-riscv-binutils-$(BINUTILS_X_VERSION)/build
 	cd riscv-binutils-gdb-riscv-binutils-$(BINUTILS_X_VERSION)/build && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	../configure \
 	    --host=riscv64-unknown-linux-gnu \
+	    --target=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	cd riscv-binutils-gdb-riscv-binutils-$(BINUTILS_X_VERSION)/build && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE)
-	cd riscv-binutils-gdb-riscv-binutils-$(BINUTILS_X_VERSION)/build && make DESTDIR=$(ROOT)/stage3-chroot install
+	cd riscv-binutils-gdb-riscv-binutils-$(BINUTILS_X_VERSION)/build && \
+	$(MAKE)
+	cd riscv-binutils-gdb-riscv-binutils-$(BINUTILS_X_VERSION)/build && \
+	make DESTDIR=$(ROOT)/stage3-chroot install
 
 binutils-$(BINUTILS_X_VERSION).tar.gz:
 	rm -f $@ $@-t
@@ -396,12 +418,10 @@ stage3-chroot/usr/lib64/libgmp.so.10: gmp-$(GMP_VERSION).tar.lz
 	rm -rf gmp-$(GMP_VERSION)
 	tar --lzip -xf gmp-$(GMP_VERSION).tar.lz
 	cd gmp-$(GMP_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	./configure --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	cd gmp-$(GMP_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE)
+	cd gmp-$(GMP_VERSION) && $(MAKE)
 	cd gmp-$(GMP_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
-	cd stage3-chroot/usr/lib && ln -s ../lib64/libgmp.so
 
 gmp-$(GMP_VERSION).tar.lz:
 	rm -f $@ $@-t
@@ -412,11 +432,10 @@ stage3-chroot/usr/lib64/libmpfr.so.4: mpfr-$(MPFR_VERSION).tar.gz
 	rm -rf mpfr-$(MPFR_VERSION)
 	tar -zxf mpfr-$(MPFR_VERSION).tar.gz
 	cd mpfr-$(MPFR_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	./configure --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64 \
 	    --with-gmp=$(ROOT)/stage3-chroot/usr
-	cd mpfr-$(MPFR_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE)
+	cd mpfr-$(MPFR_VERSION) && $(MAKE)
 	cd mpfr-$(MPFR_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
 	cd stage3-chroot/usr/lib && ln -s ../lib64/libmpfr.so
 	rm -f stage3-chroot/usr/lib64/*.la
@@ -430,12 +449,11 @@ stage3-chroot/usr/lib64/libmpc.so.3: mpc-$(MPC_VERSION).tar.gz
 	rm -rf mpc-$(MPC_VERSION)
 	tar -zxf mpc-$(MPC_VERSION).tar.gz
 	cd mpc-$(MPC_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	./configure --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64 \
 	    --with-gmp=$(ROOT)/stage3-chroot/usr \
 	    --with-mpfr=$(ROOT)/stage3-chroot/usr
-	cd mpc-$(MPC_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE)
+	cd mpc-$(MPC_VERSION) && $(MAKE)
 	cd mpc-$(MPC_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
 	cd stage3-chroot/usr/lib && ln -s ../lib64/libmpc.so
 	rm -f stage3-chroot/usr/lib64/*.la
@@ -454,7 +472,6 @@ stage3-chroot/usr/bin/gcc: gcc-$(GCC_X_VERSION).tar.gz
 	mkdir riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build
 	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build && \
 	gcc_cv_as_leb128=no \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	../configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64 \
@@ -473,7 +490,7 @@ stage3-chroot/usr/bin/gcc: gcc-$(GCC_X_VERSION).tar.gz
 	    --with-linker-hash-style=gnu \
 	    --enable-initfini-array \
 	    --disable-libgcj
-	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build && gcc_cv_as_leb128=no PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE)
+	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build && gcc_cv_as_leb128=no $(MAKE)
 	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build && make install DESTDIR=$(ROOT)/stage3-chroot
 	rm -f stage3-chroot/usr/lib64/*.la
 # See next rule for why we do this ...
@@ -499,8 +516,6 @@ stage3-chroot/usr/lib64/libstdc++.so: stage3-chroot/usr/bin/gcc
 	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build/riscv64-unknown-linux-gnu/libstdc++-v3 && \
 	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	make install DESTDIR=$(ROOT)/stage3-chroot
-# make install ignores --libdir, so we have to do this:
-	mv $(ROOT)/stage3-chroot/usr/lib/libstdc++* $(ROOT)/stage3-chroot/usr/lib64/
 
 # libgomp isn't built correctly.
 stage3-chroot/usr/lib64/libgomp.so: stage3-chroot/usr/bin/gcc
@@ -546,7 +561,6 @@ stage3-chroot/usr/bin/mount: util-linux-$(UTIL_LINUX_VERSION).tar.xz
 	rm -rf util-linux-$(UTIL_LINUX_VERSION)
 	tar -Jxf $^
 	cd util-linux-$(UTIL_LINUX_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	LDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64 \
 	./configure \
 	    --host=riscv64-unknown-linux-gnu \
@@ -556,13 +570,13 @@ stage3-chroot/usr/bin/mount: util-linux-$(UTIL_LINUX_VERSION).tar.xz
 	    --disable-makeinstall-chown \
 	    --disable-eject \
 	    --enable-static-programs=mount
-	cd util-linux-$(UTIL_LINUX_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE)
-	cd util-linux-$(UTIL_LINUX_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make install DESTDIR=$(ROOT)/stage3-chroot
+	cd util-linux-$(UTIL_LINUX_VERSION) && $(MAKE)
+	cd util-linux-$(UTIL_LINUX_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
 	rm -f stage3-chroot/usr/lib64/*.la
 
 util-linux-$(UTIL_LINUX_VERSION).tar.xz:
 	rm -f $@ $@-t
-	wget -O $@-t ftp://ftp.kernel.org/pub/linux/utils/util-linux/v$(UTIL_LINUX_VERSION)/util-linux-$(UTIL_LINUX_VERSION).tar.xz
+	wget -O $@-t https://www.kernel.org/pub/linux/utils/util-linux/v$(UTIL_LINUX_VERSION)/util-linux-$(UTIL_LINUX_VERSION).tar.xz
 	mv $@-t $@
 
 # Cross-compile GNU tar.
@@ -570,11 +584,10 @@ stage3-chroot/usr/bin/tar: tar-$(TAR_VERSION).tar.xz
 	rm -rf tar-$(TAR_VERSION)
 	tar -Jxf $^
 	cd tar-$(TAR_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	./configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	cd tar-$(TAR_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE)
+	cd tar-$(TAR_VERSION) && $(MAKE)
 	cd tar-$(TAR_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
 
 tar-$(TAR_VERSION).tar.xz:
@@ -587,11 +600,10 @@ stage3-chroot/usr/bin/gzip: gzip-$(GZIP_VERSION).tar.gz
 	rm -rf gzip-$(GZIP_VERSION)
 	tar -zxf $^
 	cd gzip-$(GZIP_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	./configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	cd gzip-$(GZIP_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE)
+	cd gzip-$(GZIP_VERSION) && $(MAKE)
 	cd gzip-$(GZIP_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
 
 gzip-$(GZIP_VERSION).tar.gz:
@@ -604,12 +616,11 @@ stage3-chroot/usr/lib64/libz.so: zlib-$(ZLIB_VERSION).tar.gz
 	rm -rf zlib-$(ZLIB_VERSION)
 	tar -zxf $^
 	cd zlib-$(ZLIB_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	CC=riscv64-unknown-linux-gnu-gcc \
 	CFLAGS="-I$(ROOT)/stage3-chroot/usr/include -L$(ROOT)/stage3-chroot/usr/lib" \
 	./configure \
 	    --prefix=/usr --libdir=/usr/lib64
-	cd zlib-$(ZLIB_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE) shared
+	cd zlib-$(ZLIB_VERSION) && $(MAKE) shared
 	cd zlib-$(ZLIB_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
 
 zlib-$(ZLIB_VERSION).tar.gz:
@@ -622,13 +633,12 @@ stage3-chroot/usr/bin/file: file-$(FILE_VERSION).tar.gz
 	rm -rf file-$(FILE_VERSION)
 	tar -zxf $^
 	cd file-$(FILE_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	LDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64 \
 	./configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64 \
 	    --disable-static --enable-shared
-	cd file-$(FILE_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE) V=1
+	cd file-$(FILE_VERSION) && $(MAKE) V=1
 	cd file-$(FILE_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
 	rm -f stage3-chroot/usr/lib64/*.la
 
@@ -642,13 +652,12 @@ stage3-chroot/usr/lib64/libpopt.so: popt-$(POPT_VERSION).tar.gz
 	rm -rf popt-$(POPT_VERSION)
 	tar -zxf $^
 	cd popt-$(POPT_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	LDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64 \
 	./configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64 \
 	    --disable-static --enable-shared
-	cd popt-$(POPT_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE) V=1
+	cd popt-$(POPT_VERSION) && $(MAKE) V=1
 	cd popt-$(POPT_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
 	rm -f stage3-chroot/usr/lib64/*.la
 
@@ -664,7 +673,6 @@ stage3-chroot/usr/lib64/libbeecrypt.so: beecrypt-$(BEECRYPT_VERSION).tar.gz
 	cd beecrypt-$(BEECRYPT_VERSION) && patch -p0 < ../beecrypt-disable-cplusplus.patch
 	cd beecrypt-$(BEECRYPT_VERSION) && autoreconf -i
 	cd beecrypt-$(BEECRYPT_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	LDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64 \
 	./configure \
 	    --host=riscv64-unknown-linux-gnu \
@@ -674,8 +682,8 @@ stage3-chroot/usr/lib64/libbeecrypt.so: beecrypt-$(BEECRYPT_VERSION).tar.gz
 	    --disable-openmp \
 	    --disable-static \
 	    --enable-shared
-	cd beecrypt-$(BEECRYPT_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE) V=1
-	cd beecrypt-$(BEECRYPT_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make install DESTDIR=$(ROOT)/stage3-chroot V=1
+	cd beecrypt-$(BEECRYPT_VERSION) && $(MAKE) V=1
+	cd beecrypt-$(BEECRYPT_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot V=1
 	chrpath -d stage3-chroot/usr/lib64/libbeecrypt.so.*
 	rm -f stage3-chroot/usr/lib64/*.la
 
@@ -689,12 +697,11 @@ stage3-chroot/usr/bin/nano: nano-$(NANO_VERSION).tar.gz
 	rm -rf nano-$(NANO_VERSION)
 	tar -zxf $^
 	cd nano-$(NANO_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	LDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64 \
 	./configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	cd nano-$(NANO_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE)
+	cd nano-$(NANO_VERSION) && $(MAKE)
 	cd nano-$(NANO_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
 
 nano-$(NANO_VERSION).tar.gz:
@@ -707,11 +714,10 @@ stage3-chroot/usr/bin/grep: grep-$(GREP_VERSION).tar.xz
 	rm -rf grep-$(GREP_VERSION)
 	tar -Jxf $^
 	cd grep-$(GREP_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	./configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	cd grep-$(GREP_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE)
+	cd grep-$(GREP_VERSION) && $(MAKE)
 	cd grep-$(GREP_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
 
 grep-$(GREP_VERSION).tar.xz:
@@ -724,12 +730,11 @@ stage3-chroot/usr/bin/less: less-$(LESS_VERSION).tar.gz
 	rm -rf less-$(LESS_VERSION)
 	tar -zxf $^
 	cd less-$(LESS_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	LDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64 \
 	./configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	cd less-$(LESS_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE)
+	cd less-$(LESS_VERSION) && $(MAKE)
 	cd less-$(LESS_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
 
 less-$(LESS_VERSION).tar.gz:
@@ -744,12 +749,11 @@ stage3-chroot/usr/bin/strace: strace-$(STRACE_SHORT_COMMIT).tar.gz stage3-chroot
 	cd strace-$(STRACE_COMMIT) && patch -p1 < ../0001-Build-strace-for-RISC-V.patch
 	cd strace-$(STRACE_COMMIT) && ./bootstrap
 	cd strace-$(STRACE_COMMIT) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	LDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64 \
 	./configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	cd strace-$(STRACE_COMMIT) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE)
+	cd strace-$(STRACE_COMMIT) && $(MAKE)
 	cd strace-$(STRACE_COMMIT) && make install DESTDIR=$(ROOT)/stage3-chroot
 
 strace-$(STRACE_SHORT_COMMIT).tar.gz:
@@ -762,7 +766,6 @@ stage3-chroot/usr/bin/bzip2: bzip2-$(BZIP2_VERSION).tar.gz
 	rm -rf bzip2-$(BZIP2_VERSION)
 	tar -zxf $^
 	cd bzip2-$(BZIP2_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	$(MAKE) libbz2.a bzip2 bzip2recover \
 	PREFIX=/usr \
 	CC=riscv64-unknown-linux-gnu-gcc \
@@ -782,12 +785,11 @@ stage3-chroot/usr/bin/make: make-$(MAKE_VERSION).tar.gz
 	rm -rf make-$(MAKE_VERSION)
 	tar -zxf $^
 	cd make-$(MAKE_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	./configure \
 	    --without-guile \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	cd make-$(MAKE_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE)
+	cd make-$(MAKE_VERSION) && $(MAKE)
 	cd make-$(MAKE_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
 
 make-$(MAKE_VERSION).tar.gz:
@@ -800,11 +802,12 @@ stage3-chroot/usr/bin/diff: diffutils-$(DIFFUTILS_VERSION).tar.xz
 	rm -rf diffutils-$(DIFFUTILS_VERSION)
 	tar -Jxf $^
 	cd diffutils-$(DIFFUTILS_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	./configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	cd diffutils-$(DIFFUTILS_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE)
+# ./configure misdetects getopt when cross-compiling.
+	perl -pi.bak -e 's{^#define __GETOPT_PREFIX.*}{}' diffutils-$(DIFFUTILS_VERSION)/lib/config.h
+	cd diffutils-$(DIFFUTILS_VERSION) && $(MAKE)
 	cd diffutils-$(DIFFUTILS_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
 
 diffutils-$(DIFFUTILS_VERSION).tar.xz:
@@ -817,11 +820,10 @@ stage3-chroot/usr/bin/find: findutils-$(FINDUTILS_VERSION).tar.gz
 	rm -rf findutils-$(FINDUTILS_VERSION)
 	tar -zxf $^
 	cd findutils-$(FINDUTILS_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	./configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	cd findutils-$(FINDUTILS_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE)
+	cd findutils-$(FINDUTILS_VERSION) && $(MAKE)
 	cd findutils-$(FINDUTILS_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
 
 findutils-$(FINDUTILS_VERSION).tar.gz:
@@ -834,11 +836,10 @@ stage3-chroot/usr/bin/sed: sed-$(SED_VERSION).tar.gz
 	rm -rf sed-$(SED_VERSION)
 	tar -zxf $^
 	cd sed-$(SED_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	./configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	cd sed-$(SED_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE)
+	cd sed-$(SED_VERSION) && $(MAKE)
 	cd sed-$(SED_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
 
 sed-$(SED_VERSION).tar.gz:
@@ -851,11 +852,10 @@ stage3-chroot/usr/bin/patch: patch-$(PATCH_VERSION).tar.gz
 	rm -rf patch-$(PATCH_VERSION)
 	tar -zxf $^
 	cd patch-$(PATCH_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	./configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	cd patch-$(PATCH_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE)
+	cd patch-$(PATCH_VERSION) && $(MAKE)
 	cd patch-$(PATCH_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
 
 patch-$(PATCH_VERSION).tar.gz:
@@ -869,11 +869,11 @@ stage3-chroot/usr/bin/hostname: hostname-$(HOSTNAME_VERSION).tar.gz
 	tar -zxf $^
 	cd hostname && patch -p1 < ../hostname-rh.patch
 	cd hostname && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
-	$(MAKE) \
 	CC=riscv64-unknown-linux-gnu-gcc \
-	CFLAGS="-O2 -g"
-	cd hostname && make install BASEDIR=$(ROOT)/stage3-chroot
+	CFLAGS="-O2 -g" \
+	$(MAKE)
+	cd hostname && \
+	make install BASEDIR=$(ROOT)/stage3-chroot
 
 hostname-$(HOSTNAME_VERSION).tar.gz:
 	rm -f $@ $@-t
@@ -885,12 +885,11 @@ stage3-chroot/usr/bin/gettext: gettext-$(GETTEXT_VERSION).tar.gz
 	rm -rf gettext-$(GETTEXT_VERSION)
 	tar -zxf $^
 	cd gettext-$(GETTEXT_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	./configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	cd gettext-$(GETTEXT_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE)
-	cd gettext-$(GETTEXT_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make install DESTDIR=$(ROOT)/stage3-chroot
+	cd gettext-$(GETTEXT_VERSION) && $(MAKE)
+	cd gettext-$(GETTEXT_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
 	rm -f stage3-chroot/usr/lib64/*.la
 
 gettext-$(GETTEXT_VERSION).tar.gz:
@@ -902,8 +901,19 @@ gettext-$(GETTEXT_VERSION).tar.gz:
 stage3-chroot/usr/bin/lua: lua-$(LUA_VERSION).tar.gz
 	rm -rf lua-$(LUA_VERSION)
 	tar -zxf $^
-	cd lua-$(LUA_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE) PLAT=linux INSTALL_TOP=/usr CC=riscv64-unknown-linux-gnu-gcc AR="riscv64-unknown-linux-gnu-ar rcu" RANLIB="riscv64-unknown-linux-gnu-ranlib" MYLDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64 MYLIBS=-ltinfo MYCFLAGS="-fPIC -DLUA_COMPAT_5_1"
-	cd lua-$(LUA_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make install INSTALL_TOP=$(ROOT)/stage3-chroot/usr INSTALL_LIB=$(ROOT)/stage3-chroot/usr/lib64
+# Missing inclusion of <sys/ucontext.h>.
+	cd lua-$(LUA_VERSION) && \
+	patch -p1 < ../lua-5.3.4-include-ucontext.patch
+	cd lua-$(LUA_VERSION) && \
+	$(MAKE) PLAT=linux INSTALL_TOP=/usr \
+	        CC=riscv64-unknown-linux-gnu-gcc \
+	        AR="riscv64-unknown-linux-gnu-ar rcu" \
+	        RANLIB="riscv64-unknown-linux-gnu-ranlib" \
+	        MYLDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64 \
+	        MYLIBS=-ltinfo \
+	        MYCFLAGS="-fPIC -DLUA_COMPAT_5_1"
+	cd lua-$(LUA_VERSION) && \
+	make install INSTALL_TOP=$(ROOT)/stage3-chroot/usr INSTALL_LIB=$(ROOT)/stage3-chroot/usr/lib64
 
 lua-$(LUA_VERSION).tar.gz:
 	rm -f $@ $@-t
@@ -915,12 +925,11 @@ stage3-chroot/usr/bin/xz: xz-$(XZ_VERSION).tar.gz
 	rm -rf xz-$(XZ_VERSION)
 	tar -zxf $^
 	cd xz-$(XZ_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	./configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	cd xz-$(XZ_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE)
-	cd xz-$(XZ_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH make install DESTDIR=$(ROOT)/stage3-chroot
+	cd xz-$(XZ_VERSION) && $(MAKE)
+	cd xz-$(XZ_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
 	rm -f stage3-chroot/usr/lib64/*.la
 
 xz-$(XZ_VERSION).tar.gz:
@@ -933,14 +942,13 @@ stage3-chroot/usr/bin/git: git-$(GIT_VERSION).tar.gz
 	rm -rf git-$(GIT_VERSION)
 	tar -zxf $^
 	cd git-$(GIT_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	./configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64 \
 	    ac_cv_fread_reads_directories=no \
 	    ac_cv_snprintf_returns_bogus=no \
 	    LDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64
-	cd git-$(GIT_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE) NO_PERL=1
+	cd git-$(GIT_VERSION) && $(MAKE) NO_PERL=1
 	cd git-$(GIT_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot NO_PERL=1
 
 git-$(GIT_VERSION).tar.gz:
@@ -953,11 +961,10 @@ stage3-chroot/usr/bin/gawk: gawk-$(GAWK_VERSION).tar.gz
 	rm -rf gawk-$(GAWK_VERSION)
 	tar -zxf $^
 	cd gawk-$(GAWK_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	./configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	cd gawk-$(GAWK_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE)
+	cd gawk-$(GAWK_VERSION) && $(MAKE)
 	cd gawk-$(GAWK_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
 
 gawk-$(GAWK_VERSION).tar.gz:
@@ -970,7 +977,6 @@ stage3-chroot/usr/bin/vim: vim-$(VIM_VERSION).tar.gz
 	rm -rf vim74
 	bzcat $^ | tar xf -
 	cd vim74/src && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	vim_cv_memmove_handles_overlap=yes \
 	vim_cv_stat_ignores_slash=no \
 	vim_cv_getcwd_broken=no \
@@ -982,7 +988,7 @@ stage3-chroot/usr/bin/vim: vim-$(VIM_VERSION).tar.gz
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64 \
 	    --with-tlib=tinfo
-	cd vim74/src && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE)
+	cd vim74/src && $(MAKE)
 	cd vim74/src && make install DESTDIR=$(ROOT)/stage3-chroot STRIP=riscv64-unknown-linux-gnu-strip
 
 vim-$(VIM_VERSION).tar.gz:
@@ -997,7 +1003,6 @@ stage3-chroot/usr/bin/screen: screen-$(SCREEN_VERSION).tar.gz
 	cd screen-$(SCREEN_VERSION) && patch -p1 < ../screen-cross-compile.patch
 	cd screen-$(SCREEN_VERSION) && autoreconf -i
 	cd screen-$(SCREEN_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	./configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64 \
@@ -1006,7 +1011,7 @@ stage3-chroot/usr/bin/screen: screen-$(SCREEN_VERSION).tar.gz
 	    --with-pty-group=5 \
 	    --with-sys-screenrc="/etc/screenrc" \
 	    --with-socket-dir="/var/run/screen"
-	cd screen-$(SCREEN_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE) LDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64
+	cd screen-$(SCREEN_VERSION) && $(MAKE) LDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64
 	cd screen-$(SCREEN_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
 # If the user has a .screenrc, indicating local preferences, copy
 # it into the chroot.  However don't fail if not found.
@@ -1022,11 +1027,10 @@ stage3-chroot/usr/bin/m4: m4-$(M4_VERSION).tar.gz
 	rm -rf m4-$(M4_VERSION)
 	bzcat $^ | tar xf -
 	cd m4-$(M4_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	./configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	cd m4-$(M4_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE)
+	cd m4-$(M4_VERSION) && $(MAKE)
 	cd m4-$(M4_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
 
 m4-$(M4_VERSION).tar.gz:
@@ -1039,14 +1043,13 @@ stage3-chroot/usr/bin/flex: flex-$(FLEX_VERSION).tar.gz
 	rm -rf flex-$(FLEX_VERSION)
 	tar zxf $^
 	cd flex-$(FLEX_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	./configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
 # flex tries to build the tests during 'make all', by running the
 # already-compiled flex binary.  Set SUBDIRS to prevent it from going
 # into any directories except those needed to build flex itself.
-	cd flex-$(FLEX_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE) SUBDIRS="lib src"
+	cd flex-$(FLEX_VERSION) && $(MAKE) SUBDIRS="lib src"
 	cd flex-$(FLEX_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot SUBDIRS="lib src"
 
 flex-$(FLEX_VERSION).tar.gz:
@@ -1059,11 +1062,10 @@ stage3-chroot/usr/bin/bison: bison-$(BISON_VERSION).tar.gz
 	rm -rf bison-$(BISON_VERSION)
 	tar zxf $^
 	cd bison-$(BISON_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	./configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	cd bison-$(BISON_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE)
+	cd bison-$(BISON_VERSION) && $(MAKE)
 	cd bison-$(BISON_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
 
 bison-$(BISON_VERSION).tar.gz:
@@ -1076,11 +1078,10 @@ stage3-chroot/usr/bin/autoconf: autoconf-$(AUTOCONF_VERSION).tar.gz
 	rm -rf autoconf-$(AUTOCONF_VERSION)
 	tar zxf $^
 	cd autoconf-$(AUTOCONF_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	./configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	cd autoconf-$(AUTOCONF_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE)
+	cd autoconf-$(AUTOCONF_VERSION) && $(MAKE)
 	cd autoconf-$(AUTOCONF_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
 
 autoconf-$(AUTOCONF_VERSION).tar.gz:
@@ -1095,11 +1096,10 @@ stage3-chroot/usr/bin/automake: automake-$(AUTOMAKE_VERSION).tar.gz automake-por
 	cd automake-$(AUTOMAKE_VERSION) && \
 	patch -p1 < ../automake-port-to-future-gzip.patch && \
 	patch -p1 < ../automake-port-to-perl522.patch && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	./configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	cd automake-$(AUTOMAKE_VERSION) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE)
+	cd automake-$(AUTOMAKE_VERSION) && $(MAKE)
 	cd automake-$(AUTOMAKE_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot
 
 automake-$(AUTOMAKE_VERSION).tar.gz:
@@ -1111,25 +1111,20 @@ automake-$(AUTOMAKE_VERSION).tar.gz:
 stage3-chroot/usr/bin/eu-readelf: elfutils-$(ELFUTILS_VERSION).tar.bz2
 	rm -rf elfutils-$(ELFUTILS_VERSION)
 	bzcat $^ | tar xf -
-	cd elfutils-$(ELFUTILS_VERSION) && patch -p1 < ../elfutils-fix-linking.patch
-	cd elfutils-$(ELFUTILS_VERSION) && automake
+#	cd elfutils-$(ELFUTILS_VERSION) && patch -p1 < ../elfutils-fix-linking.patch
 	cd elfutils-$(ELFUTILS_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
-	LDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64 \
 	./configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64 \
 	    --program-prefix=eu-
 	cd elfutils-$(ELFUTILS_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH && \
-	$(MAKE) LDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64
+	$(MAKE) V=1
 	cd elfutils-$(ELFUTILS_VERSION) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH && \
 	make install DESTDIR=$(ROOT)/stage3-chroot
 
 elfutils-$(ELFUTILS_VERSION).tar.bz2:
 	rm -f $@ $@-t
-	wget -O $@-t https://fedorahosted.org/releases/e/l/elfutils/$(ELFUTILS_VERSION)/elfutils-0.166.tar.bz2
+	wget -O $@-t https://sourceware.org/elfutils/ftp/$(ELFUTILS_VERSION)/elfutils-$(ELFUTILS_VERSION).tar.bz2
 	mv $@-t $@
 
 # Cross-compile jsoncpp.  This is a dependency of native cmake, but it
@@ -1140,7 +1135,6 @@ stage3-chroot/usr/lib64/libjsoncpp.so: jsoncpp-$(JSONCPP_VERSION).tar.gz
 	zcat $^ | tar xf -
 	cd jsoncpp-$(JSONCPP_VERSION) && mkdir build
 	cd jsoncpp-$(JSONCPP_VERSION)/build && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	LDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64 \
 	cmake .. \
 	    -DCMAKE_C_COMPILER=riscv64-unknown-linux-gnu-gcc \
@@ -1155,9 +1149,8 @@ stage3-chroot/usr/lib64/libjsoncpp.so: jsoncpp-$(JSONCPP_VERSION).tar.gz
 #	    -DSYSCONF_INSTALL_DIR:PATH=/etc
 #	    -DSHARE_INSTALL_PREFIX:PATH=/usr/share
 	cd jsoncpp-$(JSONCPP_VERSION)/build && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH && $(MAKE)
+	$(MAKE)
 	cd jsoncpp-$(JSONCPP_VERSION)/build && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH && \
 	make install DESTDIR=$(ROOT)/stage3-chroot
 	mv stage3-chroot/usr/lib/libjsoncpp.{a,so}* stage3-chroot/usr/lib64/
 
@@ -1170,18 +1163,17 @@ jsoncpp-$(JSONCPP_VERSION).tar.gz:
 # We build this from a git commit, with a few hacks to the configure
 # script.
 stage3-chroot/usr/bin/rpm: rpm-$(RPM_SHORT_COMMIT).tar.gz db-$(BDB_VERSION).tar.gz
-	rm -rf rpm-$(RPM_SHORT_COMMIT)
+	rm -rf rpm-$(RPM_COMMIT)
 	tar -zxf rpm-$(RPM_SHORT_COMMIT).tar.gz
-	tar -zxf db-$(BDB_VERSION).tar.gz -C rpm-$(RPM_SHORT_COMMIT)
-	cd rpm-$(RPM_SHORT_COMMIT) && ln -s db-$(BDB_VERSION) db
-	cd rpm-$(RPM_SHORT_COMMIT) && \
+	tar -zxf db-$(BDB_VERSION).tar.gz -C rpm-$(RPM_COMMIT)
+	cd rpm-$(RPM_COMMIT) && ln -s db-$(BDB_VERSION) db
+	cd rpm-$(RPM_COMMIT) && \
 	patch -p1 < ../0001-RISCV-64-bit-riscv64-support.patch && \
 	patch -p1 < ../0002-rpmrc-Convert-uname.machine-riscv-to-riscv32-riscv64.patch && \
 	patch -p1 < ../0003-build-fgetc-returns-int-not-char.patch && \
 	patch -p1 < ../0001-HACKS-TO-GET-RPM-TO-CROSS-COMPILE.patch
-	cd rpm-$(RPM_SHORT_COMMIT) && autoreconf -i
-	cd rpm-$(RPM_SHORT_COMMIT) && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
+	cd rpm-$(RPM_COMMIT) && autoreconf -i
+	cd rpm-$(RPM_COMMIT) && \
 	LDFLAGS=-L$(ROOT)/stage3-chroot/usr/lib64 \
 	./configure \
 	    --host=riscv64-unknown-linux-gnu \
@@ -1197,8 +1189,8 @@ stage3-chroot/usr/bin/rpm: rpm-$(RPM_SHORT_COMMIT).tar.gz db-$(BDB_VERSION).tar.
 	    --without-external-db \
 	    --enable-ndb \
 	    --disable-plugins
-	cd rpm-$(RPM_SHORT_COMMIT) && PATH=$(ROOT)/fixed-gcc:$$PATH $(MAKE) V=1
-	cd rpm-$(RPM_SHORT_COMMIT) && PATH=$(ROOT)/fixed-gcc:$$PATH make install DESTDIR=$(ROOT)/stage3-chroot
+	cd rpm-$(RPM_COMMIT) && $(MAKE) V=1
+	cd rpm-$(RPM_COMMIT) && make install DESTDIR=$(ROOT)/stage3-chroot
 	rm -f stage3-chroot/usr/lib64/*.la
 # Fix optflags in redhat-specific RPM configuration.
 	echo 'optflags: riscv64 %{__global_cflags}' >> $(ROOT)/stage3-chroot/usr/lib/rpm/redhat/rpmrc
@@ -1227,7 +1219,7 @@ stage3-chroot/usr/bin/rpm: rpm-$(RPM_SHORT_COMMIT).tar.gz db-$(BDB_VERSION).tar.
 
 rpm-$(RPM_SHORT_COMMIT).tar.gz:
 	rm -f $@ $@-t
-	wget -O $@-t 'http://rpm.org/gitweb?p=rpm.git;a=snapshot;h=$(RPM_COMMIT);sf=tgz'
+	wget -O $@-t 'https://github.com/rpm-software-management/rpm/archive/$(RPM_COMMIT).tar.gz'
 	mv $@-t $@
 
 db-$(BDB_VERSION).tar.gz:
@@ -1238,7 +1230,7 @@ db-$(BDB_VERSION).tar.gz:
 # Add a custom poweroff program.
 # For some reason this only works in qemu, not spike.
 stage3-chroot/usr/bin/poweroff: poweroff.c
-	$(ROOT)/fixed-gcc/riscv64-unknown-linux-gnu-gcc $^ -o $@
+	riscv64-unknown-linux-gnu-gcc $^ -o $@
 
 # Create a place to put useful command aliases.
 stage3-chroot/etc/profile.d/aliases.sh: aliases.sh
@@ -1295,15 +1287,20 @@ stage3-disk.img.xz: stage3-disk.img
 	xz --best -k $^
 
 # Helper which boots stage3 disk image in spike.
-boot-stage3-in-spike: $(STAGE3_DISK) stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
+boot-stage3-in-spike: $(STAGE3_DISK) host-tools/riscv64-unknown-elf/bin/bbl
 	spike +disk=$(STAGE3_DISK) \
-	    /usr/bin/bbl stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
+	    host-tools/riscv64-unknown-elf/bin/bbl
 
 # Helper which boots stage3 disk image in qemu.
-boot-stage3-in-qemu: $(STAGE3_DISK) stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
-	qemu-system-riscv -m 4G -kernel /usr/bin/bbl \
-	    -append ./stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
-	    -drive file=$(STAGE3_DISK),format=raw -nographic
+boot-stage3-in-qemu: $(STAGE3_DISK) host-tools/riscv64-unknown-elf/bin/bbl
+	qemu-system-riscv64 \
+	    -nographic -machine virt -m 2G \
+	    -kernel host-tools/riscv64-unknown-elf/bin/bbl \
+	    -append "console=ttyS0 ro root=/dev/vda" \
+	    -device virtio-blk-device,drive=hd0 \
+	    -drive file=$(STAGE3_DISK),format=raw,id=hd0 \
+	    -device virtio-net-device,netdev=usernet \
+	    -netdev user,id=usernet
 
 ifneq ($(origin SRPM), undefined)
 
@@ -1490,7 +1487,7 @@ STAGE4_KOJI_NOARCH_NAMES = \
 	tzdata \
 	words
 
-STAGE4_KOJI_FEDORA_RELEASE = f25
+STAGE4_KOJI_FEDORA_RELEASE = f27
 
 stage4: stage4-disk.img
 

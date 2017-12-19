@@ -1,0 +1,10 @@
+--- lua-5.3.4/src/lprefix.h~	2014-12-29 16:54:13.000000000 +0000
++++ lua-5.3.4/src/lprefix.h	2017-12-19 21:21:04.561650970 +0000
+@@ -7,6 +7,7 @@
+ #ifndef lprefix_h
+ #define lprefix_h
+ 
++#include <sys/ucontext.h>
+ 
+ /*
+ ** Allows POSIX/XSI stuff
