@@ -212,6 +212,7 @@ stage3: riscv-linux/vmlinux \
 	stage3-chroot/rpmbuild/RPMS/noarch/kernel-headers-1-1.fc27.noarch.rpm \
 	stage3-tdnf/tdnf-$(TDNF_VERSION)-2.fc27.src.rpm \
 	stage3-chroot/etc/yum.repos.d/local.repo \
+	stage3-chroot/usr/lib/libtinfo.so.6 \
 	$(STAGE3_DISK)
 
 riscv-linux/vmlinux: riscv-linux/arch/riscv/include/asm/serial.h riscv-linux/.config
@@ -1250,6 +1251,14 @@ stage3-chroot/usr/lib/rpm/config.sub: config.sub
 # Create /rpmbuild inside the stage3 chroot.
 stage3-chroot/rpmbuild:
 	mkdir -p $@/{BUILD,BUILDROOT,RPMS/noarch,RPMS/riscv64,SOURCES,SPECS,SRPMS}
+
+# This library is required by bash (used to run the init script) and
+# located in /usr/lib64.  However at the point we boot, ld.so.cache is
+# not created and the default library path only includes /usr/lib, so
+# we need to make a symlink.
+stage3-chroot/usr/lib/libtinfo.so.6:
+	cd stage3-chroot/usr/lib && \
+	ln -s ../lib64/libtinfo.so.6
 
 INIT=init.sh
 
