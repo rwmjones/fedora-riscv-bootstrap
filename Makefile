@@ -21,15 +21,43 @@ clean:
 #----------------------------------------------------------------------
 # Stage 1
 
-stage1: host-tools/bin/qemu-system-riscv64
+RISCV_QEMU_COMMIT      = 07146abe22e5ea5948fda5d511fd1fd228e196fa
+RISCV_QEMU_SHORTCOMMIT = 07146abe
 
-host-tools/bin/qemu-system-riscv64:
-	cd riscv-qemu && \
-	./configure --prefix=$(ROOT)/host-tools --sysconfdir=$(ROOT)/host-tools/etc --target-list="riscv64-softmmu" --disable-werror --disable-xen --disable-tpm
-	cd riscv-qemu && \
-	$(MAKE)
-	cd riscv-qemu && \
-	$(MAKE) install
+stage1: stage1-riscv-qemu/riscv-qemu-$(RISCV_QEMU_SHORTCOMMIT).tar.gz \
+	stage1-riscv-qemu/riscv-qemu.spec \
+	stamp-riscv-qemu-installed
+
+stage1-riscv-qemu/riscv-qemu-$(RISCV_QEMU_SHORTCOMMIT).tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t 'https://github.com/riscv/riscv-qemu/archive/$(RISCV_QEMU_COMMIT)/riscv-qemu-$(RISCV_QEMU_SHORTCOMMIT).tar.gz'
+	mv $@-t $@
+
+stage1-riscv-qemu/riscv-qemu.spec: stage1-riscv-qemu/riscv-qemu.spec.in
+	rm -f $@
+	sed -e 's/@COMMIT@/$(RISCV_QEMU_COMMIT)/g' \
+	    -e 's/@SHORTCOMMIT@/$(RISCV_QEMU_SHORTCOMMIT)/g' \
+	    < $^ > $@-t
+	mv $@-t $@
+
+stamp-riscv-qemu-installed:
+	rm -f $@
+	@rpm -q riscv-qemu >/dev/null || { \
+	    echo "ERROR: You must install riscv-qemu:"; \
+	    echo; \
+	    echo "       dnf copr enable rjones/riscv"; \
+	    echo "       dnf install riscv-qemu"; \
+	    echo; \
+	    echo "OR: you can build it yourself from the stage1-riscv-qemu directory."; \
+	    echo; \
+	    exit 1; \
+	}
+	@qemu-system-riscv64 --version || { \
+	    echo "ERROR: qemu-system-riscv is not working."; \
+	    echo "Make sure you installed the riscv-qemu package."; \
+	    exit 1; \
+	}
+	touch $@
 
 #----------------------------------------------------------------------
 # Stage 2

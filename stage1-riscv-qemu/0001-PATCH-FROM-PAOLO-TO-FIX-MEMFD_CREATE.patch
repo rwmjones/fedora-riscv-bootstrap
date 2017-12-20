@@ -1,0 +1,42 @@
+From e95abd100d4f4532cd4ceeab63f3824befbee323 Mon Sep 17 00:00:00 2001
+From: "Richard W.M. Jones" <rjones@redhat.com>
+Date: Mon, 11 Dec 2017 08:18:44 +0000
+Subject: [PATCH] PATCH FROM PAOLO TO FIX MEMFD_CREATE
+
+(cherry picked from commit 772d0e000b88204af743c008c6625735b243dd4f)
+---
+ configure    | 2 +-
+ util/memfd.c | 4 +---
+ 2 files changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/configure b/configure
+index dd464d3f08..8fa8099c9c 100755
+--- a/configure
++++ b/configure
+@@ -3604,7 +3604,7 @@ fi
+ # check if memfd is supported
+ memfd=no
+ cat > $TMPC << EOF
+-#include <sys/memfd.h>
++#include <sys/mman.h>
+ 
+ int main(void)
+ {
+diff --git a/util/memfd.c b/util/memfd.c
+index 4571d1aba8..412e94a405 100644
+--- a/util/memfd.c
++++ b/util/memfd.c
+@@ -31,9 +31,7 @@
+ 
+ #include "qemu/memfd.h"
+ 
+-#ifdef CONFIG_MEMFD
+-#include <sys/memfd.h>
+-#elif defined CONFIG_LINUX
++#if defined CONFIG_LINUX && !defined CONFIG_MEMFD
+ #include <sys/syscall.h>
+ #include <asm/unistd.h>
+ 
+-- 
+2.15.1
+
