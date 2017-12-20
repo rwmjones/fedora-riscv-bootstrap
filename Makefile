@@ -1305,7 +1305,7 @@ boot-stage3-in-qemu: $(STAGE3_DISK) host-tools/riscv64-unknown-elf/bin/bbl
 	qemu-system-riscv64 \
 	    -nographic -machine virt -m 2G \
 	    -kernel host-tools/riscv64-unknown-elf/bin/bbl \
-	    -append "console=ttyS0 ro root=/dev/vda" \
+	    -append "console=ttyS0 ro root=/dev/vda init=/init" \
 	    -device virtio-blk-device,drive=hd0 \
 	    -drive file=$(STAGE3_DISK),format=raw,id=hd0 \
 	    -device virtio-net-device,netdev=usernet \
