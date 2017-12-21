@@ -1,0 +1,72 @@
+From 552e2ca27c632aeb18c05d61a5e9724a789c033a Mon Sep 17 00:00:00 2001
+From: "Richard W.M. Jones" <rjones@redhat.com>
+Date: Thu, 21 Dec 2017 22:04:44 +0000
+Subject: [PATCH 2/2] ADD DUMB POWEROFF DEVICE
+
+---
+ hw/riscv/virt.c         | 20 ++++++++++++++++++++
+ include/hw/riscv/virt.h |  3 ++-
+ 2 files changed, 22 insertions(+), 1 deletion(-)
+
+diff --git a/hw/riscv/virt.c b/hw/riscv/virt.c
+index 2ec00ceef7..cd81423b16 100644
+--- a/hw/riscv/virt.c
++++ b/hw/riscv/virt.c
+@@ -52,6 +52,7 @@ static const struct MemmapEntry {
+ } virt_memmap[] =
+ {
+     [VIRT_DEBUG] =    {        0x0,      0x100 },
++    [VIRT_POWEROFF] = {      0xff0,       0x10 },
+     [VIRT_MROM] =     {     0x1000,     0x2000 },
+     [VIRT_CLINT] =    {  0x2000000,    0x10000 },
+     [VIRT_PLIC] =     {  0xc000000,  0x4000000 },
+@@ -224,6 +225,15 @@ static void create_fdt(RISCVVirtState *s, const struct MemmapEntry *memmap,
+ 
+ }
+ 
++static void poweroff_write(void *opaque, hwaddr addr,
++                           uint64_t value, unsigned size)
++{
++    fprintf (stderr, "qemu: poweroff_write\n");
++    if (size == 4 && value == 0x0FF0FF) {
++        exit (0);
++    }
++}
++
+ static void riscv_virt_board_init(MachineState *machine)
+ {
+     const struct MemmapEntry *memmap = virt_memmap;
+@@ -323,6 +333,16 @@ static void riscv_virt_board_init(MachineState *machine)
+         s->soc.harts[0].env.irq[4], boot_rom,
+         &s->soc.harts[0].env, serial_hds[0]);
+ #endif
++
++    /* XXX Dumb poweroff device. */
++    static const MemoryRegionOps io_ops = {
++        .write = poweroff_write,
++        .endianness = DEVICE_NATIVE_ENDIAN,
++    };
++    static MemoryRegion io;
++    memory_region_init_io(&io, NULL, &io_ops, NULL, "poweroff", 8);
++    memory_region_add_subregion(system_memory,
++                                virt_memmap[VIRT_POWEROFF].base, &io);
+ }
+ 
+ static int riscv_virt_board_sysbus_device_init(SysBusDevice *sysbusdev)
+diff --git a/include/hw/riscv/virt.h b/include/hw/riscv/virt.h
+index 9e5467a405..f9084da55b 100644
+--- a/include/hw/riscv/virt.h
++++ b/include/hw/riscv/virt.h
+@@ -49,7 +49,8 @@ enum {
+     VIRT_PLIC,
+     VIRT_UART0,
+     VIRT_VIRTIO,
+-    VIRT_DRAM
++    VIRT_DRAM,
++    VIRT_POWEROFF,
+ };
+ 
+ 
+-- 
+2.15.1
+

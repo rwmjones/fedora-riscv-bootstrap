@@ -2,7 +2,7 @@
 
 Name:           riscv-qemu
 Version:        2.7.50
-Release:        0.1.git@SHORTCOMMIT@%{?dist}
+Release:        0.2.git@SHORTCOMMIT@%{?dist}
 Summary:        RISC-V fork of QEMU
 License:        GPLv2+ and LGPLv2+ and BSD
 
@@ -12,6 +12,13 @@ Source0:        https://github.com/riscv/%{name}/archive/@COMMIT@/%{name}-@SHORT
 # This fixes a bug in qemu or works around a bug in Fedora's glibc
 # depending who you believe.
 Patch1:         0001-PATCH-FROM-PAOLO-TO-FIX-MEMFD_CREATE.patch
+
+# https://github.com/riscv/riscv-qemu/pull/82
+# With htif disabled there is no usable poweroff device.  Until that
+# is fixed add a dumb poweroff device which powers off qemu when
+# (uint32_t) 0x0ff0ff is written to physical address 0xff0.
+# This requires a corresponding patch to riscv-pk.
+Patch2:         0002-ADD-DUMB-POWEROFF-DEVICE.patch
 
 # These were just copied from qemu.spec, they are probably not
 # all required.
@@ -82,6 +89,7 @@ This is the RISC-V fork of QEMU.
 %prep
 %setup -q -n %{name}-@COMMIT@
 %patch1 -p1
+%patch2 -p1
 
 
 %build
