@@ -1,0 +1,10 @@
+--- riscv-binutils-gdb-riscv-binutils-2.29/gdb/Makefile.in.old	2017-12-04 22:15:15.000000000 +0000
++++ riscv-binutils-gdb-riscv-binutils-2.29/gdb/Makefile.in	2017-12-27 19:39:11.348372955 +0000
+@@ -1797,6 +1797,7 @@
+ 	reggroups.o \
+ 	registry.o \
+ 	reverse.o \
++	riscv-linux-nat.o \
+ 	rsp-low.o \
+ 	run-time-clock.o \
+ 	rust-lang.o \

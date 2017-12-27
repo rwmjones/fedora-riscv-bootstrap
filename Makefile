@@ -422,10 +422,9 @@ coreutils-$(COREUTILS_VERSION).tar.xz:
 stage3-chroot/usr/bin/as: binutils-$(BINUTILS_X_VERSION).tar.gz
 	rm -rf riscv-binutils-gdb-riscv-binutils-$(BINUTILS_X_VERSION)
 	zcat $^ | tar xf -
-# This patch works around https://github.com/riscv/riscv-binutils-gdb/issues/96
-# It completely breaks gdb, but we don't care for stage3.
+# Fix for https://github.com/riscv/riscv-binutils-gdb/issues/96
 	cd riscv-binutils-gdb-riscv-binutils-$(BINUTILS_X_VERSION) && \
-	patch -p1 < ../riscv-binutils-gdb-riscv-binutils-2.29-break-gdb.patch
+	patch -p1 < ../riscv-binutils-fix-gdb.patch
 	mkdir riscv-binutils-gdb-riscv-binutils-$(BINUTILS_X_VERSION)/build
 	cd riscv-binutils-gdb-riscv-binutils-$(BINUTILS_X_VERSION)/build && \
 	../configure \
