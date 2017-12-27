@@ -1,32 +1,7 @@
-From f53d4ceb4394158edd0d681c01214a278e99f00d Mon Sep 17 00:00:00 2001
-From: "Richard W.M. Jones" <rjones@redhat.com>
-Date: Mon, 22 Aug 2016 11:24:43 +0100
-Subject: [PATCH] HACKS TO GET RPM TO CROSS-COMPILE
-
----
- Makefile.am            | 2 +-
- configure.ac           | 9 +++++++++
- tools/sepdebugcrcfix.c | 2 ++
- 3 files changed, 12 insertions(+), 1 deletion(-)
-
-diff --git a/Makefile.am b/Makefile.am
-index 08d8c8e..62d6fd2 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -173,7 +173,7 @@ elfdeps_LDADD +=	@WITH_LIBELF_LIB@ @WITH_POPT_LIB@
- 
- rpmlibexec_PROGRAMS +=	sepdebugcrcfix
- sepdebugcrcfix_SOURCES = tools/sepdebugcrcfix.c
--sepdebugcrcfix_LDADD =	@WITH_LIBELF_LIB@
-+sepdebugcrcfix_LDADD =	@WITH_LIBELF_LIB@ -lz
- endif
- endif
- 
-diff --git a/configure.ac b/configure.ac
-index e2d5ec3..096f5f8 100644
---- a/configure.ac
-+++ b/configure.ac
-@@ -226,6 +226,8 @@ AC_SEARCH_LIBS(dlopen, [dl])
+diff -ur rpm-b22f9609d82625ec451d48515d6d318c5bf72d83.old/configure.ac rpm-b22f9609d82625ec451d48515d6d318c5bf72d83/configure.ac
+--- rpm-b22f9609d82625ec451d48515d6d318c5bf72d83.old/configure.ac	2017-12-15 14:24:50.000000000 +0000
++++ rpm-b22f9609d82625ec451d48515d6d318c5bf72d83/configure.ac	2017-12-27 16:09:22.915974474 +0000
+@@ -253,6 +253,8 @@
  
  #=================
  # Check for libelf library. Prefer external, otherwise none.
@@ -35,7 +10,7 @@ index e2d5ec3..096f5f8 100644
  WITH_LIBELF_LIB=
  AC_CHECK_HEADER([libelf.h])
  AC_CHECK_HEADERS([gelf.h], [
-@@ -237,6 +239,7 @@ AC_CHECK_HEADERS([gelf.h], [
+@@ -264,6 +266,7 @@
  ])
  AC_SUBST(WITH_LIBELF_LIB)
  AM_CONDITIONAL(LIBELF,[test "$WITH_LIBELF" = yes])
@@ -43,7 +18,7 @@ index e2d5ec3..096f5f8 100644
  
  AC_CHECK_HEADERS([dwarf.h], [
    WITH_LIBDWARF=yes
-@@ -309,6 +312,8 @@ AC_SUBST(WITH_NSS_LIB)
+@@ -428,6 +431,8 @@
  WITH_MAGIC_INCLUDE=
  WITH_MAGIC_LIB=
  
@@ -52,7 +27,7 @@ index e2d5ec3..096f5f8 100644
  AC_CHECK_HEADER([magic.h], [
      AC_CHECK_LIB(magic, magic_open, [
        WITH_MAGIC_INCLUDE=
-@@ -319,6 +324,7 @@ AC_CHECK_HEADER([magic.h], [
+@@ -438,6 +443,7 @@
  ],[
        AC_MSG_ERROR([missing required header magic.h]) 
  ])
@@ -60,27 +35,38 @@ index e2d5ec3..096f5f8 100644
  
  AC_SUBST(WITH_MAGIC_INCLUDE)
  AC_SUBST(WITH_MAGIC_LIB)
-@@ -369,6 +375,8 @@ AM_CONDITIONAL(WITH_ARCHIVE,[test "$with_archive" = yes])
+@@ -481,6 +487,7 @@
+       AC_MSG_ERROR([missing required header archive.h])
+   ])
+ ])
++LIBS="$old_LIBS"
  
- #=================
+ AC_SUBST(WITH_ARCHIVE_INCLUDE)
+ AC_SUBST(WITH_ARCHIVE_LIB)
+@@ -490,6 +497,8 @@
  # Check for elfutils libdw library with dwelf_elf_gnu_build_id.
+ WITH_LIBDW_LIB=
+ HAVE_LIBDW_STRTAB=
 +old_LIBS="$LIBS"
 +LIBS="-lz -llzma -lelf"
  AS_IF([test "$WITH_LIBELF" = yes],[
    AC_CHECK_HEADERS([elfutils/libdwelf.h],[
-     AC_CHECK_LIB(dw, dwelf_elf_gnu_build_id, [
-@@ -381,6 +389,7 @@ AS_IF([test "$WITH_LIBELF" = yes],[
-   AC_SUBST(WITH_LIBDW_LIB)
-   AM_CONDITIONAL(LIBDW,[test "$WITH_LIBDW" = yes])
- ])
-+LIBS="$old_LIBS"
+     # dwelf_elf_gnu_build_id was introduced in elfutils 0.159
+diff -ur rpm-b22f9609d82625ec451d48515d6d318c5bf72d83.old/Makefile.am rpm-b22f9609d82625ec451d48515d6d318c5bf72d83/Makefile.am
+--- rpm-b22f9609d82625ec451d48515d6d318c5bf72d83.old/Makefile.am	2017-12-15 14:24:50.000000000 +0000
++++ rpm-b22f9609d82625ec451d48515d6d318c5bf72d83/Makefile.am	2017-12-27 16:12:46.551760368 +0000
+@@ -175,7 +175,7 @@
  
- #=================
- # Process --with/without-external-db
-diff --git a/tools/sepdebugcrcfix.c b/tools/sepdebugcrcfix.c
-index cd7fa02..8a5ba98 100644
---- a/tools/sepdebugcrcfix.c
-+++ b/tools/sepdebugcrcfix.c
+ rpmlibexec_PROGRAMS +=	sepdebugcrcfix
+ sepdebugcrcfix_SOURCES = tools/sepdebugcrcfix.c
+-sepdebugcrcfix_LDADD =	@WITH_LIBELF_LIB@
++sepdebugcrcfix_LDADD =	@WITH_LIBELF_LIB@ -lz
+ endif #LIBELF
+ 
+ rpmlibexec_PROGRAMS +=	rpmdeps
+diff -ur rpm-b22f9609d82625ec451d48515d6d318c5bf72d83.old/tools/sepdebugcrcfix.c rpm-b22f9609d82625ec451d48515d6d318c5bf72d83/tools/sepdebugcrcfix.c
+--- rpm-b22f9609d82625ec451d48515d6d318c5bf72d83.old/tools/sepdebugcrcfix.c	2017-12-15 14:24:50.000000000 +0000
++++ rpm-b22f9609d82625ec451d48515d6d318c5bf72d83/tools/sepdebugcrcfix.c	2017-12-27 16:08:43.155020246 +0000
 @@ -15,6 +15,8 @@
  
  /* Version 2013-06-24.  */
@@ -88,8 +74,5 @@ index cd7fa02..8a5ba98 100644
 +#include "system.h"
 +
  #define _GNU_SOURCE
- #include <string.h>
- #include <fcntl.h>
--- 
-2.7.4
-
+ 
+ #include "system.h"

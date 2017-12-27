@@ -1,0 +1,11 @@
+--- rpm-b22f9609d82625ec451d48515d6d318c5bf72d83/db3/Makefile.old	2017-12-27 17:58:21.678758657 +0000
++++ rpm-b22f9609d82625ec451d48515d6d318c5bf72d83/db3/Makefile	2017-12-27 17:58:40.747737972 +0000
+@@ -51,7 +51,7 @@
+ ##################################################
+ # C API.
+ ##################################################
+-CFLAGS=		-c $(CPPFLAGS)  
++CFLAGS=		-c $(CPPFLAGS)  -fPIC
+ CC=		$(LIBTOOL) --mode=compile riscv64-unknown-linux-gnu-cc
+ CCLINK=		$(LIBTOOL) --mode=link riscv64-unknown-linux-gnu-cc  
+ 

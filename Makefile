@@ -147,8 +147,8 @@ ZLIB_VERSION       = 1.2.11
 FILE_VERSION       = 5.32
 POPT_VERSION       = 1.16
 BEECRYPT_VERSION   = 4.2.1
-RPM_COMMIT         = 95712183458748ea6cafebac1bdd5daa097d9bee
-RPM_SHORT_COMMIT   = 9571218
+RPM_COMMIT         = b22f9609d82625ec451d48515d6d318c5bf72d83
+RPM_SHORT_COMMIT   = b22f9609
 BDB_VERSION        = 4.5.20
 NANO_VERSION       = 2.6.2
 GREP_VERSION       = 2.25
@@ -1197,9 +1197,6 @@ stage3-chroot/usr/bin/rpm: rpm-$(RPM_SHORT_COMMIT).tar.gz db-$(BDB_VERSION).tar.
 	tar -zxf db-$(BDB_VERSION).tar.gz -C rpm-$(RPM_COMMIT)
 	cd rpm-$(RPM_COMMIT) && ln -s db-$(BDB_VERSION) db
 	cd rpm-$(RPM_COMMIT) && \
-	patch -p1 < ../0001-RISCV-64-bit-riscv64-support.patch && \
-	patch -p1 < ../0002-rpmrc-Convert-uname.machine-riscv-to-riscv32-riscv64.patch && \
-	patch -p1 < ../0003-build-fgetc-returns-int-not-char.patch && \
 	patch -p1 < ../0001-HACKS-TO-GET-RPM-TO-CROSS-COMPILE.patch
 	cd rpm-$(RPM_COMMIT) && autoreconf -i
 	cd rpm-$(RPM_COMMIT) && \
@@ -1213,16 +1210,18 @@ stage3-chroot/usr/bin/rpm: rpm-$(RPM_SHORT_COMMIT).tar.gz db-$(BDB_VERSION).tar.
 	    --with-vendor=redhat \
 	    --without-libarchive \
 	    --with-lua \
-	    --with-beecrypt \
+	    --with-crypto=beecrypt \
 	    --without-archive \
 	    --without-external-db \
 	    --enable-ndb \
-	    --disable-plugins
+	    --disable-plugins \
+	    --disable-zstd
+# This patch has to be applied after configure runs:
+	cd rpm-$(RPM_COMMIT) && \
+	patch -p1 < ../rpm-db3-cflags-add-fpic.patch
 	cd rpm-$(RPM_COMMIT) && $(MAKE) V=1
 	cd rpm-$(RPM_COMMIT) && make install DESTDIR=$(ROOT)/stage3-chroot
 	rm -f stage3-chroot/usr/lib64/*.la
-# Fix optflags in redhat-specific RPM configuration.
-	echo 'optflags: riscv64 %{__global_cflags}' >> $(ROOT)/stage3-chroot/usr/lib/rpm/redhat/rpmrc
 # Hack /usr/lib/rpm/macros until we have a natively build RPM.
 # These binaries might not be available in chroot, only in cross toolchain.
 	sed -i \
@@ -1240,6 +1239,7 @@ stage3-chroot/usr/bin/rpm: rpm-$(RPM_SHORT_COMMIT).tar.gz db-$(BDB_VERSION).tar.
 # Until issue is resolved globally disable hardening.
 	sed -i \
           -e 's/^%_hardened_build/#_hardened_build/' \
+          -e 's/^%_annotated_build/#_annotated_build/' \
           -e 's/\(^%_configure_libtool_hardening_hack\).*/\1\t0/' \
           stage3-chroot/usr/lib/rpm/redhat/macros
 # Make sure latest config.guess/config.sub get copied in (see below).
