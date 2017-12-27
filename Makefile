@@ -135,8 +135,6 @@ COREUTILS_VERSION  = 8.25
 GMP_VERSION        = 6.1.2
 MPFR_VERSION       = 3.1.6
 MPC_VERSION        = 1.0.3
-BINUTILS_X_VERSION = 2.29
-GCC_X_VERSION      = 7.2.0
 UTIL_LINUX_VERSION = 2.31
 TAR_VERSION        = 1.29
 GZIP_VERSION       = 1.8
@@ -419,27 +417,21 @@ coreutils-$(COREUTILS_VERSION).tar.xz:
 	mv $@-t $@
 
 # Cross-compile binutils.
-stage3-chroot/usr/bin/as: binutils-$(BINUTILS_X_VERSION).tar.gz
-	rm -rf riscv-binutils-gdb-riscv-binutils-$(BINUTILS_X_VERSION)
-	zcat $^ | tar xf -
+stage3-chroot/usr/bin/as:
+# You must apply this patch by hand to the subdirectory!
 # Fix for https://github.com/riscv/riscv-binutils-gdb/issues/96
-	cd riscv-binutils-gdb-riscv-binutils-$(BINUTILS_X_VERSION) && \
-	patch -p1 < ../riscv-binutils-fix-gdb.patch
-	mkdir riscv-binutils-gdb-riscv-binutils-$(BINUTILS_X_VERSION)/build
-	cd riscv-binutils-gdb-riscv-binutils-$(BINUTILS_X_VERSION)/build && \
+#	patch -p1 < riscv-binutils-fix-gdb.patch
+	rm -rf riscv-tools/riscv-gnu-toolchain/riscv-binutils-gdb/build-x
+	mkdir riscv-tools/riscv-gnu-toolchain/riscv-binutils-gdb/build-x
+	cd riscv-tools/riscv-gnu-toolchain/riscv-binutils-gdb/build-x && \
 	../configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --target=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	cd riscv-binutils-gdb-riscv-binutils-$(BINUTILS_X_VERSION)/build && \
+	cd riscv-tools/riscv-gnu-toolchain/riscv-binutils-gdb/build-x && \
 	$(MAKE)
-	cd riscv-binutils-gdb-riscv-binutils-$(BINUTILS_X_VERSION)/build && \
+	cd riscv-tools/riscv-gnu-toolchain/riscv-binutils-gdb/build-x && \
 	make DESTDIR=$(ROOT)/stage3-chroot install
-
-binutils-$(BINUTILS_X_VERSION).tar.gz:
-	rm -f $@ $@-t
-	wget -O $@-t https://github.com/riscv/riscv-binutils-gdb/archive/riscv-binutils-$(BINUTILS_X_VERSION).tar.gz
-	mv $@-t $@
 
 # Cross-compile GMP, MPFR and MPC (deps of GCC).
 stage3-chroot/usr/lib64/libgmp.so.10: gmp-$(GMP_VERSION).tar.lz
@@ -492,13 +484,16 @@ mpc-$(MPC_VERSION).tar.gz:
 	mv $@-t $@
 
 # Cross-compile GCC.
-stage3-chroot/usr/bin/gcc: gcc-$(GCC_X_VERSION).tar.gz
-	rm -rf riscv-gcc-riscv-gcc-$(GCC_X_VERSION)
-	zcat $^ | tar xf -
-	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION) && \
+stage3-chroot/usr/bin/gcc:
+# We want to patch this tree (unlike binutils above) so we have
+# to make a copy.
+	rm -rf riscv-gcc
+	cp -a riscv-tools/riscv-gnu-toolchain/riscv-gcc riscv-gcc
+	cd riscv-gcc && \
 	patch -p1 < ../0001-HACKS-TO-GET-GCC-TO-COMPILE.patch
-	mkdir riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build
-	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build && \
+	rm -rf riscv-gcc/build-x
+	mkdir riscv-gcc/build-x
+	cd riscv-gcc/build-x && \
 	gcc_cv_as_leb128=no \
 	../configure \
 	    --host=riscv64-unknown-linux-gnu \
@@ -518,8 +513,11 @@ stage3-chroot/usr/bin/gcc: gcc-$(GCC_X_VERSION).tar.gz
 	    --with-linker-hash-style=gnu \
 	    --enable-initfini-array \
 	    --disable-libgcj
-	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build && gcc_cv_as_leb128=no $(MAKE)
-	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build && make install DESTDIR=$(ROOT)/stage3-chroot
+	cd riscv-gcc/build-x && \
+	gcc_cv_as_leb128=no \
+	$(MAKE)
+	cd riscv-gcc/build-x && \
+	make install DESTDIR=$(ROOT)/stage3-chroot
 	rm -f stage3-chroot/usr/lib64/*.la
 # See next rule for why we do this ...
 	rm -f stage3-chroot/usr/lib64/libstdc++*
@@ -530,59 +528,54 @@ stage3-chroot/usr/bin/gcc: gcc-$(GCC_X_VERSION).tar.gz
 # executable into /usr/lib64 and ignores the --libdir parameter
 # entirely.  Fix this mess.
 stage3-chroot/usr/lib64/libstdc++.so: stage3-chroot/usr/bin/gcc
-	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build/riscv64-unknown-linux-gnu/libstdc++-v3 && \
+	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libstdc++-v3 && \
 	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	../../../libstdc++-v3/configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build/riscv64-unknown-linux-gnu/libstdc++-v3 && \
+	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libstdc++-v3 && \
 	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	make clean
-	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build/riscv64-unknown-linux-gnu/libstdc++-v3 && \
+	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libstdc++-v3 && \
 	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	$(MAKE)
-	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build/riscv64-unknown-linux-gnu/libstdc++-v3 && \
+	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libstdc++-v3 && \
 	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	make install DESTDIR=$(ROOT)/stage3-chroot
 
 # libgomp isn't built correctly.
 stage3-chroot/usr/lib64/libgomp.so: stage3-chroot/usr/bin/gcc
-	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build/riscv64-unknown-linux-gnu/libgomp && \
+	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libgomp && \
 	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	../../../libgomp/configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build/riscv64-unknown-linux-gnu/libgomp && \
+	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libgomp && \
 	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	make clean
-	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build/riscv64-unknown-linux-gnu/libgomp && \
+	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libgomp && \
 	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	$(MAKE)
-	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build/riscv64-unknown-linux-gnu/libgomp && \
+	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libgomp && \
 	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	make install DESTDIR=$(ROOT)/stage3-chroot
 
 # We don't have cross-compiled libatomic for riscv64, but libgcc_s.so refers to symbols from this library
 stage3-chroot/usr/lib64/libatomic.so: stage3-chroot/usr/bin/gcc
-	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build/riscv64-unknown-linux-gnu/libatomic && \
+	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libatomic && \
 	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	../../../libatomic/configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build/riscv64-unknown-linux-gnu/libatomic && \
+	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libatomic && \
 	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	make clean
-	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build/riscv64-unknown-linux-gnu/libatomic && \
+	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libatomic && \
 	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	$(MAKE)
-	cd riscv-gcc-riscv-gcc-$(GCC_X_VERSION)/build/riscv64-unknown-linux-gnu/libatomic && \
+	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libatomic && \
 	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	make install DESTDIR=$(ROOT)/stage3-chroot
-
-gcc-$(GCC_X_VERSION).tar.gz:
-	rm -f $@ $@-t
-	wget -O $@-t https://github.com/riscv/riscv-gcc/archive/riscv-gcc-$(GCC_X_VERSION).tar.gz
-	mv $@-t $@
 
 # Cross-compile util-linux.
 stage3-chroot/usr/bin/mount: util-linux-$(UTIL_LINUX_VERSION).tar.xz

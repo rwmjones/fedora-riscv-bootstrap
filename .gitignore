@@ -60,12 +60,11 @@ stamp-*
 /perl-5.24.0/
 /popt-1.16/
 /readline-6.3/
-/riscv-binutils-gdb-riscv-binutils-2.29/
-/riscv-gcc-riscv-gcc-7.2.0/
-/strace-4b69c4736cb9b44e0bd7bef16f7f8602b5d2f113/
+/riscv-gcc/
 /rpm-b22f9609d82625ec451d48515d6d318c5bf72d83/
 /screen-4.4.0/
 /sed-4.2/
+/strace-4b69c4736cb9b44e0bd7bef16f7f8602b5d2f113/
 /tar-1.29/
 /util-linux-2.31/
 /vim74/
