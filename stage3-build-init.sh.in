@@ -27,6 +27,9 @@ mkdir -p /run/lock
 
 # XXX devtmpfs
 
+rm -f /dev/null
+mknod /dev/null c 1 3
+
 # Initialize dynamic linker cache.
 ldconfig /usr/lib64 /usr/lib /lib64 /lib
 
