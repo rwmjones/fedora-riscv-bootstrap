@@ -540,52 +540,40 @@ stage3-chroot/usr/bin/gcc:
 # entirely.  Fix this mess.
 stage3-chroot/usr/lib64/libstdc++.so: stage3-chroot/usr/bin/gcc
 	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libstdc++-v3 && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	../../../libstdc++-v3/configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
 	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libstdc++-v3 && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	make clean
 	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libstdc++-v3 && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	$(MAKE)
 	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libstdc++-v3 && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	make install DESTDIR=$(ROOT)/stage3-chroot
 
 # libgomp isn't built correctly.
 stage3-chroot/usr/lib64/libgomp.so: stage3-chroot/usr/bin/gcc
 	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libgomp && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	../../../libgomp/configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
 	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libgomp && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	make clean
 	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libgomp && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	$(MAKE)
 	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libgomp && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	make install DESTDIR=$(ROOT)/stage3-chroot
 
 # We don't have cross-compiled libatomic for riscv64, but libgcc_s.so refers to symbols from this library
 stage3-chroot/usr/lib64/libatomic.so: stage3-chroot/usr/bin/gcc
 	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libatomic && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	../../../libatomic/configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
 	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libatomic && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	make clean
 	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libatomic && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	$(MAKE)
 	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libatomic && \
-	PATH=$(ROOT)/fixed-gcc:$$PATH \
 	make install DESTDIR=$(ROOT)/stage3-chroot
 
 # Cross-compile util-linux.
