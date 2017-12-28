@@ -74,6 +74,7 @@ else
 
   rpmbuild --rebuild /var/tmp/@SRPM@ \
            --define "debug_package %{nil}" \
+           --define "_missing_doc_files_terminate_build %{nil}" \
            --rpmfcdebug \
            --nodeps \
            --nocheck
