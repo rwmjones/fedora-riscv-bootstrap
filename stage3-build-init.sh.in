@@ -69,7 +69,7 @@ else
   set -x
   set -e
 
-  rpmbuild --rebuild /var/tmp/@SRPM@ --nodeps --rpmfcdebug
+  rpmbuild --rebuild /var/tmp/@SRPM@ --nodeps --rpmfcdebug --nocheck
 
   touch /buildok
 fi
