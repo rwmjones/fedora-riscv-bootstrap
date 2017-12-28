@@ -14,6 +14,7 @@ stamp-*
 /kernel-headers.spec
 
 /stage1-riscv-qemu/riscv-qemu.spec
+/stage1-riscv-qemu/riscv-qemu-*.rpm
 /stage3-kernel/linux-*
 /stage3-chroot-original/
 /stage3-chroot/

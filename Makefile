@@ -23,9 +23,12 @@ clean:
 
 RISCV_QEMU_COMMIT      = 07146abe22e5ea5948fda5d511fd1fd228e196fa
 RISCV_QEMU_SHORTCOMMIT = 07146abe
+RISCV_QEMU_VERSION     = 2.7.50
+RISCV_QEMU_RELEASE     = 0.3
 
 stage1: stage1-riscv-qemu/riscv-qemu-$(RISCV_QEMU_SHORTCOMMIT).tar.gz \
 	stage1-riscv-qemu/riscv-qemu.spec \
+	stage1-riscv-qemu/riscv-qemu-$(RISCV_QEMU_VERSION)-$(RISCV_QEMU_RELEASE).git$(RISCV_QEMU_SHORTCOMMIT).fc28.src.rpm \
 	stamp-riscv-qemu-installed
 
 stage1-riscv-qemu/riscv-qemu-$(RISCV_QEMU_SHORTCOMMIT).tar.gz:
@@ -37,8 +40,14 @@ stage1-riscv-qemu/riscv-qemu.spec: stage1-riscv-qemu/riscv-qemu.spec.in
 	rm -f $@
 	sed -e 's/@COMMIT@/$(RISCV_QEMU_COMMIT)/g' \
 	    -e 's/@SHORTCOMMIT@/$(RISCV_QEMU_SHORTCOMMIT)/g' \
+	    -e 's/@VERSION@/$(RISCV_QEMU_VERSION)/g' \
+	    -e 's/@RELEASE@/$(RISCV_QEMU_RELEASE)/g' \
 	    < $^ > $@-t
 	mv $@-t $@
+
+stage1-riscv-qemu/riscv-qemu-$(RISCV_QEMU_VERSION)-$(RISCV_QEMU_RELEASE).git$(RISCV_QEMU_SHORTCOMMIT).fc28.src.rpm: stage1-riscv-qemu/riscv-qemu.spec
+	cd stage1-riscv-qemu && \
+	rpmbuild -bs --define "_sourcedir $(ROOT)/stage1-riscv-qemu" --define "_srcrpmdir $(ROOT)/stage1-riscv-qemu" riscv-qemu.spec
 
 stamp-riscv-qemu-installed:
 	rm -f $@

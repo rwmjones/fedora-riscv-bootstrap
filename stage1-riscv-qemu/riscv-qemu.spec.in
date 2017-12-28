@@ -1,8 +1,8 @@
 %global debug_package %{nil}
 
 Name:           riscv-qemu
-Version:        2.7.50
-Release:        0.3.git@SHORTCOMMIT@%{?dist}
+Version:        @VERSION@
+Release:        @RELEASE@.git@SHORTCOMMIT@%{?dist}
 Summary:        RISC-V fork of QEMU
 License:        GPLv2+ and LGPLv2+ and BSD
 
