@@ -1349,8 +1349,9 @@ ifneq ($(origin SRPM), undefined)
 
 STAGE3_BUILD_EMULATOR = qemu
 
-srpm_init=$(shell rpm -q --qf "%{NAME}\n" -p $(SRPM))-init.sh
-srpm_disk=$(shell rpm -q --qf "%{NAME}\n" -p $(SRPM))-disk.img
+srpm_name=$(shell rpm -q --qf "%{NAME}\n" -p $(SRPM))
+srpm_init=$(srpm_name)-init.sh
+srpm_disk=$(srpm_name)-disk.img
 
 stage3-build:
 	@if [ "$(STAGE3_DISK)" != stage3-disk.img ]; then \
@@ -1359,7 +1360,8 @@ stage3-build:
 	fi
 	rm -f $(srpm_disk)
 	cp $(SRPM) stage3-chroot/var/tmp/
-	sed 's,@SRPM@,$(shell basename $(SRPM)),' \
+	sed -e 's,@SRPM@,$(shell basename $(SRPM)),' \
+	    -e 's,@NAME@,$(srpm_name),' \
 		< stage3-build-init.sh.in > $(srpm_init)
 	$(MAKE) STAGE3_DISK=$(srpm_disk) $(srpm_disk) INIT=$(srpm_init)
 	rm $(srpm_init)
