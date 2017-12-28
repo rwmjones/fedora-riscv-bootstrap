@@ -1298,7 +1298,6 @@ $(STAGE3_DISK):: stage3-chroot/rpmbuild stage3-chroot
 	rm -f $@
 	cp stage3-built-rpms/RPMS/riscv64/*.rpm stage3-chroot/rpmbuild/RPMS/riscv64/
 	cp stage3-built-rpms/RPMS/noarch/*.rpm stage3-chroot/rpmbuild/RPMS/noarch/
-	cp stage3-built-rpms/SRPMS/*.rpm stage3-chroot/rpmbuild/SRPMS/
 # Re-download the noarch packages and copy them into the disk image too.
 	rm -f stamp-koji-packages
 	$(MAKE) stamp-koji-packages
