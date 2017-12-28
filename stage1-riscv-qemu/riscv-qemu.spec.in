@@ -2,7 +2,7 @@
 
 Name:           riscv-qemu
 Version:        2.7.50
-Release:        0.2.git@SHORTCOMMIT@%{?dist}
+Release:        0.3.git@SHORTCOMMIT@%{?dist}
 Summary:        RISC-V fork of QEMU
 License:        GPLv2+ and LGPLv2+ and BSD
 
@@ -19,6 +19,9 @@ Patch1:         0001-PATCH-FROM-PAOLO-TO-FIX-MEMFD_CREATE.patch
 # (uint32_t) 0x0ff0ff is written to physical address 0xff0.
 # This requires a corresponding patch to riscv-pk.
 Patch2:         0002-ADD-DUMB-POWEROFF-DEVICE.patch
+
+# Print PC when ebreak is executed.  Useful for debugging.
+Patch3:         0003-target-riscv-Print-PC-when-handling-EBREAK.patch
 
 # These were just copied from qemu.spec, they are probably not
 # all required.
@@ -90,6 +93,7 @@ This is the RISC-V fork of QEMU.
 %setup -q -n %{name}-@COMMIT@
 %patch1 -p1
 %patch2 -p1
+%patch3 -p1
 
 
 %build

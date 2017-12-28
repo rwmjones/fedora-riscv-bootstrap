@@ -1,0 +1,26 @@
+From d7f934c9b3dc836d0bce8260d5e74a934448704d Mon Sep 17 00:00:00 2001
+From: "Richard W.M. Jones" <rjones@redhat.com>
+Date: Wed, 27 Dec 2017 20:00:41 +0000
+Subject: [PATCH 3/3] target-riscv: Print PC when handling EBREAK.
+
+---
+ target-riscv/helper.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/target-riscv/helper.c b/target-riscv/helper.c
+index ba8e252f9b..a9266c63ce 100644
+--- a/target-riscv/helper.c
++++ b/target-riscv/helper.c
+@@ -398,7 +398,8 @@ void riscv_cpu_do_interrupt(CPUState *cs)
+     #endif
+ 
+     if (cs->exception_index == RISCV_EXCP_BREAKPOINT) {
+-        fprintf(stderr, "debug mode not implemented\n");
++        fprintf(stderr, "debug mode not implemented, "
++                "pc = 0x" TARGET_FMT_lx "\n", env->pc);
+     }
+ 
+     /* skip dcsr cause check */
+-- 
+2.15.1
+

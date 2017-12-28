@@ -1,7 +1,7 @@
 From 552e2ca27c632aeb18c05d61a5e9724a789c033a Mon Sep 17 00:00:00 2001
 From: "Richard W.M. Jones" <rjones@redhat.com>
 Date: Thu, 21 Dec 2017 22:04:44 +0000
-Subject: [PATCH 2/2] ADD DUMB POWEROFF DEVICE
+Subject: [PATCH 2/3] ADD DUMB POWEROFF DEVICE
 
 ---
  hw/riscv/virt.c         | 20 ++++++++++++++++++++
