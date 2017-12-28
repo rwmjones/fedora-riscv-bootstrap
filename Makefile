@@ -504,10 +504,11 @@ stage3-chroot/usr/bin/gcc:
 	mkdir riscv-gcc/build-x
 	cd riscv-gcc/build-x && \
 	gcc_cv_as_leb128=no \
+	CFLAGS="-O0" \
+	CXXFLAGS="-O0" \
 	../configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64 \
-	    --enable-checking=none \
 	    --enable-shared \
 	    --enable-tls \
 	    --enable-languages=c,c++ \
