@@ -17,6 +17,15 @@ mkdir -p /run/lock
 
 # XXX devtmpfs
 
+rm -f /dev/null
+mknod /dev/null c 1 3
+rm -f /dev/tty /dev/zero
+mknod /dev/tty c 5 0
+mknod /dev/zero c 1 5
+rm -f /dev/random /dev/urandom
+mknod /dev/random c 1 8
+mknod /dev/urandom c 1 9
+
 # Initialize dynamic linker cache.
 ldconfig /usr/lib64 /usr/lib /lib64 /lib
 
