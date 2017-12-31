@@ -89,8 +89,10 @@ host-tools/bin/riscv64-unknown-linux-gnu-gcc:
 	rm -f host-tools/bin/riscv64-unknown-linux-gnu-*
 	cd riscv-tools/riscv-gnu-toolchain && \
 	$(MAKE) clean
+	export GLIBC_TARGET_FLAGS_EXTRA="--enable-obsolete-nsl --enable-obsolete-rpc"; \
 	cd riscv-tools/riscv-gnu-toolchain && \
 	./configure --prefix=$(ROOT)/host-tools
+	export GLIBC_TARGET_FLAGS_EXTRA="--enable-obsolete-nsl --enable-obsolete-rpc"; \
 	cd riscv-tools/riscv-gnu-toolchain && \
 	$(MAKE) linux
 # The versions of riscv64-unknown-linux-{gcc,g++} built above
