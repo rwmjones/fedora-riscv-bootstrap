@@ -431,19 +431,22 @@ coreutils-$(COREUTILS_VERSION).tar.xz:
 
 # Cross-compile binutils.
 stage3-chroot/usr/bin/as:
-# You must apply this patch by hand to the subdirectory!
+# We want to patch this tree so we have to make a copy.
 # Fix for https://github.com/riscv/riscv-binutils-gdb/issues/96
-#	patch -p1 < riscv-binutils-fix-gdb.patch
-	rm -rf riscv-tools/riscv-gnu-toolchain/riscv-binutils-gdb/build-x
-	mkdir riscv-tools/riscv-gnu-toolchain/riscv-binutils-gdb/build-x
-	cd riscv-tools/riscv-gnu-toolchain/riscv-binutils-gdb/build-x && \
+	rm -rf riscv-binutils-gdb
+	cp -a riscv-tools/riscv-gnu-toolchain/riscv-binutils-gdb riscv-binutils-gdb
+	cd riscv-binutils-gdb && \
+	patch -p1 < ../riscv-binutils-fix-gdb.patch
+	rm -rf riscv-binutils-gdb/build-x
+	mkdir riscv-binutils-gdb/build-x
+	cd riscv-binutils-gdb/build-x && \
 	../configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --target=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	cd riscv-tools/riscv-gnu-toolchain/riscv-binutils-gdb/build-x && \
+	cd riscv-binutils-gdb/build-x && \
 	$(MAKE)
-	cd riscv-tools/riscv-gnu-toolchain/riscv-binutils-gdb/build-x && \
+	cd riscv-binutils-gdb/build-x && \
 	make DESTDIR=$(ROOT)/stage3-chroot install
 
 # Cross-compile GMP, MPFR and MPC (deps of GCC).
@@ -498,8 +501,7 @@ mpc-$(MPC_VERSION).tar.gz:
 
 # Cross-compile GCC.
 stage3-chroot/usr/bin/gcc:
-# We want to patch this tree (unlike binutils above) so we have
-# to make a copy.
+# We want to patch this tree so we have to make a copy.
 	rm -rf riscv-gcc
 	cp -a riscv-tools/riscv-gnu-toolchain/riscv-gcc riscv-gcc
 	cd riscv-gcc && \
