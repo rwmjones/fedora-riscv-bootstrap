@@ -246,6 +246,7 @@ stage3: riscv-linux/vmlinux \
 	stage3-chroot/etc/profile.d/aliases.sh \
 	stage3-chroot/usr/lib/rpm/config.guess \
 	stage3-chroot/usr/lib/rpm/config.sub \
+	stage3-chroot/etc/ld.so.conf.d/lib64.conf \
 	stage3-chroot/rpmbuild \
 	stage3-chroot/rpmbuild/RPMS/noarch/kernel-headers-1-1.fc27.noarch.rpm \
 	stage3-tdnf/tdnf-$(TDNF_VERSION)-2.fc27.src.rpm \
@@ -1293,6 +1294,16 @@ stage3-chroot/usr/lib/rpm/config.guess: config.guess
 	install -m 0755 $^ $@
 stage3-chroot/usr/lib/rpm/config.sub: config.sub
 	install -m 0755 $^ $@
+
+# Make sure that when any %post script runs 'ldconfig’ without
+# parameters, that /usr/lib64 is included.
+stage3-chroot/etc/ld.so.conf.d/lib64.conf:
+	rm -f $@ $@-t
+	echo '/lib' >> $@-t
+	echo '/lib64' >> $@-t
+	echo '/usr/lib' >> $@-t
+	echo '/usr/lib64' >> $@-t
+	mv $@-t $@
 
 # Create /rpmbuild inside the stage3 chroot.
 stage3-chroot/rpmbuild:
