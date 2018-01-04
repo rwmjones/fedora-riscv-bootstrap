@@ -38,6 +38,17 @@ ldconfig /usr/lib64 /usr/lib /lib64 /lib
 # There is no hardware clock, just ensure the date is not miles out.
 date `date -r /usr/bin +%m%d%H%M%Y`
 
+# Bring up the network.
+# (Note: These commands won't work unless the iproute package has been
+# installed in a previous boot)
+if ip -V >&/dev/null; then
+    ip a add 10.0.2.15/255.255.255.0 dev eth0
+    ip link set eth0 up
+    ip r add default via 10.0.2.2 dev eth0
+    ip a list
+    ip r list
+fi
+
 hostname stage3
 echo stage3.fedoraproject.org > /etc/hostname
 
