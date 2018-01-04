@@ -434,9 +434,9 @@ coreutils-$(COREUTILS_VERSION).tar.xz:
 # Cross-compile binutils.
 stage3-chroot/usr/bin/as:
 # We want to patch this tree so we have to make a copy.
-# Fix for https://github.com/riscv/riscv-binutils-gdb/issues/96
 	rm -rf riscv-binutils-gdb
 	cp -a riscv-tools/riscv-gnu-toolchain/riscv-binutils-gdb riscv-binutils-gdb
+# Fix for https://github.com/riscv/riscv-binutils-gdb/pull/126
 	cd riscv-binutils-gdb && \
 	patch -p1 < ../riscv-binutils-fix-gdb.patch
 	rm -rf riscv-binutils-gdb/build-x

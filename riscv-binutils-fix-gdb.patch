@@ -1,10 +1,37 @@
---- riscv-binutils-gdb-riscv-binutils-2.29/gdb/Makefile.in.old	2017-12-04 22:15:15.000000000 +0000
-+++ riscv-binutils-gdb-riscv-binutils-2.29/gdb/Makefile.in	2017-12-27 19:39:11.348372955 +0000
-@@ -1797,6 +1797,7 @@
- 	reggroups.o \
- 	registry.o \
- 	reverse.o \
-+	riscv-linux-nat.o \
- 	rsp-low.o \
- 	run-time-clock.o \
- 	rust-lang.o \
+From be4ba407492795ba6597fe96d3d8ec6ee2267cd0 Mon Sep 17 00:00:00 2001
+From: Jim Wilson <jimw@sifive.com>
+Date: Thu, 28 Dec 2017 14:10:39 -0800
+Subject: [PATCH] Make native gdb builds work.
+
+---
+ gdb/Makefile.in   | 1 +
+ gdb/configure.nat | 4 ++++
+ 2 files changed, 5 insertions(+)
+
+diff --git a/gdb/Makefile.in b/gdb/Makefile.in
+index ef575cad101..d63e13ba28e 100644
+--- a/gdb/Makefile.in
++++ b/gdb/Makefile.in
+@@ -2636,6 +2636,7 @@ ALLDEPFILES = \
+ 	ravenscar-thread.c \
+ 	remote-sim.c \
+ 	riscv-tdep.c \
++	riscv-linux-nat.c \
+ 	riscv-linux-tdep.c \
+ 	rl78-tdep.c \
+ 	rs6000-lynx178-tdep.c \
+diff --git a/gdb/configure.nat b/gdb/configure.nat
+index 2026ee76f5b..9b0332fdd68 100644
+--- a/gdb/configure.nat
++++ b/gdb/configure.nat
+@@ -259,6 +259,10 @@ case ${gdb_host} in
+ 		# Host: PowerPC, running Linux
+ 		NATDEPFILES="${NATDEPFILES} ppc-linux-nat.o"
+ 		;;
++	    riscv)
++		# Host: RISC-V, running Linux
++		NATDEPFILES="${NATDEPFILES} riscv-linux-nat.o"
++		;;
+ 	    s390)
+ 		# Host: S390, running Linux
+ 		NATDEPFILES="${NATDEPFILES} s390-linux-nat.o"
