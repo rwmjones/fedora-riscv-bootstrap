@@ -27,6 +27,7 @@ RISCV_QEMU_VERSION     = 2.11.50
 RISCV_QEMU_RELEASE     = 0.1
 
 stage1: stage1-riscv-qemu/riscv-qemu-$(RISCV_QEMU_SHORTCOMMIT).tar.gz \
+	stage1-riscv-qemu/keycodemapdb.tar.gz \
 	stage1-riscv-qemu/riscv-qemu.spec \
 	stage1-riscv-qemu/riscv-qemu-$(RISCV_QEMU_VERSION)-$(RISCV_QEMU_RELEASE).git$(RISCV_QEMU_SHORTCOMMIT).fc28.src.rpm \
 	stamp-riscv-qemu-installed
@@ -34,6 +35,12 @@ stage1: stage1-riscv-qemu/riscv-qemu-$(RISCV_QEMU_SHORTCOMMIT).tar.gz \
 stage1-riscv-qemu/riscv-qemu-$(RISCV_QEMU_SHORTCOMMIT).tar.gz:
 	rm -f $@ $@-t
 	wget -O $@-t 'https://github.com/riscv/riscv-qemu/archive/$(RISCV_QEMU_COMMIT)/riscv-qemu-$(RISCV_QEMU_SHORTCOMMIT).tar.gz'
+	mv $@-t $@
+
+# UGH
+stage1-riscv-qemu/keycodemapdb.tar.gz:
+	rm -f $@ $@-t
+	wget -O $@-t 'https://git.qemu.org/?p=keycodemapdb.git;a=snapshot;h=a8bc2f6ec822491c2b816314352a9ae459456ec9;sf=tgz'
 	mv $@-t $@
 
 stage1-riscv-qemu/riscv-qemu.spec: stage1-riscv-qemu/riscv-qemu.spec.in

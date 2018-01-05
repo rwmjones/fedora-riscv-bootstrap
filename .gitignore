@@ -13,6 +13,7 @@ stamp-*
 
 /kernel-headers.spec
 
+/stage1-riscv-qemu/keycodemapdb.tar.gz
 /stage1-riscv-qemu/riscv-qemu.spec
 /stage1-riscv-qemu/riscv-qemu-*.rpm
 /stage3-kernel/linux-*
