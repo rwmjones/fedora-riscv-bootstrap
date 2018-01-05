@@ -21,10 +21,10 @@ clean:
 #----------------------------------------------------------------------
 # Stage 1
 
-RISCV_QEMU_COMMIT      = 07146abe22e5ea5948fda5d511fd1fd228e196fa
-RISCV_QEMU_SHORTCOMMIT = 07146abe
-RISCV_QEMU_VERSION     = 2.7.50
-RISCV_QEMU_RELEASE     = 0.3
+RISCV_QEMU_COMMIT      = d59fa3a466d8af8cdf4ba8f59a38eb70c450d9e4
+RISCV_QEMU_SHORTCOMMIT = d59fa3a4
+RISCV_QEMU_VERSION     = 2.11.50
+RISCV_QEMU_RELEASE     = 0.1
 
 stage1: stage1-riscv-qemu/riscv-qemu-$(RISCV_QEMU_SHORTCOMMIT).tar.gz \
 	stage1-riscv-qemu/riscv-qemu.spec \

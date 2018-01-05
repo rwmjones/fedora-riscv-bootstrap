@@ -1,7 +1,7 @@
-From 552e2ca27c632aeb18c05d61a5e9724a789c033a Mon Sep 17 00:00:00 2001
+From f9932958469cc97038514c6419981be90458f95b Mon Sep 17 00:00:00 2001
 From: "Richard W.M. Jones" <rjones@redhat.com>
 Date: Thu, 21 Dec 2017 22:04:44 +0000
-Subject: [PATCH 2/3] ADD DUMB POWEROFF DEVICE
+Subject: [PATCH 1/2] ADD DUMB POWEROFF DEVICE
 
 ---
  hw/riscv/virt.c         | 20 ++++++++++++++++++++
@@ -9,19 +9,19 @@ Subject: [PATCH 2/3] ADD DUMB POWEROFF DEVICE
  2 files changed, 22 insertions(+), 1 deletion(-)
 
 diff --git a/hw/riscv/virt.c b/hw/riscv/virt.c
-index 2ec00ceef7..cd81423b16 100644
+index 7c6fead5f9..970f0881ae 100644
 --- a/hw/riscv/virt.c
 +++ b/hw/riscv/virt.c
-@@ -52,6 +52,7 @@ static const struct MemmapEntry {
- } virt_memmap[] =
- {
+@@ -49,6 +49,7 @@ static const struct MemmapEntry {
+     hwaddr size;
+ } virt_memmap[] = {
      [VIRT_DEBUG] =    {        0x0,      0x100 },
 +    [VIRT_POWEROFF] = {      0xff0,       0x10 },
      [VIRT_MROM] =     {     0x1000,     0x2000 },
      [VIRT_CLINT] =    {  0x2000000,    0x10000 },
      [VIRT_PLIC] =     {  0xc000000,  0x4000000 },
-@@ -224,6 +225,15 @@ static void create_fdt(RISCVVirtState *s, const struct MemmapEntry *memmap,
- 
+@@ -225,6 +226,15 @@ static void create_fdt(RISCVVirtState *s, const struct MemmapEntry *memmap,
+     g_free(nodename);
  }
  
 +static void poweroff_write(void *opaque, hwaddr addr,
@@ -36,10 +36,10 @@ index 2ec00ceef7..cd81423b16 100644
  static void riscv_virt_board_init(MachineState *machine)
  {
      const struct MemmapEntry *memmap = virt_memmap;
-@@ -323,6 +333,16 @@ static void riscv_virt_board_init(MachineState *machine)
-         s->soc.harts[0].env.irq[4], boot_rom,
-         &s->soc.harts[0].env, serial_hds[0]);
- #endif
+@@ -327,6 +337,16 @@ static void riscv_virt_board_init(MachineState *machine)
+     serial_mm_init(system_memory, memmap[VIRT_UART0].base,
+         0, SIFIVE_PLIC(s->plic)->irqs[UART0_IRQ], 399193,
+         serial_hds[0], DEVICE_LITTLE_ENDIAN);
 +
 +    /* XXX Dumb poweroff device. */
 +    static const MemoryRegionOps io_ops = {
