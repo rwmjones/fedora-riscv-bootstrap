@@ -447,6 +447,12 @@ stage3-chroot/usr/bin/as:
 # Fix for https://github.com/riscv/riscv-binutils-gdb/pull/126
 	cd riscv-binutils-gdb && \
 	patch -p1 < ../riscv-binutils-fix-gdb.patch
+# Fix for __global_pointer$ issue
+# https://github.com/riscv/riscv-binutils-gdb/issues/108
+	cd riscv-binutils-gdb && \
+	patch -p1 < ../binutils-gdb.git-da02107a39f3eff5e0b6d6321da4e88f9564350a.patch
+	cd riscv-binutils-gdb && \
+	patch -p1 < ../binutils-gdb.git-0527614a9b805d1f640f477f51f9780403487ef8.patch
 	rm -rf riscv-binutils-gdb/build-x
 	mkdir riscv-binutils-gdb/build-x
 	cd riscv-binutils-gdb/build-x && \

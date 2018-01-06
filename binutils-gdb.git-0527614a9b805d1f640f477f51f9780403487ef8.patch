@@ -1,0 +1,223 @@
+From: Jim Wilson <jimw@sifive.com>
+Date: Tue, 5 Dec 2017 22:42:12 +0000 (-0800)
+Subject: Really fix riscv shared library __global_pointer$ problem.
+X-Git-Url: https://sourceware.org/git/gitweb.cgi?p=binutils-gdb.git;a=commitdiff_plain;h=0527614a9b805d1f640f477f51f9780403487ef8
+
+Really fix riscv shared library __global_pointer$ problem.
+
+	ld/
+	* emulparams/elf32lriscv-defs.sh (SDATA_START_SYMBOLS): Remove HIDDEN.
+	Don't define __global_pointer$ when CREATE_SHLIB.
+	* testsuite/ld-riscv-elf/gp-hidden-64.rd,
+	* testsuite/ld-riscv-elf/gp-hidden-lib.rd,
+	* testsuite/ld-riscv-elf/gp-hidden-lib.s,
+	* testsuite/ld-riscv-elf/gp-hidden-ver-64.rd,
+	* testsuite/ld-riscv-elf/gp-hidden-ver.rd,
+	* testsuite/ld-riscv-elf/gp-hidden-ver.s,
+	* testsuite/ld-riscv-elf/gp-hidden-ver.ver,
+	* testsuite/ld-riscv-elf/gp-hidden.rd,
+	* testsuite/ld-riscv-elf/gp-hidden.s,
+	* testsuite/ld-riscv-elf/gp-hidden.sd: Delete.
+	* testsuite/ld-riscv-elf/gp-test-lib.sd,
+	* testsuite/ld-riscv-elf/gp-test.s,
+	* testsuite/ld-riscv-elf/gp-test.sd: New.
+	* testsuite/ld-riscv-elf/ld-riscv-elf.exp: Rewrite gp tests.
+---
+
+diff --git a/ld/emulparams/elf32lriscv-defs.sh b/ld/emulparams/elf32lriscv-defs.sh
+index 5b41d5c..29ed6d8 100644
+--- a/ld/emulparams/elf32lriscv-defs.sh
++++ b/ld/emulparams/elf32lriscv-defs.sh
+@@ -23,7 +23,8 @@ TEXT_START_ADDR=0x10000
+ MAXPAGESIZE="CONSTANT (MAXPAGESIZE)"
+ COMMONPAGESIZE="CONSTANT (COMMONPAGESIZE)"
+ 
+-SDATA_START_SYMBOLS="HIDDEN (__global_pointer$ = . + 0x800);
++SDATA_START_SYMBOLS="__global_pointer$ = . + 0x800;"
++SDATA_START_SYMBOLS="${CREATE_SHLIB-${SDATA_START_SYMBOLS}}
+     *(.srodata.cst16) *(.srodata.cst8) *(.srodata.cst4) *(.srodata.cst2) *(.srodata .srodata.*)"
+ 
+ INITIAL_READONLY_SECTIONS=".interp         : { *(.interp) } ${CREATE_PIE-${INITIAL_READONLY_SECTIONS}}"
+diff --git a/ld/testsuite/ld-riscv-elf/gp-hidden-64.rd b/ld/testsuite/ld-riscv-elf/gp-hidden-64.rd
+deleted file mode 100644
+index aaaec93..0000000
+--- a/ld/testsuite/ld-riscv-elf/gp-hidden-64.rd
++++ /dev/null
+@@ -1,4 +0,0 @@
+-
+-Relocation section '\.rela\.dyn' at offset .* contains 1 entry:
+- *Offset * Info * Type * Sym\. *Value * Sym\. *Name \+ Addend
+-[0-9a-f]+ * [0-9a-f]+02 * R_RISCV_64 * [0-9a-f]+ * foo \+ 0
+diff --git a/ld/testsuite/ld-riscv-elf/gp-hidden-lib.rd b/ld/testsuite/ld-riscv-elf/gp-hidden-lib.rd
+deleted file mode 100644
+index 59b4442..0000000
+--- a/ld/testsuite/ld-riscv-elf/gp-hidden-lib.rd
++++ /dev/null
+@@ -1,5 +0,0 @@
+-
+-Relocation section '\.rela\.dyn' at offset .* contains 1 entry:
+- *Offset * Info * Type * Sym\. *Value * Sym\. *Name \+ Addend
+-# This must be an absolute relocation, there must not be a _gp reference.
+-[0-9a-f]+ * 0+03 * R_RISCV_RELATIVE * [0-9a-f]+
+diff --git a/ld/testsuite/ld-riscv-elf/gp-hidden-lib.s b/ld/testsuite/ld-riscv-elf/gp-hidden-lib.s
+deleted file mode 100644
+index 04f0655..0000000
+--- a/ld/testsuite/ld-riscv-elf/gp-hidden-lib.s
++++ /dev/null
+@@ -1,6 +0,0 @@
+-	.data
+-	.globl	bar
+-	.type	bar, @object
+-bar:
+-	.dc.a	__global_pointer$
+-	.size	bar, . - bar
+diff --git a/ld/testsuite/ld-riscv-elf/gp-hidden-ver-64.rd b/ld/testsuite/ld-riscv-elf/gp-hidden-ver-64.rd
+deleted file mode 100644
+index 57cb13f..0000000
+--- a/ld/testsuite/ld-riscv-elf/gp-hidden-ver-64.rd
++++ /dev/null
+@@ -1,6 +0,0 @@
+-
+-Relocation section '\.rela\.dyn' at offset .* contains 2 entries:
+- *Offset * Info * Type * Sym\. *Value * Sym\. *Name \+ Addend
+-# This must be an absolute relocation, there must not be a _gp reference.
+-[0-9a-f]+ * 0+03 * R_RISCV_RELATIVE * [0-9a-f]+
+-[0-9a-f]+ * [0-9a-f]+02 * R_RISCV_64 * [0-9a-f]+ * bar \+ 0
+diff --git a/ld/testsuite/ld-riscv-elf/gp-hidden-ver.rd b/ld/testsuite/ld-riscv-elf/gp-hidden-ver.rd
+deleted file mode 100644
+index dbed24f..0000000
+--- a/ld/testsuite/ld-riscv-elf/gp-hidden-ver.rd
++++ /dev/null
+@@ -1,6 +0,0 @@
+-
+-Relocation section '\.rela\.dyn' at offset .* contains 2 entries:
+- *Offset * Info * Type * Sym\. *Value * Sym\. *Name \+ Addend
+-# This must be an absolute relocation, there must not be a _gp reference.
+-[0-9a-f]+ * 0+03 * R_RISCV_RELATIVE * [0-9a-f]+
+-[0-9a-f]+ * [0-9a-f]+01 * R_RISCV_32 * [0-9a-f]+ * bar \+ 0
+diff --git a/ld/testsuite/ld-riscv-elf/gp-hidden-ver.s b/ld/testsuite/ld-riscv-elf/gp-hidden-ver.s
+deleted file mode 100644
+index a197bac..0000000
+--- a/ld/testsuite/ld-riscv-elf/gp-hidden-ver.s
++++ /dev/null
+@@ -1,7 +0,0 @@
+-	.data
+-	.globl	foo
+-	.type	foo, @object
+-foo:
+-	.dc.a	bar
+-	.dc.a	__global_pointer$
+-	.size	foo, . - foo
+diff --git a/ld/testsuite/ld-riscv-elf/gp-hidden-ver.ver b/ld/testsuite/ld-riscv-elf/gp-hidden-ver.ver
+deleted file mode 100644
+index b6b2365..0000000
+--- a/ld/testsuite/ld-riscv-elf/gp-hidden-ver.ver
++++ /dev/null
+@@ -1 +0,0 @@
+-{ global: foo; local: *; };
+diff --git a/ld/testsuite/ld-riscv-elf/gp-hidden.rd b/ld/testsuite/ld-riscv-elf/gp-hidden.rd
+deleted file mode 100644
+index dc29f7d..0000000
+--- a/ld/testsuite/ld-riscv-elf/gp-hidden.rd
++++ /dev/null
+@@ -1,4 +0,0 @@
+-
+-Relocation section '\.rela\.dyn' at offset .* contains 1 entry:
+- *Offset * Info * Type * Sym\. *Value * Sym\. *Name \+ Addend
+-[0-9a-f]+ * [0-9a-f]+01 * R_RISCV_32 * [0-9a-f]+ * foo \+ 0
+diff --git a/ld/testsuite/ld-riscv-elf/gp-hidden.sd b/ld/testsuite/ld-riscv-elf/gp-test-lib.sd
+similarity index 70%
+rename from ld/testsuite/ld-riscv-elf/gp-hidden.sd
+rename to ld/testsuite/ld-riscv-elf/gp-test-lib.sd
+index f4321c2..c590e6c 100644
+--- a/ld/testsuite/ld-riscv-elf/gp-hidden.sd
++++ b/ld/testsuite/ld-riscv-elf/gp-test-lib.sd
+@@ -1,9 +1,9 @@
+-
+ Symbol table '.dynsym' contains [0-9]+ entries:
+  * Num: * Value * Size * Type * Bind * Vis * Ndx * Name
+ #...
+ Symbol table '.symtab' contains [0-9]+ entries:
+  * Num: * Value * Size * Type * Bind * Vis * Ndx * Name
++#failif
++#...
++ * [0-9a-f]+: * [0-9a-f]+ * 0 * NOTYPE * GLOBAL * DEFAULT .* __global_pointer\$
+ #...
+- * [0-9a-f]+: * [0-9a-f]+ * 0 * NOTYPE * LOCAL * DEFAULT .* __global_pointer\$
+-#pass
+diff --git a/ld/testsuite/ld-riscv-elf/gp-hidden.s b/ld/testsuite/ld-riscv-elf/gp-test.s
+similarity index 65%
+rename from ld/testsuite/ld-riscv-elf/gp-hidden.s
+rename to ld/testsuite/ld-riscv-elf/gp-test.s
+index 18d3ca3..a92c75e 100644
+--- a/ld/testsuite/ld-riscv-elf/gp-hidden.s
++++ b/ld/testsuite/ld-riscv-elf/gp-test.s
+@@ -2,6 +2,5 @@
+ 	.globl	blah
+ 	.type	blah, @object
+ blah:
+-	.dc.a	foo
+-	.dc.a	__global_pointer$
++	.dc.a	0
+ 	.size	blah, . - blah
+diff --git a/ld/testsuite/ld-riscv-elf/gp-test.sd b/ld/testsuite/ld-riscv-elf/gp-test.sd
+new file mode 100644
+index 0000000..30c1482
+--- /dev/null
++++ b/ld/testsuite/ld-riscv-elf/gp-test.sd
+@@ -0,0 +1,5 @@
++Symbol table '.symtab' contains [0-9]+ entries:
++ * Num: * Value * Size * Type * Bind * Vis * Ndx * Name
++#...
++ * [0-9a-f]+: * [0-9a-f]+ * 0 * NOTYPE * GLOBAL * DEFAULT .* __global_pointer\$
++#pass
+diff --git a/ld/testsuite/ld-riscv-elf/ld-riscv-elf.exp b/ld/testsuite/ld-riscv-elf/ld-riscv-elf.exp
+index 9f5959c..ea09a16 100644
+--- a/ld/testsuite/ld-riscv-elf/ld-riscv-elf.exp
++++ b/ld/testsuite/ld-riscv-elf/ld-riscv-elf.exp
+@@ -24,33 +24,22 @@ if [istarget "riscv*-*-*"] {
+ 
+     set abis { rv32gc ilp32 elf32lriscv rv64gc lp64 elf64lriscv }
+     foreach { arch abi emul } $abis {
+-	# This checks whether our linker scripts get the scope of
+-	# __global_pointer$ right, and thus must therefore use default scripts.
++	# This checks whether our linker scripts handle __global_pointer$
++	# correctly.  It should be defined in executables and PIE, but not
++	# in shared libraries.
+ 	set suff64 [string map {ilp32 "" lp64 -64} $abi]
+ 	run_ld_link_tests [list \
+-			       [list "gp scope test ($abi shared library)" \
++			       [list "gp test ($abi shared library)" \
+ 				    "-m$emul -shared" "" \
+ 				    "-march=$arch -mabi=$abi -fpic" \
+-				    { gp-hidden-lib.s } \
+-				    [list \
+-					 "readelf --relocs gp-hidden-lib.rd" \
+-					 "readelf --syms gp-hidden.sd"] \
+-				    "gp-hidden-lib-${abi}.so"] \
+-			       [list "gp scope test ($abi versioned lib)" \
+-				    "-m$emul -shared -version-script gp-hidden-ver.ver tmpdir/gp-hidden-lib-${abi}.so" "" \
+-				    "-march=$arch -mabi=$abi -fpic" \
+-				    { gp-hidden-ver.s } \
+-				    [list \
+-					 "readelf --relocs gp-hidden-ver${suff64}.rd" \
+-					 "readelf --syms gp-hidden.sd"] \
+-				    "gp-hidden-ver-${abi}.so"] \
+-			       [list "gp scope test ($abi executable)" \
+-				    "-m$emul -e 0 -rpath-link . tmpdir/gp-hidden-ver-${abi}.so" "" \
++				    { gp-test.s } \
++				    [list "readelf --syms gp-test-lib.sd"] \
++				    "gp-test-lib-${abi}.so"] \
++			       [list "gp test ($abi executable)" \
++				    "-m$emul" "" \
+ 				    "-march=$arch -mabi=$abi" \
+-				    {gp-hidden.s} \
+-				    [list \
+-					 "readelf --relocs gp-hidden${suff64}.rd" \
+-					 "readelf --syms gp-hidden.sd"]\
+-				    "gp-hidden-${abi}"]]
++				    { gp-test.s } \
++				    [list "readelf --syms gp-test.sd"] \
++				    "gp-test-${abi}"]]
+     }
+ }
