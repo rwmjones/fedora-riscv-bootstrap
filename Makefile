@@ -1369,7 +1369,9 @@ stage3-disk.img::
 	fi
 
 # Upload the compressed disk image.
-upload-stage3: stage3-disk.img.xz
+upload-stage3: stage3-disk.img.xz \
+	host-tools/riscv64-unknown-elf/bin/bbl \
+	riscv-linux/vmlinux
 	scp $^ tick:public_html/riscv/
 stage3-disk.img.xz: stage3-disk.img
 	rm -f $@
