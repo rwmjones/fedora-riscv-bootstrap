@@ -1383,6 +1383,7 @@ boot-stage3-in-spike: $(STAGE3_DISK) host-tools/riscv64-unknown-elf/bin/bbl
 	    host-tools/riscv64-unknown-elf/bin/bbl
 
 # Helper which boots stage3 disk image in qemu.
+# Use TELNET=1 to enable incoming telnet connections.
 boot-stage3-in-qemu: $(STAGE3_DISK) host-tools/riscv64-unknown-elf/bin/bbl
 	qemu-system-riscv64 \
 	    -nographic -machine virt -m 2G \
@@ -1391,7 +1392,7 @@ boot-stage3-in-qemu: $(STAGE3_DISK) host-tools/riscv64-unknown-elf/bin/bbl
 	    -device virtio-blk-device,drive=hd0 \
 	    -drive file=$(STAGE3_DISK),format=raw,id=hd0 \
 	    -device virtio-net-device,netdev=usernet \
-	    -netdev user,id=usernet
+	    -netdev user,id=usernet$${TELNET:+,hostfwd=tcp::10000-:23}
 
 ifneq ($(origin SRPM), undefined)
 
