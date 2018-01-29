@@ -20,9 +20,6 @@ Source1:        keycodemapdb.tar.gz
 # This requires a corresponding patch to riscv-pk.
 Patch1:         0001-ADD-DUMB-POWEROFF-DEVICE.patch
 
-# Print PC when ebreak is executed.  Useful for debugging.
-Patch2:         0002-target-riscv-Print-PC-when-handling-EBREAK.patch
-
 # These were just copied from qemu.spec, they are probably not
 # all required.
 BuildRequires: texi2html
@@ -97,7 +94,6 @@ rm -rf keycodemapdb
 mv keycodemapdb-* keycodemapdb
 popd
 %patch1 -p1
-%patch2 -p1
 
 
 %build
