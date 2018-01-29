@@ -78,29 +78,26 @@ stamp-riscv-qemu-installed:
 #----------------------------------------------------------------------
 # Stage 2
 
-stage2: riscv-tools/riscv-pk/README.md \
-	host-tools/bin/riscv64-unknown-elf-gcc \
+stage2: stage2-cross-tools/configure \
+	stage2-cross-tools/linux-headers/include/asm/auxvec.h \
 	host-tools/bin/riscv64-unknown-linux-gnu-gcc
 
-riscv-tools/riscv-pk/README.md:
-	cd riscv-tools && \
-	git submodule update --init --recursive
+stage2-cross-tools/configure:
+	cd stage2-cross-tools && autoconf
 
-host-tools/bin/riscv64-unknown-elf-gcc:
-	cd riscv-tools && \
-	RISCV=$(ROOT)/host-tools \
-	MAKEFLAGS=-j`nproc` \
-	./build.sh
+stage2-cross-tools/linux-headers/include/asm/auxvec.h:
+	cd linux && \
+	make headers_install \
+	    ARCH=riscv \
+	    INSTALL_HDR_PATH=$(ROOT)/stage2-cross-tools/linux-headers
 
 host-tools/bin/riscv64-unknown-linux-gnu-gcc:
 	rm -f host-tools/bin/riscv64-unknown-linux-gnu-*
-	cd riscv-tools/riscv-gnu-toolchain && \
-	$(MAKE) clean
 	export GLIBC_TARGET_FLAGS_EXTRA="--enable-obsolete-nsl --enable-obsolete-rpc"; \
-	cd riscv-tools/riscv-gnu-toolchain && \
+	cd stage2-cross-tools && \
 	./configure --prefix=$(ROOT)/host-tools
 	export GLIBC_TARGET_FLAGS_EXTRA="--enable-obsolete-nsl --enable-obsolete-rpc"; \
-	cd riscv-tools/riscv-gnu-toolchain && \
+	cd stage2-cross-tools && \
 	$(MAKE) linux
 # The versions of riscv64-unknown-linux-{gcc,g++} built above
 # are (possibly) broken in that they require an explicit --sysroot

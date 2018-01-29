@@ -1,9 +1,15 @@
-[submodule "riscv-tools"]
-	path = riscv-tools
-	url = https://github.com/riscv/riscv-tools
 [submodule "riscv-pk"]
 	path = riscv-pk
 	url = https://github.com/riscv/riscv-pk
-[submodule "riscv-linux"]
-	path = riscv-linux
-	url = https://github.com/riscv/riscv-linux
+[submodule "linux"]
+	path = linux
+	url = git://github.com/torvalds/linux.git
+[submodule "stage2-cross-tools/glibc"]
+	path = stage2-cross-tools/glibc
+	url = git://sourceware.org/git/glibc.git
+[submodule "stage2-cross-tools/binutils-gdb"]
+	path = stage2-cross-tools/binutils-gdb
+	url = git://sourceware.org/git/binutils-gdb.git
+[submodule "gcc"]
+	path = stage2-cross-tools/gcc
+	url = git://gcc.gnu.org/git/gcc.git
