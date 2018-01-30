@@ -21,12 +21,12 @@ mount.static -t sysfs /sys /sys
 mount.static -t tmpfs -o "nosuid,size=20%,mode=0755" tmpfs /run
 mkdir -p /run/lock
 mkdir -p /dev/pts
-mount -t devpts /dev/pts /dev/pts
+mount.static -t devpts /dev/pts /dev/pts
 mkdir -p /dev/shm
-mount -t tmpfs -o mode=1777 shmfs /dev/shm
+mount.static -t tmpfs -o mode=1777 shmfs /dev/shm
 
 # XXX devtmpfs
-#mount -t devtmpfs /dev /dev
+#mount.static -t devtmpfs /dev /dev
 
 rm -f /dev/null
 mknod /dev/null c 1 3
