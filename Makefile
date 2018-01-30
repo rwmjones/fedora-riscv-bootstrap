@@ -442,15 +442,6 @@ stage3-chroot/usr/bin/as:
 # We want to patch this tree so we have to make a copy.
 	rm -rf binutils-gdb
 	cp -a stage2-cross-tools/binutils-gdb binutils-gdb
-# Fix for https://github.com/riscv/binutils-gdb/pull/126
-	cd binutils-gdb && \
-	patch -p1 < ../riscv-binutils-fix-gdb.patch
-# Fix for __global_pointer$ issue
-# https://github.com/riscv/binutils-gdb/issues/108
-	cd binutils-gdb && \
-	patch -p1 < ../binutils-gdb.git-da02107a39f3eff5e0b6d6321da4e88f9564350a.patch
-	cd binutils-gdb && \
-	patch -p1 < ../binutils-gdb.git-0527614a9b805d1f640f477f51f9780403487ef8.patch
 	rm -rf binutils-gdb/build-x
 	mkdir binutils-gdb/build-x
 	cd binutils-gdb/build-x && \
