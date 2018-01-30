@@ -5,3 +5,12 @@ config.status
 Makefile
 .DS_Store
 !/regression/Makefile
+
+build-binutils-linux/
+build-gcc-linux-stage1/
+build-gcc-linux-stage2/
+build-glibc-linux-headers/
+build-glibc-linux-rv64imafdc-lp64d/
+configure
+linux-headers/
+stamps/
