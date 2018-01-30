@@ -448,7 +448,7 @@ stage3-chroot/usr/bin/as:
 	../configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --target=riscv64-unknown-linux-gnu \
-	    --prefix=/usr --libdir=/usr/lib64
+	    --prefix=/usr --libdir=/usr/lib64 --disable-werror
 	cd binutils-gdb/build-x && \
 	$(MAKE)
 	cd binutils-gdb/build-x && \
