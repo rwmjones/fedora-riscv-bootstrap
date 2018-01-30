@@ -197,7 +197,7 @@ JSONCPP_VERSION    = 1.7.4
 TDNF_VERSION       = 1.0.9
 
 stage3: linux/vmlinux \
-	host-tools/riscv64-unknown-elf/bin/bbl \
+	host-tools/riscv64-unknown-linux-gnu/bin/bbl \
 	stage3-chroot-original/etc/fedora-release \
 	stage3-chroot/etc/fedora-release \
 	stage3-chroot/lib64/libc.so.6 \
@@ -263,9 +263,9 @@ stage3: linux/vmlinux \
 
 linux/vmlinux: linux/arch/riscv/include/asm/serial.h linux/.config
 	cd linux && \
-	$(MAKE) ARCH=riscv CROSS_COMPILE=riscv64-unknown-elf- vmlinux
+	$(MAKE) ARCH=riscv CROSS_COMPILE=riscv64-unknown-linux-gnu- vmlinux
 	cd linux && \
-	$(MAKE) ARCH=riscv CROSS_COMPILE=riscv64-unknown-elf- headers_install INSTALL_HDR_PATH=$(ROOT)/stage3-chroot/usr
+	$(MAKE) ARCH=riscv CROSS_COMPILE=riscv64-unknown-linux-gnu- headers_install INSTALL_HDR_PATH=$(ROOT)/stage3-chroot/usr
 	ls -l $@
 
 # See https://github.com/riscv/riscv-qemu/commit/039dbd521277bc0aab672203a1a199e4519094da
@@ -276,18 +276,18 @@ linux/arch/riscv/include/asm/serial.h: asm-serial.h
 linux/.config: kernel-config
 	rm -f $@
 	cd linux && \
-	$(MAKE) ARCH=riscv CROSS_COMPILE=riscv64-unknown-elf- defconfig
+	$(MAKE) ARCH=riscv CROSS_COMPILE=riscv64-unknown-linux-gnu- defconfig
 	cat $< >> $@
 	cd linux && \
-	$(MAKE) ARCH=riscv CROSS_COMPILE=riscv64-unknown-elf- olddefconfig
+	$(MAKE) ARCH=riscv CROSS_COMPILE=riscv64-unknown-linux-gnu- olddefconfig
 
 # Build the bbl with embedded kernel.
-host-tools/riscv64-unknown-elf/bin/bbl: linux/vmlinux
+host-tools/riscv64-unknown-linux-gnu/bin/bbl: linux/vmlinux
 	rm -rf riscv-pk/build
 	mkdir -p riscv-pk/build
 	cd riscv-pk/build && \
 	RISCV=$(ROOT)/host-tools \
-	../configure --prefix=$(ROOT)/host-tools --host=riscv64-unknown-elf --with-payload=$(ROOT)/$<
+	../configure --prefix=$(ROOT)/host-tools --host=riscv64-unknown-linux-gnu --with-payload=$(ROOT)/$<
 	cd riscv-pk/build && \
 	RISCV=$(ROOT)/host-tools \
 	$(MAKE)
@@ -300,7 +300,7 @@ stage3-chroot/rpmbuild/RPMS/noarch/kernel-headers-1-1.fc27.noarch.rpm: linux/vml
 	rm -rf kernel-headers
 	mkdir -p kernel-headers/usr
 	cd linux && \
-	make ARCH=riscv CROSS_COMPILE=riscv64-unknown-elf- headers_install INSTALL_HDR_PATH=$(ROOT)/kernel-headers/usr
+	make ARCH=riscv CROSS_COMPILE=riscv64-unknown-linux-gnu- headers_install INSTALL_HDR_PATH=$(ROOT)/kernel-headers/usr
 	sed -e 's,@ROOT@,$(ROOT),g' < kernel-headers.spec.in > kernel-headers.spec
 	mkdir -p stage3-chroot/rpmbuild/RPMS/noarch
 	rpmbuild -ba kernel-headers.spec --define "_topdir $(ROOT)/stage3-chroot/rpmbuild"
@@ -363,7 +363,7 @@ stage3-chroot/lib64/libc.so.6:
 # Copy in the correct Linux header files.
 stage3-chroot/usr/include/asm/ptrace.h: linux/vmlinux
 	cd linux && \
-	make ARCH=riscv CROSS_COMPILE=riscv64-unknown-elf- headers_install INSTALL_HDR_PATH=$(ROOT)/stage3-chroot/usr
+	make ARCH=riscv CROSS_COMPILE=riscv64-unknown-linux-gnu- headers_install INSTALL_HDR_PATH=$(ROOT)/stage3-chroot/usr
 
 # Cross-compile ncurses.
 stage3-chroot/usr/bin/tic: ncurses-$(NCURSES_VERSION).tgz
@@ -1367,7 +1367,7 @@ stage3-disk.img::
 
 # Upload the compressed disk image.
 upload-stage3: stage3-disk.img.xz \
-	host-tools/riscv64-unknown-elf/bin/bbl \
+	host-tools/riscv64-unknown-linux-gnu/bin/bbl \
 	linux/vmlinux
 	scp $^ tick:public_html/riscv/
 stage3-disk.img.xz: stage3-disk.img
@@ -1375,16 +1375,16 @@ stage3-disk.img.xz: stage3-disk.img
 	xz --best -k $^
 
 # Helper which boots stage3 disk image in spike.
-boot-stage3-in-spike: $(STAGE3_DISK) host-tools/riscv64-unknown-elf/bin/bbl
+boot-stage3-in-spike: $(STAGE3_DISK) host-tools/riscv64-unknown-linux-gnu/bin/bbl
 	spike +disk=$(STAGE3_DISK) \
-	    host-tools/riscv64-unknown-elf/bin/bbl
+	    host-tools/riscv64-unknown-linux-gnu/bin/bbl
 
 # Helper which boots stage3 disk image in qemu.
 # Use TELNET=1 to enable incoming telnet connections.
-boot-stage3-in-qemu: $(STAGE3_DISK) host-tools/riscv64-unknown-elf/bin/bbl
+boot-stage3-in-qemu: $(STAGE3_DISK) host-tools/riscv64-unknown-linux-gnu/bin/bbl
 	qemu-system-riscv64 \
 	    -nographic -machine virt -m 2G \
-	    -kernel host-tools/riscv64-unknown-elf/bin/bbl \
+	    -kernel host-tools/riscv64-unknown-linux-gnu/bin/bbl \
 	    -append "console=ttyS0 ro root=/dev/vda init=/init" \
 	    -device virtio-blk-device,drive=hd0 \
 	    -drive file=$(STAGE3_DISK),format=raw,id=hd0 \
