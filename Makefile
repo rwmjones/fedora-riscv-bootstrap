@@ -814,6 +814,10 @@ bzip2-$(BZIP2_VERSION).tar.gz:
 stage3-chroot/usr/bin/make: make-$(MAKE_VERSION).tar.gz
 	rm -rf make-$(MAKE_VERSION)
 	tar -zxf $^
+#	Unclear why this patch is needed but upstream make has other
+#	fixes for the way it misuses glibc.
+	cd make-$(MAKE_VERSION) && \
+	patch -p1 < ../make-4.2.1-fix-alloca.patch
 	cd make-$(MAKE_VERSION) && \
 	./configure \
 	    --without-guile \
