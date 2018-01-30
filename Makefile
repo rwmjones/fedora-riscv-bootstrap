@@ -899,7 +899,7 @@ patch-$(PATCH_VERSION).tar.gz:
 
 # Cross-compile hostname.
 stage3-chroot/usr/bin/hostname: hostname-$(HOSTNAME_VERSION).tar.gz
-	rm -rf hostname-$(HOSTNAME_VERSION)
+	rm -rf hostname
 	tar -zxf $^
 	cd hostname && patch -p1 < ../hostname-rh.patch
 	cd hostname && \
