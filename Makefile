@@ -354,6 +354,7 @@ stage3-chroot/lib64/libc.so.6:
 	mkdir -p stage3-chroot/usr/lib/audit
 	mkdir -p stage3-chroot/usr/lib/gconv
 	mkdir -p stage3-chroot/usr/lib/ldscripts
+	mkdir -p stage3-chroot/usr/include/rpcsvc
 	for f in `cd host-tools/sysroot && find -type f -o -type l`; do \
 	    cp -d host-tools/sysroot/$$f stage3-chroot/$$f; \
 	done
