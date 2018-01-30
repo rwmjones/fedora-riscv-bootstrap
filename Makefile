@@ -347,7 +347,7 @@ stage3-chroot/etc/fedora-release: stage3-chroot-original/etc/fedora-release
 	mv stage3-chroot-t stage3-chroot
 	rm -f stage3-chroot/usr/include/asm/ptrace.h
 
-# Copy in compiled glibc from the stage3-cross-tools sysroot.  Only
+# Copy in compiled glibc from the stage2-cross-tools sysroot.  Only
 # copy files and symlinks, leave the target directory structure
 # intact.
 stage3-chroot/lib64/libc.so.6:
@@ -440,27 +440,27 @@ coreutils-$(COREUTILS_VERSION).tar.xz:
 # Cross-compile binutils.
 stage3-chroot/usr/bin/as:
 # We want to patch this tree so we have to make a copy.
-	rm -rf riscv-binutils-gdb
-	cp -a stage3-cross-tools/riscv-binutils-gdb riscv-binutils-gdb
-# Fix for https://github.com/riscv/riscv-binutils-gdb/pull/126
-	cd riscv-binutils-gdb && \
+	rm -rf binutils-gdb
+	cp -a stage2-cross-tools/binutils-gdb binutils-gdb
+# Fix for https://github.com/riscv/binutils-gdb/pull/126
+	cd binutils-gdb && \
 	patch -p1 < ../riscv-binutils-fix-gdb.patch
 # Fix for __global_pointer$ issue
-# https://github.com/riscv/riscv-binutils-gdb/issues/108
-	cd riscv-binutils-gdb && \
+# https://github.com/riscv/binutils-gdb/issues/108
+	cd binutils-gdb && \
 	patch -p1 < ../binutils-gdb.git-da02107a39f3eff5e0b6d6321da4e88f9564350a.patch
-	cd riscv-binutils-gdb && \
+	cd binutils-gdb && \
 	patch -p1 < ../binutils-gdb.git-0527614a9b805d1f640f477f51f9780403487ef8.patch
-	rm -rf riscv-binutils-gdb/build-x
-	mkdir riscv-binutils-gdb/build-x
-	cd riscv-binutils-gdb/build-x && \
+	rm -rf binutils-gdb/build-x
+	mkdir binutils-gdb/build-x
+	cd binutils-gdb/build-x && \
 	../configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --target=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	cd riscv-binutils-gdb/build-x && \
+	cd binutils-gdb/build-x && \
 	$(MAKE)
-	cd riscv-binutils-gdb/build-x && \
+	cd binutils-gdb/build-x && \
 	make DESTDIR=$(ROOT)/stage3-chroot install
 
 # Cross-compile GMP, MPFR and MPC (deps of GCC).
@@ -516,13 +516,13 @@ mpc-$(MPC_VERSION).tar.gz:
 # Cross-compile GCC.
 stage3-chroot/usr/bin/gcc:
 # We want to patch this tree so we have to make a copy.
-	rm -rf riscv-gcc
-	cp -a stage3-cross-tools/gcc riscv-gcc
-	cd riscv-gcc && \
+	rm -rf gcc
+	cp -a stage2-cross-tools/gcc gcc
+	cd gcc && \
 	patch -p1 < ../0001-HACKS-TO-GET-GCC-TO-COMPILE.patch
-	rm -rf riscv-gcc/build-x
-	mkdir riscv-gcc/build-x
-	cd riscv-gcc/build-x && \
+	rm -rf gcc/build-x
+	mkdir gcc/build-x
+	cd gcc/build-x && \
 	gcc_cv_as_leb128=no \
 	CFLAGS="-O0" \
 	CXXFLAGS="-O0" \
@@ -544,10 +544,10 @@ stage3-chroot/usr/bin/gcc:
 	    --with-linker-hash-style=gnu \
 	    --enable-initfini-array \
 	    --disable-libgcj
-	cd riscv-gcc/build-x && \
+	cd gcc/build-x && \
 	gcc_cv_as_leb128=no \
 	$(MAKE)
-	cd riscv-gcc/build-x && \
+	cd gcc/build-x && \
 	make install DESTDIR=$(ROOT)/stage3-chroot
 	rm -f stage3-chroot/usr/lib64/*.la
 # See next rule for why we do this ...
@@ -559,41 +559,41 @@ stage3-chroot/usr/bin/gcc:
 # executable into /usr/lib64 and ignores the --libdir parameter
 # entirely.  Fix this mess.
 stage3-chroot/usr/lib64/libstdc++.so: stage3-chroot/usr/bin/gcc
-	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libstdc++-v3 && \
+	cd gcc/build-x/riscv64-unknown-linux-gnu/libstdc++-v3 && \
 	../../../libstdc++-v3/configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libstdc++-v3 && \
+	cd gcc/build-x/riscv64-unknown-linux-gnu/libstdc++-v3 && \
 	make clean
-	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libstdc++-v3 && \
+	cd gcc/build-x/riscv64-unknown-linux-gnu/libstdc++-v3 && \
 	$(MAKE)
-	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libstdc++-v3 && \
+	cd gcc/build-x/riscv64-unknown-linux-gnu/libstdc++-v3 && \
 	make install DESTDIR=$(ROOT)/stage3-chroot
 
 # libgomp isn't built correctly.
 stage3-chroot/usr/lib64/libgomp.so: stage3-chroot/usr/bin/gcc
-	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libgomp && \
+	cd gcc/build-x/riscv64-unknown-linux-gnu/libgomp && \
 	../../../libgomp/configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libgomp && \
+	cd gcc/build-x/riscv64-unknown-linux-gnu/libgomp && \
 	make clean
-	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libgomp && \
+	cd gcc/build-x/riscv64-unknown-linux-gnu/libgomp && \
 	$(MAKE)
-	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libgomp && \
+	cd gcc/build-x/riscv64-unknown-linux-gnu/libgomp && \
 	make install DESTDIR=$(ROOT)/stage3-chroot
 
 # We don't have cross-compiled libatomic for riscv64, but libgcc_s.so refers to symbols from this library
 stage3-chroot/usr/lib64/libatomic.so: stage3-chroot/usr/bin/gcc
-	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libatomic && \
+	cd gcc/build-x/riscv64-unknown-linux-gnu/libatomic && \
 	../../../libatomic/configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64
-	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libatomic && \
+	cd gcc/build-x/riscv64-unknown-linux-gnu/libatomic && \
 	make clean
-	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libatomic && \
+	cd gcc/build-x/riscv64-unknown-linux-gnu/libatomic && \
 	$(MAKE)
-	cd riscv-gcc/build-x/riscv64-unknown-linux-gnu/libatomic && \
+	cd gcc/build-x/riscv64-unknown-linux-gnu/libatomic && \
 	make install DESTDIR=$(ROOT)/stage3-chroot
 
 # Cross-compile util-linux.
