@@ -202,7 +202,7 @@ stage3: linux/vmlinux \
 	stage3-chroot/etc/fedora-release \
 	stage3-chroot/lib64/libc.so.6 \
 	stage3-chroot/usr/include/asm/ptrace.h \
-	host-tools/riscv64-unknown-linux-gnu/bin/bbl \
+	host-tools/riscv64-unknown-elf/bin/bbl \
 	stage3-chroot/usr/bin/tic \
 	stage3-chroot/usr/lib64/libhistory.so.6 \
 	stage3-chroot/bin/bash \
@@ -283,7 +283,7 @@ linux/.config: kernel-config
 	$(MAKE) ARCH=riscv CROSS_COMPILE=riscv64-unknown-linux-gnu- olddefconfig
 
 # Build the bbl with embedded kernel.
-host-tools/riscv64-unknown-linux-gnu/bin/bbl: linux/vmlinux
+host-tools/riscv64-unknown-elf/bin/bbl: linux/vmlinux
 	rm -rf riscv-pk/build
 	mkdir -p riscv-pk/build
 	cd riscv-pk/build && \
@@ -1362,7 +1362,7 @@ stage3-disk.img::
 
 # Upload the compressed disk image.
 upload-stage3: stage3-disk.img.xz \
-	host-tools/riscv64-unknown-linux-gnu/bin/bbl \
+	host-tools/riscv64-unknown-elf/bin/bbl \
 	linux/vmlinux
 	scp $^ tick:public_html/riscv/
 stage3-disk.img.xz: stage3-disk.img
@@ -1370,16 +1370,16 @@ stage3-disk.img.xz: stage3-disk.img
 	xz --best -k $^
 
 # Helper which boots stage3 disk image in spike.
-boot-stage3-in-spike: $(STAGE3_DISK) host-tools/riscv64-unknown-linux-gnu/bin/bbl
+boot-stage3-in-spike: $(STAGE3_DISK) host-tools/riscv64-unknown-elf/bin/bbl
 	spike +disk=$(STAGE3_DISK) \
-	    host-tools/riscv64-unknown-linux-gnu/bin/bbl
+	    host-tools/riscv64-unknown-elf/bin/bbl
 
 # Helper which boots stage3 disk image in qemu.
 # Use TELNET=1 to enable incoming telnet connections.
-boot-stage3-in-qemu: $(STAGE3_DISK) host-tools/riscv64-unknown-linux-gnu/bin/bbl
+boot-stage3-in-qemu: $(STAGE3_DISK) host-tools/riscv64-unknown-elf/bin/bbl
 	qemu-system-riscv64 \
 	    -nographic -machine virt -m 2G \
-	    -kernel host-tools/riscv64-unknown-linux-gnu/bin/bbl \
+	    -kernel host-tools/riscv64-unknown-elf/bin/bbl \
 	    -append "console=ttyS0 ro root=/dev/vda init=/init" \
 	    -device virtio-blk-device,drive=hd0 \
 	    -drive file=$(STAGE3_DISK),format=raw,id=hd0 \
