@@ -197,11 +197,11 @@ JSONCPP_VERSION    = 1.7.4
 TDNF_VERSION       = 1.0.9
 
 stage3: linux/vmlinux \
-	host-tools/riscv64-unknown-linux-gnu/bin/bbl \
 	stage3-chroot-original/etc/fedora-release \
 	stage3-chroot/etc/fedora-release \
 	stage3-chroot/lib64/libc.so.6 \
 	stage3-chroot/usr/include/asm/ptrace.h \
+	host-tools/riscv64-unknown-linux-gnu/bin/bbl \
 	stage3-chroot/usr/bin/tic \
 	stage3-chroot/usr/lib64/libhistory.so.6 \
 	stage3-chroot/bin/bash \
