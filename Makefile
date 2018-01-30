@@ -1432,6 +1432,20 @@ stage3-build:
 
 endif
 
+# This very long operation rebuilds all stage 3 source RPMs,
+# ignoring any errors, but saving the log files from each build,
+# and the output binary RPMs (if any) in ./rpmbuild.
+
+stage3-rebuild-all-srpms:
+	@for srpm in $(ROOT)/stage3-built-rpms/SRPMS/*.src.rpm; do \
+	    base=$$(basename $$srpm); \
+	    name=$$(rpm -q --qf "%{NAME}\n" -p $$srpm); \
+	    echo "building $$srpm"; \
+	    echo "    base=$$base name=$$name"; \
+	    $(MAKE) stage3-build SRPM="$$srpm" >& $$base.log; \
+	    rm -f $$name-disk.img; \
+	done
+
 #----------------------------------------------------------------------
 # Stage 4
 
