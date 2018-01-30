@@ -515,8 +515,6 @@ stage3-chroot/usr/bin/gcc:
 	mkdir gcc/build-x
 	cd gcc/build-x && \
 	gcc_cv_as_leb128=no \
-	CFLAGS="-O0" \
-	CXXFLAGS="-O0" \
 	../configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64 \
