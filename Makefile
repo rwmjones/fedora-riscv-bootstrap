@@ -13,7 +13,7 @@ clean:
 	find -name '*~' -delete
 	rm -f stamp-*
 	rm -rf host-tools
-	rm -f linux/vmlinux
+	rm -f riscv-linux/vmlinux
 	rm -rf stage3-chroot
 	rm -f $(STAGE3_DISK)
 	rm -f stage4-disk.img
@@ -86,7 +86,7 @@ stage2-cross-tools/configure:
 	cd stage2-cross-tools && autoconf
 
 stage2-cross-tools/linux-headers/include/asm/auxvec.h:
-	cd linux && \
+	cd riscv-linux && \
 	make headers_install \
 	    ARCH=riscv \
 	    INSTALL_HDR_PATH=$(ROOT)/stage2-cross-tools/linux-headers
@@ -197,7 +197,7 @@ JSONCPP_VERSION    = 1.7.4
 # starting from this version:
 TDNF_VERSION       = 1.0.9
 
-stage3: linux/vmlinux \
+stage3: riscv-linux/vmlinux \
 	stage3-chroot-original/etc/fedora-release \
 	stage3-chroot/etc/fedora-release \
 	stage3-chroot/lib64/libc.so.6 \
@@ -262,28 +262,28 @@ stage3: linux/vmlinux \
 	stage3-chroot/usr/lib/libtinfo.so.6 \
 	$(STAGE3_DISK)
 
-linux/vmlinux: linux/arch/riscv/include/asm/serial.h linux/.config
-	cd linux && \
+riscv-linux/vmlinux: riscv-linux/arch/riscv/include/asm/serial.h riscv-linux/.config
+	cd riscv-linux && \
 	$(MAKE) ARCH=riscv CROSS_COMPILE=riscv64-unknown-linux-gnu- vmlinux
-	cd linux && \
+	cd riscv-linux && \
 	$(MAKE) ARCH=riscv CROSS_COMPILE=riscv64-unknown-linux-gnu- headers_install INSTALL_HDR_PATH=$(ROOT)/stage3-chroot/usr
 	ls -l $@
 
 # See https://github.com/riscv/riscv-qemu/commit/039dbd521277bc0aab672203a1a199e4519094da
-linux/arch/riscv/include/asm/serial.h: asm-serial.h
+riscv-linux/arch/riscv/include/asm/serial.h: asm-serial.h
 	rm -f $@
-	cp asm-serial.h linux/arch/riscv/include/asm/serial.h
+	cp asm-serial.h riscv-linux/arch/riscv/include/asm/serial.h
 
-linux/.config: kernel-config
+riscv-linux/.config: kernel-config
 	rm -f $@
-	cd linux && \
+	cd riscv-linux && \
 	$(MAKE) ARCH=riscv CROSS_COMPILE=riscv64-unknown-linux-gnu- defconfig
 	cat $< >> $@
-	cd linux && \
+	cd riscv-linux && \
 	$(MAKE) ARCH=riscv CROSS_COMPILE=riscv64-unknown-linux-gnu- olddefconfig
 
 # Build the bbl with embedded kernel.
-host-tools/riscv64-unknown-elf/bin/bbl: linux/vmlinux
+host-tools/riscv64-unknown-elf/bin/bbl: riscv-linux/vmlinux
 	rm -rf riscv-pk/build
 	mkdir -p riscv-pk/build
 	cd riscv-pk/build && \
@@ -297,10 +297,10 @@ host-tools/riscv64-unknown-elf/bin/bbl: linux/vmlinux
 	$(MAKE) install
 
 # Build the phony kernel-headers RPM.
-stage3-chroot/rpmbuild/RPMS/noarch/kernel-headers-1-1.fc27.noarch.rpm: linux/vmlinux
+stage3-chroot/rpmbuild/RPMS/noarch/kernel-headers-1-1.fc27.noarch.rpm: riscv-linux/vmlinux
 	rm -rf kernel-headers
 	mkdir -p kernel-headers/usr
-	cd linux && \
+	cd riscv-linux && \
 	make ARCH=riscv CROSS_COMPILE=riscv64-unknown-linux-gnu- headers_install INSTALL_HDR_PATH=$(ROOT)/kernel-headers/usr
 	sed -e 's,@ROOT@,$(ROOT),g' < kernel-headers.spec.in > kernel-headers.spec
 	mkdir -p stage3-chroot/rpmbuild/RPMS/noarch
@@ -363,8 +363,8 @@ stage3-chroot/lib64/libc.so.6:
 	rm -f stage3-chroot/usr/include/asm/ptrace.h
 
 # Copy in the correct Linux header files.
-stage3-chroot/usr/include/asm/ptrace.h: linux/vmlinux
-	cd linux && \
+stage3-chroot/usr/include/asm/ptrace.h: riscv-linux/vmlinux
+	cd riscv-linux && \
 	make ARCH=riscv CROSS_COMPILE=riscv64-unknown-linux-gnu- headers_install INSTALL_HDR_PATH=$(ROOT)/stage3-chroot/usr
 
 # Cross-compile ncurses.
@@ -1363,7 +1363,7 @@ stage3-disk.img::
 # Upload the compressed disk image.
 upload-stage3: stage3-disk.img.xz \
 	host-tools/riscv64-unknown-elf/bin/bbl \
-	linux/vmlinux
+	riscv-linux/vmlinux
 	scp $^ tick:public_html/riscv/
 stage3-disk.img.xz: stage3-disk.img
 	rm -f $@
