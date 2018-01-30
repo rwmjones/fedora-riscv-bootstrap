@@ -93,6 +93,7 @@ stage2-cross-tools/linux-headers/include/asm/auxvec.h:
 
 host-tools/bin/riscv64-unknown-linux-gnu-gcc:
 	rm -f host-tools/bin/riscv64-unknown-linux-gnu-*
+	-make -C stage2-cross-tools clean
 	export GLIBC_TARGET_FLAGS_EXTRA="--enable-obsolete-nsl --enable-obsolete-rpc"; \
 	cd stage2-cross-tools && \
 	./configure --prefix=$(ROOT)/host-tools
