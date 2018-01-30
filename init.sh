@@ -41,6 +41,8 @@ mknod /dev/urandom c 1 9
 
 # Initialize dynamic linker cache.
 ldconfig /usr/lib64 /usr/lib /lib64 /lib
+# XXX That doesn't work - why?  This works ...
+export LD_LIBRARY_PATH=/usr/lib64:/usr/lib
 
 # There is no hardware clock, just ensure the date is not miles out.
 date `date -r /usr/bin +%m%d%H%M%Y`
