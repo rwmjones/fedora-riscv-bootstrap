@@ -1331,7 +1331,7 @@ stage3-chroot/rpmbuild:
 # we need to make a symlink.
 stage3-chroot/usr/lib/libtinfo.so.6:
 	cd stage3-chroot/usr/lib && \
-	ln -s ../lib64/libtinfo.so.6
+	ln -sf ../lib64/libtinfo.so.6
 
 INIT=init.sh
 
