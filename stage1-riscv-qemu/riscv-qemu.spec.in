@@ -20,6 +20,11 @@ Source1:        keycodemapdb.tar.gz
 # This requires a corresponding patch to riscv-pk.
 Patch1:         0001-ADD-DUMB-POWEROFF-DEVICE.patch
 
+# https://github.com/michaeljclark/riscv-qemu/commit/ad01d6e1ae7cf88dae72bc4f1fe31b240b52a3ed
+# and see discussion here:
+# https://groups.google.com/a/groups.riscv.org/d/msg/sw-dev/2q1RKjk5FwE/eoFTlBa4BgAJ
+Patch2:         0002-RISC-V-Implement-priv-ISA-v1.10-trap-and-sret-mret-x.patch
+
 # These were just copied from qemu.spec, they are probably not
 # all required.
 BuildRequires: texi2html
@@ -94,6 +99,7 @@ rm -rf keycodemapdb
 mv keycodemapdb-* keycodemapdb
 popd
 %patch1 -p1
+%patch2 -p1
 
 
 %build
