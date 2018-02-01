@@ -56,8 +56,8 @@ BuildRequires: spice-server-devel >= 0.12.0
 BuildRequires: libseccomp-devel >= 2.3.0
 BuildRequires: libcurl-devel
 #BuildRequires: ceph-devel >= 0.61
-BuildRequires: systemtap
-BuildRequires: systemtap-sdt-devel
+#BuildRequires: systemtap
+#BuildRequires: systemtap-sdt-devel
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
 BuildRequires: libuuid-devel
