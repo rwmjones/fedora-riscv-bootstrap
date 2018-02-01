@@ -1434,10 +1434,13 @@ endif
 
 # This very long operation rebuilds all stage 3 source RPMs,
 # ignoring any errors, but saving the log files from each build,
-# and the output binary RPMs (if any) in ./rpmbuild.
+# and the output binary RPMs (if any) in ./rpmbuild.  You can
+# build another collection of source RPMs by setting SRPMSDIR.
+
+SRPMSDIR = $(ROOT)/stage3-built-rpms/SRPMS/
 
 stage3-rebuild-all-srpms:
-	@for srpm in $(ROOT)/stage3-built-rpms/SRPMS/*.src.rpm; do \
+	@for srpm in $(SRPMSDIR)/*.src.rpm; do \
 	    base=$$(basename $$srpm); \
 	    name=$$(rpm -q --qf "%{NAME}\n" -p $$srpm); \
 	    echo "building $$srpm"; \
