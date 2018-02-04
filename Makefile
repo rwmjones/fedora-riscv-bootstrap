@@ -1339,6 +1339,7 @@ INIT=init.sh
 # Note `-s +...' adds spare space to the disk image.
 $(STAGE3_DISK):: stage3-chroot/rpmbuild stage3-chroot
 	rm -f $@
+	lockfile stage3-disk.lock
 	cp stage3-built-rpms/RPMS/riscv64/*.rpm stage3-chroot/rpmbuild/RPMS/riscv64/
 	cp stage3-built-rpms/RPMS/noarch/*.rpm stage3-chroot/rpmbuild/RPMS/noarch/
 # Re-download the noarch packages and copy them into the disk image too.
@@ -1351,6 +1352,7 @@ $(STAGE3_DISK):: stage3-chroot/rpmbuild stage3-chroot
 	cd stage3-chroot/rpmbuild/RPMS && createrepo .
 	cp $(INIT) stage3-chroot/init
 	cd stage3-chroot && virt-make-fs . ../$@ -t ext2 -F raw -s +20G
+	rm -f stage3-disk.lock
 
 # If a rule really wants stage3-disk.img, you have to unset the
 # environment variable.
