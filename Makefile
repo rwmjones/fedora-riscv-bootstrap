@@ -1344,7 +1344,7 @@ $(STAGE3_DISK):: stage3-chroot/rpmbuild stage3-chroot
 	cp stage3-built-rpms/RPMS/noarch/*.rpm stage3-chroot/rpmbuild/RPMS/noarch/
 # Re-download the noarch packages and copy them into the disk image too.
 	rm -f stamp-koji-packages
-	$(MAKE) stamp-koji-packages
+	if ! $(MAKE) stamp-koji-packages; then rm -f stage3-disk.lock; exit 1; fi
 	cp stage4-koji-noarch-rpms/*.noarch.rpm stage3-chroot/rpmbuild/RPMS/noarch/
 	cp stage4-koji-noarch-rpms/*.src.rpm stage3-chroot/rpmbuild/SRPMS/
 # Create a repository for use by tdnf.  This is pointed to by
