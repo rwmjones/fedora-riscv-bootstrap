@@ -44,8 +44,11 @@ ldconfig /usr/lib64 /usr/lib /lib64 /lib
 # XXX That doesn't work - why?  This works ...
 export LD_LIBRARY_PATH=/usr/lib64:/usr/lib
 
+# Fix owner of umount binary.
+chown root.root /usr/bin/umount
+
 # There is no hardware clock, just ensure the date is not miles out.
-date `date -r /usr/bin +%m%d%H%M%Y`
+date `date -r /var/tmp +%m%d%H%M%Y`
 
 # Bring up the network.
 # (Note: These commands won't work unless the iproute package has been
