@@ -1351,7 +1351,8 @@ $(STAGE3_DISK):: stage3-chroot/rpmbuild stage3-chroot
 # /etc/yum.repos.d/local.repo
 	cd stage3-chroot/rpmbuild/RPMS && createrepo .
 	cp $(INIT) stage3-chroot/init
-	cd stage3-chroot && virt-make-fs . ../$@ -t ext2 -F raw -s +20G
+	cd stage3-chroot && \
+	if ! virt-make-fs . ../$@ -t ext2 -F raw -s +20G; then rm -f stage3-disk.lock; exit 1; fi
 	rm -f stage3-disk.lock
 
 # If a rule really wants stage3-disk.img, you have to unset the
