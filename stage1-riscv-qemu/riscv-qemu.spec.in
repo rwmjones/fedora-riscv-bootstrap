@@ -13,18 +13,6 @@ Source0:        https://github.com/riscv/%{name}/archive/@COMMIT@/%{name}-@SHORT
 # https://git.qemu.org/?p=keycodemapdb.git;a=snapshot;h=a8bc2f6ec822491c2b816314352a9ae459456ec9;sf=tgz
 Source1:        keycodemapdb.tar.gz
 
-# https://github.com/riscv/riscv-qemu/pull/82
-# With htif disabled there is no usable poweroff device.  Until that
-# is fixed add a dumb poweroff device which powers off qemu when
-# (uint32_t) 0x0ff0ff is written to physical address 0xff0.
-# This requires a corresponding patch to riscv-pk.
-Patch1:         0001-ADD-DUMB-POWEROFF-DEVICE.patch
-
-# https://github.com/michaeljclark/riscv-qemu/commit/ad01d6e1ae7cf88dae72bc4f1fe31b240b52a3ed
-# and see discussion here:
-# https://groups.google.com/a/groups.riscv.org/d/msg/sw-dev/2q1RKjk5FwE/eoFTlBa4BgAJ
-Patch2:         0002-RISC-V-Implement-priv-ISA-v1.10-trap-and-sret-mret-x.patch
-
 # These were just copied from qemu.spec, they are probably not
 # all required.
 BuildRequires: texi2html
@@ -98,8 +86,6 @@ zcat %{SOURCE1} | tar xf -
 rm -rf keycodemapdb
 mv keycodemapdb-* keycodemapdb
 popd
-%patch1 -p1
-%patch2 -p1
 
 
 %build
