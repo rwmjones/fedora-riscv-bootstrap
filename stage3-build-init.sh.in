@@ -94,6 +94,7 @@ else
            --define "debug_package %{nil}" \
            --define "_missing_doc_files_terminate_build %{nil}" \
            --define "_unitdir /usr/lib/systemd/system" \
+           --define "_sysctldir /usr/lib/sysctl.d" \
            --define "_tmpfilesdir /usr/lib/tmpfiles.d" \
            --define "_udevrulesdir /usr/lib/udev/rules.d" \
            --define "_emacs_sitestartdir /usr/share/emacs/site-lisp/site-start.d" \
