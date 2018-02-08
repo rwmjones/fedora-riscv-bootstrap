@@ -1672,13 +1672,21 @@ stamp-koji-packages:
 	touch $@
 
 # Helper which boots stage4 disk image in qemu.
-boot-stage4-in-qemu: stage4-disk.img stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
-	qemu-system-riscv -m 4G -kernel /usr/bin/bbl \
-	    -append ./stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux \
-	    -drive file=stage4-disk.img,format=raw -nographic
+# Use TELNET=1 to enable incoming telnet connections.
+boot-stage4-in-qemu: stage4-disk.img host-tools/riscv64-unknown-elf/bin/bbl
+	qemu-system-riscv64 \
+	    -nographic -machine virt -m 2G \
+	    -kernel host-tools/riscv64-unknown-elf/bin/bbl \
+	    -append "console=ttyS0 ro root=/dev/vda init=/init" \
+	    -device virtio-blk-device,drive=hd0 \
+	    -drive file=stage4-disk.img,format=raw,id=hd0 \
+	    -device virtio-net-device,netdev=usernet \
+	    -netdev user,id=usernet$${TELNET:+,hostfwd=tcp::10000-:23}
 
 # Upload the compressed stage4 disk image.
-upload-stage4: stage4-disk.img.xz stage3-kernel/linux-$(KERNEL_VERSION)/vmlinux
+upload-stage4: stage4-disk.img.xz \
+	host-tools/riscv64-unknown-elf/bin/bbl \
+	riscv-linux/vmlinux
 	scp $^ fedorapeople.org:/project/risc-v/disk-images/
 
 stage4-disk.img.xz: stage4-disk.img-pristine
