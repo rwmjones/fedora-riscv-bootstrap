@@ -18,6 +18,9 @@ cp -a @ROOT@/kernel-headers/usr/include/* $RPM_BUILD_ROOT%{_includedir}/
 find $RPM_BUILD_ROOT%{_includedir} -name .install -delete
 find $RPM_BUILD_ROOT%{_includedir} -name ..install.cmd -delete
 
+# This has to match the mode of glibc-headers, else you get file conflicts.
+chmod 0755 $RPM_BUILD_ROOT%{_includedir}/scsi
+
 %files
 %{_includedir}/*
 
