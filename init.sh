@@ -11,6 +11,8 @@ PATH=/usr/libexec/gcc/riscv64-unknown-linux-gnu/6.1.0:\
 /bin:\
 /sbin
 export PATH
+# Work around default search path problems.
+export LD_LIBRARY_PATH=/usr/lib64:/usr/lib
 
 # Root filesystem is mounted as ro, remount it as rw.
 mount.static -o remount,rw /
@@ -46,8 +48,6 @@ mknod /dev/urandom c 1 9
 
 # Initialize dynamic linker cache.
 ldconfig /usr/lib64 /usr/lib /lib64 /lib
-# XXX That doesn't work - why?  This works ...
-export LD_LIBRARY_PATH=/usr/lib64:/usr/lib
 
 # Fix owner of umount binary.
 chown root.root /usr/bin/umount
