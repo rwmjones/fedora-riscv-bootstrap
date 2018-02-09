@@ -85,6 +85,12 @@ trap cleanup INT QUIT TERM EXIT ERR
 
 if test ! -f /rpmsdone; then
   # On the first run, we need to install all the RPMs and then reboot.
+
+  # Don't install documentation and debuginfo files.
+  rm -f /rpmbuild/RPMS/*/*-doc-*.rpm
+  rm -f /rpmbuild/RPMS/*/*-docs-*.rpm
+  rm -f /rpmbuild/RPMS/*/*-debuginfo-*.rpm
+
   rpm -Uvh --nodeps /rpmbuild/RPMS/{noarch,riscv64}/*.rpm ||:
   rm -f /var/lib/rpm/__db*
   rpm --initdb ||:
