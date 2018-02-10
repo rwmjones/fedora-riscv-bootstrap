@@ -104,6 +104,7 @@ else
   rpmbuild --rebuild /var/tmp/@SRPM@ \
            --define "debug_package %{nil}" \
            --undefine _annotated_build \
+           --define "_topdir /rpmbuild" \
            --define "_missing_doc_files_terminate_build %{nil}" \
            --define "_unitdir /usr/lib/systemd/system" \
            --define "_sysctldir /usr/lib/sysctl.d" \
