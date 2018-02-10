@@ -1472,6 +1472,8 @@ STAGE4_KOJI_NOARCH_NAMES = \
 	basesystem \
 	ca-certificates \
 	crypto-policies \
+	docbook-dtds \
+	docbook-style-xsl \
 	elfutils \
 	fedora-release \
 	fedora-repos \
