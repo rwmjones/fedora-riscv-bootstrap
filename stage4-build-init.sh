@@ -106,6 +106,15 @@ else
     mkdir /var/tmp/mnt
     mount.static -o loop /var/tmp/stage4-disk.img-t /var/tmp/mnt
 
+    # Bind-mount some filesystems into the chroot so the RPM scripts
+    # can run cleanly.
+    mkdir -p /var/tmp/mnt/dev
+    mount.static --rbind /dev /var/tmp/mnt/dev
+    mkdir -p /var/tmp/mnt/proc
+    mount.static --rbind /proc /var/tmp/mnt/proc
+    mkdir -p /var/tmp/mnt/sys
+    mount.static --rbind /sys /var/tmp/mnt/sys
+
     # Iteratively install RPMs, removing any with failed dependencies.
     while true; do
         echo Running rpm on current package set ...
