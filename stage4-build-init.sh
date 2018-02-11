@@ -148,9 +148,9 @@ else
     sleep 5
     sync
     kill -9 `lsof -t /var/tmp/mnt` ||:
-    sleep 1
+    sleep 5
     sync
-    umount /var/tmp/mnt
+    umount /var/tmp/mnt ||:
 
     # Disk image is built, so move it to the final filename.
     # guestfish downloads this, but if it doesn't exist, guestfish
