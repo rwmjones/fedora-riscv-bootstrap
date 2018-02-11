@@ -1,13 +1,12 @@
 %global debug_package %{nil}
 
 Name:           hack-gcc
-Version:        6.1.0
-# Make sure the release is 0.x so the real GCC will override this package.
-Release:        0.0
+Version:        @HACK_GCC_VERSION@
+Release:        @HACK_GCC_RELEASE@
 Summary:        RISC-V GCC (binary hack)
 License:        GPLv2+
 
-Source0:        riscv-gcc-%{version}-binary.tar.gz
+Source0:        hack-gcc-%{version}-binary.tar.gz
 
 # For /etc/profile.d
 Requires:       setup
@@ -39,10 +38,6 @@ proper GCC.
 
 %install
 zcat %{SOURCE0} | tar -xf - -C $RPM_BUILD_ROOT
-
-# Some bogus leftover files.
-rm $RPM_BUILD_ROOT/usr/lib/libsupc++.a
-rm $RPM_BUILD_ROOT/usr/lib/libsupc++.la
 
 # Remove info directory file.
 rm $RPM_BUILD_ROOT/usr/share/info/dir

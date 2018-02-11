@@ -1597,6 +1597,9 @@ STAGE4_KOJI_NOARCH_NAMES = \
 
 STAGE4_KOJI_FEDORA_RELEASE = f27
 
+HACK_GCC_VERSION = 7.3.1
+HACK_GCC_RELEASE = 0.1
+
 stage4: stage4-disk.img
 
 # The clean stage4 disk image, built only from RPMs.
@@ -1631,9 +1634,11 @@ stage4-disk.img-pristine: stamp-stage4-builder stage3-chroot/usr/bin/poweroff
 # /init script and containing all the RPMs built so far.  The /init
 # script takes the RPMs and tries to build stage4-disk.img from them.
 stamp-stage4-builder: stage4-build-init.sh \
-		      stage3-chroot/var/tmp/stage4-disk.img-template.tar.gz
+		      stage3-chroot/var/tmp/stage4-disk.img-template.tar.gz \
+		      stage4-hack-gcc/hack-gcc-$(HACK_GCC_VERSION)-$(HACK_GCC_RELEASE).riscv64.rpm
 	rm -f $@ stage4-builder.img
 	$(MAKE) STAGE3_DISK=stage4-builder.img stage4-builder.img INIT=$<
+	guestfish -a stage4-builder.img -i copy-in stage4-hack-gcc/hack-gcc-$(HACK_GCC_VERSION)-$(HACK_GCC_RELEASE).riscv64.rpm /rpmbuild/RPMS/riscv64/
 	touch $@
 
 # Make an empty template for the stage4 disk image.
@@ -1659,6 +1664,115 @@ stage4-disk.img-template:
 	truncate -s 10G $@-t
 	mkfs -t ext4 $@-t
 	mv $@-t $@
+
+# hack-gcc is an RPM containing the cross-compiled GCC binary.
+#
+# Because we had a lot of problems building GCC inside qemu (simply
+# because GCC is huge and qemu-system-riscv is very slow), this
+# directory contains a temporary hack: a binary RPM build of GCC.
+
+stage4-hack-gcc/hack-gcc-$(HACK_GCC_VERSION)-$(HACK_GCC_RELEASE).riscv64.rpm: \
+	stage4-hack-gcc/hack-gcc-$(HACK_GCC_VERSION)-$(HACK_GCC_RELEASE).src.rpm
+	$(MAKE) stage3-build SRPM=$<
+	cp ./rpmbuild/RPMS/riscv64/hack-gcc-$(HACK_GCC_VERSION)-$(HACK_GCC_RELEASE).riscv64.rpm $@
+	rm hack-gcc-disk.img
+	rm stage3-built-rpms/SRPMS/hack-gcc-$(HACK_GCC_VERSION)-$(HACK_GCC_RELEASE).src.rpm
+
+stage4-hack-gcc/hack-gcc-$(HACK_GCC_VERSION)-$(HACK_GCC_RELEASE).src.rpm: \
+		stage4-hack-gcc/hack-gcc-$(HACK_GCC_VERSION)-binary.tar.gz \
+		stage4-hack-gcc/hack-gcc.spec
+	cd stage4-hack-gcc && \
+	rpmbuild -bs hack-gcc.spec \
+	    --define "_sourcedir $(ROOT)/stage4-hack-gcc" \
+	    --define "_srcrpmdir $(ROOT)/stage4-hack-gcc"
+
+stage4-hack-gcc/hack-gcc.spec: stage4-hack-gcc/hack-gcc.spec.in
+	rm -f $@ $@-t
+	sed -e 's/@HACK_GCC_VERSION@/$(HACK_GCC_VERSION)/' \
+	    -e 's/@HACK_GCC_RELEASE@/$(HACK_GCC_RELEASE)/' \
+	    $< > $@-t
+	mv $@-t $@
+
+stage4-hack-gcc/hack-gcc-$(HACK_GCC_VERSION)-binary.tar.gz:
+# We want to patch this tree so we have to make a copy.
+	rm -rf stage4-hack-gcc/tmp-gcc
+	rm -rf stage4-hack-gcc/tmp-tree
+	rm -f $@ $@-t
+	cp -a stage2-cross-tools/gcc stage4-hack-gcc/tmp-gcc
+	cd stage4-hack-gcc/tmp-gcc && \
+	patch -p1 < ../../0001-HACKS-TO-GET-GCC-TO-COMPILE.patch
+	rm -rf stage4-hack-gcc/tmp-gcc/build-x
+	mkdir stage4-hack-gcc/tmp-gcc/build-x
+	cd stage4-hack-gcc/tmp-gcc/build-x && \
+	gcc_cv_as_leb128=no \
+	../configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64 \
+	    --enable-shared \
+	    --enable-tls \
+	    --enable-languages=c,c++ \
+	    --disable-libmudflap \
+	    --disable-libssp \
+	    --disable-libquadmath \
+	    --disable-nls \
+	    --disable-multilib \
+	    --enable-__cxa_atexit \
+	    --disable-libunwind-exceptions \
+	    --enable-gnu-unique-object \
+	    --enable-linker-build-id \
+	    --with-linker-hash-style=gnu \
+	    --enable-initfini-array \
+	    --disable-libgcj
+	cd stage4-hack-gcc/tmp-gcc/build-x && \
+	gcc_cv_as_leb128=no \
+	$(MAKE)
+	cd stage4-hack-gcc/tmp-gcc/build-x && \
+	make install DESTDIR=$(ROOT)/stage4-hack-gcc/tmp-tree
+	rm -f stage4-hack-gcc/tmp-tree/usr/lib64/*.la
+
+# These libraries are not cross-compiled correctly, we must rebuild them.
+	rm stage4-hack-gcc/tmp-tree/usr/lib64/libstdc++*
+	rm stage4-hack-gcc/tmp-tree/usr/lib64/libgomp*
+	rm stage4-hack-gcc/tmp-tree/usr/lib64/libatomic*
+
+	cd stage4-hack-gcc/tmp-gcc/build-x/riscv64-unknown-linux-gnu/libstdc++-v3 && \
+	../../../libstdc++-v3/configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64
+	cd stage4-hack-gcc/tmp-gcc/build-x/riscv64-unknown-linux-gnu/libstdc++-v3 && \
+	make clean
+	cd stage4-hack-gcc/tmp-gcc/build-x/riscv64-unknown-linux-gnu/libstdc++-v3 && \
+	$(MAKE)
+	cd stage4-hack-gcc/tmp-gcc/build-x/riscv64-unknown-linux-gnu/libstdc++-v3 && \
+	make install DESTDIR=$(ROOT)/stage4-hack-gcc/tmp-tree
+
+	cd stage4-hack-gcc/tmp-gcc/build-x/riscv64-unknown-linux-gnu/libgomp && \
+	../../../libgomp/configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64
+	cd stage4-hack-gcc/tmp-gcc/build-x/riscv64-unknown-linux-gnu/libgomp && \
+	make clean
+	cd stage4-hack-gcc/tmp-gcc/build-x/riscv64-unknown-linux-gnu/libgomp && \
+	$(MAKE)
+	cd stage4-hack-gcc/tmp-gcc/build-x/riscv64-unknown-linux-gnu/libgomp && \
+	make install DESTDIR=$(ROOT)/stage4-hack-gcc/tmp-tree
+
+	cd stage4-hack-gcc/tmp-gcc/build-x/riscv64-unknown-linux-gnu/libatomic && \
+	../../../libatomic/configure \
+	    --host=riscv64-unknown-linux-gnu \
+	    --prefix=/usr --libdir=/usr/lib64
+	cd stage4-hack-gcc/tmp-gcc/build-x/riscv64-unknown-linux-gnu/libatomic && \
+	make clean
+	cd stage4-hack-gcc/tmp-gcc/build-x/riscv64-unknown-linux-gnu/libatomic && \
+	$(MAKE)
+	cd stage4-hack-gcc/tmp-gcc/build-x/riscv64-unknown-linux-gnu/libatomic && \
+	make install DESTDIR=$(ROOT)/stage4-hack-gcc/tmp-tree
+
+# Tar up the resulting tree.
+	tar -C $(ROOT)/stage4-hack-gcc/tmp-tree -cf - . | gzip --best > $(ROOT)/stage4-hack-gcc/hack-gcc-$(HACK_GCC_VERSION)-binary.tar.gz-t
+	mv $@-t $@
+	rm -rf stage4-hack-gcc/tmp-gcc
+	rm -rf stage4-hack-gcc/tmp-tree
 
 # Download STAGE4_KOJI_NOARCH_NAMES packages.
 stamp-koji-packages:
