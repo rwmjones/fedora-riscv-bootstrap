@@ -1,6 +1,6 @@
 Summary:  RISC-V kernel headers interim package
 Name:     kernel-headers
-Version:  1
+Version:  4.15
 Release:  1.fc27
 License:  GPLv2
 BuildArch: noarch

@@ -256,7 +256,7 @@ stage3: riscv-linux/vmlinux \
 	stage3-chroot/etc/ld.so.conf.d/lib64.conf \
 	stage3-chroot/etc/resolv.conf \
 	stage3-chroot/rpmbuild \
-	stage3-chroot/rpmbuild/RPMS/noarch/kernel-headers-1-1.fc27.noarch.rpm \
+	stage3-chroot/rpmbuild/RPMS/noarch/kernel-headers-4.15-1.fc27.noarch.rpm \
 	stage3-tdnf/tdnf-$(TDNF_VERSION)-2.fc27.src.rpm \
 	stage3-chroot/etc/yum.repos.d/local.repo \
 	stage3-chroot/usr/lib/libtinfo.so.6 \
@@ -297,7 +297,7 @@ host-tools/riscv64-unknown-elf/bin/bbl: riscv-linux/vmlinux
 	$(MAKE) install
 
 # Build the phony kernel-headers RPM.
-stage3-chroot/rpmbuild/RPMS/noarch/kernel-headers-1-1.fc27.noarch.rpm: riscv-linux/vmlinux
+stage3-chroot/rpmbuild/RPMS/noarch/kernel-headers-4.15-1.fc27.noarch.rpm: riscv-linux/vmlinux
 	rm -rf kernel-headers
 	mkdir -p kernel-headers/usr
 	cd riscv-linux && \
