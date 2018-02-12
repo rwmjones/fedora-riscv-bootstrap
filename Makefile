@@ -1085,6 +1085,9 @@ stage3-chroot/usr/bin/flex: flex-$(FLEX_VERSION).tar.gz
 # into any directories except those needed to build flex itself.
 	cd flex-$(FLEX_VERSION) && $(MAKE) SUBDIRS="lib src"
 	cd flex-$(FLEX_VERSION) && make install DESTDIR=$(ROOT)/stage3-chroot SUBDIRS="lib src"
+# remove libfl shared libraries, which is also what happens on x86-64
+	rm stage3-chroot/usr/lib64/libfl.so*
+	rm stage3-chroot/usr/lib64/libfl_pic.so*
 
 flex-$(FLEX_VERSION).tar.gz:
 	rm -f $@ $@-t
