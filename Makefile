@@ -1480,6 +1480,7 @@ STAGE4_KOJI_NOARCH_NAMES = \
 	docbook-dtds \
 	docbook-style-xsl \
 	elfutils \
+	emacs-filesystem \
 	fedora-release \
 	fedora-repos \
 	fontawesome-fonts \
@@ -1598,7 +1599,8 @@ STAGE4_KOJI_NOARCH_NAMES = \
 	setup \
 	sgml-common \
 	tzdata \
-	words
+	words \
+	xemacs-filesystem
 
 STAGE4_KOJI_FEDORA_RELEASE = f27
 
