@@ -1088,6 +1088,8 @@ stage3-chroot/usr/bin/flex: flex-$(FLEX_VERSION).tar.gz
 # remove libfl shared libraries, which is also what happens on x86-64
 	rm stage3-chroot/usr/lib64/libfl.so*
 	rm stage3-chroot/usr/lib64/libfl_pic.so*
+	rm stage3-chroot/usr/lib64/libfl.la
+	rm stage3-chroot/usr/lib64/libfl_pic.la
 
 flex-$(FLEX_VERSION).tar.gz:
 	rm -f $@ $@-t
