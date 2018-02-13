@@ -13,6 +13,7 @@ Requires:       setup
 
 # Make it look like the real GCC package.
 Provides:       gcc = %{version}
+Provides:       gcc(major) = 7
 Provides:       gcc-c++ = %{version}
 
 # Not found by elfdeps for some reason:
