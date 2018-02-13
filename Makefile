@@ -1472,7 +1472,7 @@ stage3-rebuild-all-srpms:
 # package names.  Some noarch packages can be dropped from this list
 # if they are judged unnecessary, or if they pull in too many arch-ful
 # dependencies.
-STAGE4_KOJI_NOARCH_NAMES = \
+STAGE4_KOJI_NOARCH_SOURCE_NAMES = \
 	autoconf-archive \
 	basesystem \
 	ca-certificates \
@@ -1599,6 +1599,12 @@ STAGE4_KOJI_NOARCH_NAMES = \
 	sgml-common \
 	tzdata \
 	words
+
+# Above are source names.  We can also download individual noarch
+# binary packages:
+STAGE4_KOJI_NOARCH_BINARY_NAMES = \
+	emacs-filesystem \
+	xemacs-filesystem
 
 STAGE4_KOJI_FEDORA_RELEASE = f27
 
@@ -1779,14 +1785,18 @@ stage4-hack-gcc/hack-gcc-$(HACK_GCC_VERSION)-binary.tar.gz:
 	rm -rf stage4-hack-gcc/tmp-gcc
 	rm -rf stage4-hack-gcc/tmp-tree
 
-# Download STAGE4_KOJI_NOARCH_NAMES packages.
+# Download STAGE4_KOJI_NOARCH_SOURCE_NAMES packages.
 stamp-koji-packages:
 	rm -f $@
 	mkdir -p stage4-koji-noarch-rpms
 	cd stage4-koji-noarch-rpms && \
-	for f in $$( koji latest-build $(STAGE4_KOJI_FEDORA_RELEASE) $(STAGE4_KOJI_NOARCH_NAMES) --quiet | awk '{print $$1}' ); do \
+	for f in $$( koji latest-build $(STAGE4_KOJI_FEDORA_RELEASE) $(STAGE4_KOJI_NOARCH_SOURCE_NAMES) --quiet | awk '{print $$1}' ); do \
 	    test -f $$f.src.rpm || koji download-build $$f || exit 1; \
 	done;
+	cd stage4-koji-noarch-rpms && \
+	for f in $(STAGE4_KOJI_NOARCH_BINARY_NAMES); do \
+	    dnf download `dnf repoquery $$f`; \
+	done
 # Blacklist a few packages which cause excessive dependencies.
 	rm -f stage4-koji-noarch-rpms/fedora-release-[a-z]*
 	rm -f stage4-koji-noarch-rpms/emacs-gettext-*
