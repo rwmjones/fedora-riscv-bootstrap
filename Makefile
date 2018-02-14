@@ -1496,7 +1496,9 @@ STAGE4_KOJI_NOARCH_SOURCE_NAMES = \
 	iso-codes \
 	lato-fonts \
 	ncurses \
+	nim-srpm-macros \
 	ocaml-srpm-macros \
+	openblas-srpm-macros \
 	perl-Archive-Tar \
 	perl-Archive-Zip \
 	perl-B-Debug \
@@ -1596,6 +1598,7 @@ STAGE4_KOJI_NOARCH_SOURCE_NAMES = \
 	python3-sphinx-theme-alabaster \
 	python3-sphinx_rtd_theme \
 	rpmdevtools \
+	rust-srpm-macros \
 	setup \
 	sgml-common \
 	tzdata \
@@ -1605,6 +1608,7 @@ STAGE4_KOJI_NOARCH_SOURCE_NAMES = \
 # binary packages:
 STAGE4_KOJI_NOARCH_BINARY_NAMES = \
 	emacs-filesystem \
+	qt5-srpm-macros \
 	xemacs-filesystem
 
 STAGE4_KOJI_FEDORA_RELEASE = f27
