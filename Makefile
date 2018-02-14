@@ -1430,11 +1430,12 @@ stage3-build:
 	    echo "Build failed -- see error messages above."; \
 	    exit 1; \
 	fi
-	virt-copy-out -a $(srpm_disk) /rpmbuild ./
+	mkdir -p rpmbuild-$(srpm_name)
+	virt-copy-out -a $(srpm_disk) /rpmbuild rpmbuild-$(srpm_name)
 	-cp $(SRPM) stage3-built-rpms/SRPMS/
-	@echo Check log output, and RPMs in ./rpmbuild directory
+	@echo Check log output, and RPMs in rpmbuild-$(srpm_name) directory
 	@echo If they are correct then:
-	@echo 1. copy RPMs from ./rpmbuild to stage3-built-rpms/RPMS/riscv64/
+	@echo 1. copy RPMs from rpmbuild-$(srpm_name) to stage3-built-rpms/RPMS/riscv64/
 	@echo 2. check in the SRPM and RPMs
 	@echo $(srpm_disk) is still available for examination.
 

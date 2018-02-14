@@ -10,7 +10,7 @@ stamp-*
 .gdb_history
 
 /host-tools/
-/rpmbuild/
+/rpmbuild-*/
 
 /kernel-headers.spec
 
