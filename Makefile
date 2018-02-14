@@ -533,7 +533,8 @@ stage3-chroot/usr/bin/gcc:
 	    --enable-linker-build-id \
 	    --with-linker-hash-style=gnu \
 	    --enable-initfini-array \
-	    --disable-libgcj
+	    --disable-libgcj \
+	    --with-gcc-major-version-only
 	cd gcc/build-x && \
 	gcc_cv_as_leb128=no \
 	$(MAKE)
@@ -1738,7 +1739,8 @@ stage4-hack-gcc/hack-gcc-$(HACK_GCC_VERSION)-binary.tar.gz:
 	    --enable-linker-build-id \
 	    --with-linker-hash-style=gnu \
 	    --enable-initfini-array \
-	    --disable-libgcj
+	    --disable-libgcj \
+	    --with-gcc-major-version-only
 	cd stage4-hack-gcc/tmp-gcc/build-x && \
 	gcc_cv_as_leb128=no \
 	$(MAKE)

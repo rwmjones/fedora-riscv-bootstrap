@@ -1,5 +1,7 @@
 %global debug_package %{nil}
 
+%global major_version 7
+
 Name:           hack-gcc
 Version:        @HACK_GCC_VERSION@
 Release:        @HACK_GCC_RELEASE@
@@ -13,7 +15,7 @@ Requires:       setup
 
 # Make it look like the real GCC package.
 Provides:       gcc = %{version}
-Provides:       gcc(major) = 7
+Provides:       gcc(major) = %{major_version}
 Provides:       gcc-c++ = %{version}
 
 # Not found by elfdeps for some reason:
@@ -56,12 +58,13 @@ EOF
 %{_includedir}/*
 %{_libdir}/gcc/riscv64-unknown-linux-gnu
 %{_libdir}/*
-%{_libexecdir}/gcc/riscv64-unknown-linux-gnu/%{version}
+%{_libexecdir}/gcc/riscv64-unknown-linux-gnu/%{major_version}
 %{_infodir}/*.info*
 %{_datadir}/locale/*/LC_MESSAGES/*.mo
 %{_mandir}/man1/*.1*
 %{_mandir}/man7/*.7*
 %{_datadir}/gcc-%{version}/*
+%{_datadir}/gcc-%{major_version}/*
 
 
 
