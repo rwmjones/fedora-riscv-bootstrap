@@ -1691,7 +1691,7 @@ stage4-disk.img-template:
 stage4-hack-gcc/hack-gcc-$(HACK_GCC_VERSION)-$(HACK_GCC_RELEASE).riscv64.rpm: \
 	stage4-hack-gcc/hack-gcc-$(HACK_GCC_VERSION)-$(HACK_GCC_RELEASE).src.rpm
 	$(MAKE) stage3-build SRPM=$<
-	cp ./rpmbuild/RPMS/riscv64/hack-gcc-$(HACK_GCC_VERSION)-$(HACK_GCC_RELEASE).riscv64.rpm $@
+	cp ./rpmbuild-hack-gcc/rpmbuild/RPMS/riscv64/hack-gcc-$(HACK_GCC_VERSION)-$(HACK_GCC_RELEASE).riscv64.rpm $@
 	rm hack-gcc-disk.img
 	rm stage3-built-rpms/SRPMS/hack-gcc-$(HACK_GCC_VERSION)-$(HACK_GCC_RELEASE).src.rpm
 
