@@ -42,6 +42,12 @@ proper GCC.
 %install
 zcat %{SOURCE0} | tar -xf - -C $RPM_BUILD_ROOT
 
+# Create symlinks.
+ln -sf gcc %{buildroot}%{_prefix}/bin/cc
+mkdir -p %{buildroot}%{_prefix}/lib
+rm -f %{buildroot}%{_prefix}/lib/cpp
+ln -sf ../bin/cpp %{buildroot}/%{_prefix}/lib/cpp
+
 # Remove info directory file.
 rm $RPM_BUILD_ROOT/usr/share/info/dir
 
@@ -55,6 +61,7 @@ EOF
 %files
 %{_sysconfdir}/profile.d/gcc.sh
 %{_bindir}/*
+%{_prefix}/lib/cpp
 %{_includedir}/*
 %{_libdir}/gcc/riscv64-unknown-linux-gnu
 %{_libdir}/*
@@ -65,7 +72,6 @@ EOF
 %{_mandir}/man7/*.7*
 %{_datadir}/gcc-%{version}/*
 %{_datadir}/gcc-%{major_version}/*
-
 
 
 %changelog
