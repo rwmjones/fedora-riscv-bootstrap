@@ -73,7 +73,6 @@ EOF
 %{_datadir}/locale/*/LC_MESSAGES/*.mo
 %{_mandir}/man1/*.1*
 %{_mandir}/man7/*.7*
-%{_datadir}/gcc-%{version}/*
 %{_datadir}/gcc-%{major_version}/*
 
 
