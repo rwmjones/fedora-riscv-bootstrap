@@ -1614,7 +1614,7 @@ STAGE4_KOJI_NOARCH_BINARY_NAMES = \
 STAGE4_KOJI_FEDORA_RELEASE = f27
 
 HACK_GCC_VERSION = 7.3.1
-HACK_GCC_RELEASE = 0.2
+HACK_GCC_RELEASE = 0.3
 
 stage4: stage4-disk.img
 
@@ -1753,7 +1753,8 @@ stage4-hack-gcc/hack-gcc-$(HACK_GCC_VERSION)-binary.tar.gz:
 	cd stage4-hack-gcc/tmp-gcc/build-x/riscv64-unknown-linux-gnu/libstdc++-v3 && \
 	../../../libstdc++-v3/configure \
 	    --host=riscv64-unknown-linux-gnu \
-	    --prefix=/usr --libdir=/usr/lib64
+	    --prefix=/usr --libdir=/usr/lib64 \
+	    --with-gcc-major-version-only
 	cd stage4-hack-gcc/tmp-gcc/build-x/riscv64-unknown-linux-gnu/libstdc++-v3 && \
 	make clean
 	cd stage4-hack-gcc/tmp-gcc/build-x/riscv64-unknown-linux-gnu/libstdc++-v3 && \
@@ -1764,7 +1765,8 @@ stage4-hack-gcc/hack-gcc-$(HACK_GCC_VERSION)-binary.tar.gz:
 	cd stage4-hack-gcc/tmp-gcc/build-x/riscv64-unknown-linux-gnu/libgomp && \
 	../../../libgomp/configure \
 	    --host=riscv64-unknown-linux-gnu \
-	    --prefix=/usr --libdir=/usr/lib64
+	    --prefix=/usr --libdir=/usr/lib64 \
+	    --with-gcc-major-version-only
 	cd stage4-hack-gcc/tmp-gcc/build-x/riscv64-unknown-linux-gnu/libgomp && \
 	make clean
 	cd stage4-hack-gcc/tmp-gcc/build-x/riscv64-unknown-linux-gnu/libgomp && \
@@ -1775,7 +1777,8 @@ stage4-hack-gcc/hack-gcc-$(HACK_GCC_VERSION)-binary.tar.gz:
 	cd stage4-hack-gcc/tmp-gcc/build-x/riscv64-unknown-linux-gnu/libatomic && \
 	../../../libatomic/configure \
 	    --host=riscv64-unknown-linux-gnu \
-	    --prefix=/usr --libdir=/usr/lib64
+	    --prefix=/usr --libdir=/usr/lib64 \
+	    --with-gcc-major-version-only
 	cd stage4-hack-gcc/tmp-gcc/build-x/riscv64-unknown-linux-gnu/libatomic && \
 	make clean
 	cd stage4-hack-gcc/tmp-gcc/build-x/riscv64-unknown-linux-gnu/libatomic && \
