@@ -60,6 +60,9 @@ cat > $RPM_BUILD_ROOT/etc/profile.d/gcc.sh <<'EOF'
 PATH=/usr/libexec/gcc/riscv64-unknown-linux-gnu/%{version}:$PATH
 EOF
 
+# Remove libtool *.la files.
+find $RPM_BUILD_ROOT -name '*.la' -delete
+
 
 %files
 %{_sysconfdir}/profile.d/gcc.sh
