@@ -516,6 +516,7 @@ stage3-chroot/usr/bin/gcc:
 	rm -rf gcc/build-x
 	mkdir gcc/build-x
 	cd gcc/build-x && \
+	gcc_cv_as_leb128=no \
 	../configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64 \
@@ -536,6 +537,7 @@ stage3-chroot/usr/bin/gcc:
 	    --disable-libgcj \
 	    --with-gcc-major-version-only
 	cd gcc/build-x && \
+	gcc_cv_as_leb128=no \
 	$(MAKE)
 	cd gcc/build-x && \
 	make install DESTDIR=$(ROOT)/stage3-chroot
@@ -1614,7 +1616,7 @@ STAGE4_KOJI_NOARCH_BINARY_NAMES = \
 STAGE4_KOJI_FEDORA_RELEASE = f27
 
 HACK_GCC_VERSION = 7.3.1
-HACK_GCC_RELEASE = 0.3
+HACK_GCC_RELEASE = 0.4
 
 stage4: stage4-disk.img
 
@@ -1720,6 +1722,7 @@ stage4-hack-gcc/hack-gcc-$(HACK_GCC_VERSION)-binary.tar.gz:
 	rm -rf stage4-hack-gcc/tmp-gcc/build-x
 	mkdir stage4-hack-gcc/tmp-gcc/build-x
 	cd stage4-hack-gcc/tmp-gcc/build-x && \
+	gcc_cv_as_leb128=no \
 	../configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64 \
@@ -1740,6 +1743,7 @@ stage4-hack-gcc/hack-gcc-$(HACK_GCC_VERSION)-binary.tar.gz:
 	    --disable-libgcj \
 	    --with-gcc-major-version-only
 	cd stage4-hack-gcc/tmp-gcc/build-x && \
+	gcc_cv_as_leb128=no \
 	$(MAKE)
 	cd stage4-hack-gcc/tmp-gcc/build-x && \
 	make install DESTDIR=$(ROOT)/stage4-hack-gcc/tmp-tree
@@ -1751,6 +1755,7 @@ stage4-hack-gcc/hack-gcc-$(HACK_GCC_VERSION)-binary.tar.gz:
 	rm stage4-hack-gcc/tmp-tree/usr/lib64/libatomic*
 
 	cd stage4-hack-gcc/tmp-gcc/build-x/riscv64-unknown-linux-gnu/libstdc++-v3 && \
+	gcc_cv_as_leb128=no \
 	../../../libstdc++-v3/configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64 \
@@ -1758,11 +1763,13 @@ stage4-hack-gcc/hack-gcc-$(HACK_GCC_VERSION)-binary.tar.gz:
 	cd stage4-hack-gcc/tmp-gcc/build-x/riscv64-unknown-linux-gnu/libstdc++-v3 && \
 	make clean
 	cd stage4-hack-gcc/tmp-gcc/build-x/riscv64-unknown-linux-gnu/libstdc++-v3 && \
+	gcc_cv_as_leb128=no \
 	$(MAKE)
 	cd stage4-hack-gcc/tmp-gcc/build-x/riscv64-unknown-linux-gnu/libstdc++-v3 && \
 	make install DESTDIR=$(ROOT)/stage4-hack-gcc/tmp-tree
 
 	cd stage4-hack-gcc/tmp-gcc/build-x/riscv64-unknown-linux-gnu/libgomp && \
+	gcc_cv_as_leb128=no \
 	../../../libgomp/configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64 \
@@ -1770,11 +1777,13 @@ stage4-hack-gcc/hack-gcc-$(HACK_GCC_VERSION)-binary.tar.gz:
 	cd stage4-hack-gcc/tmp-gcc/build-x/riscv64-unknown-linux-gnu/libgomp && \
 	make clean
 	cd stage4-hack-gcc/tmp-gcc/build-x/riscv64-unknown-linux-gnu/libgomp && \
+	gcc_cv_as_leb128=no \
 	$(MAKE)
 	cd stage4-hack-gcc/tmp-gcc/build-x/riscv64-unknown-linux-gnu/libgomp && \
 	make install DESTDIR=$(ROOT)/stage4-hack-gcc/tmp-tree
 
 	cd stage4-hack-gcc/tmp-gcc/build-x/riscv64-unknown-linux-gnu/libatomic && \
+	gcc_cv_as_leb128=no \
 	../../../libatomic/configure \
 	    --host=riscv64-unknown-linux-gnu \
 	    --prefix=/usr --libdir=/usr/lib64 \
@@ -1782,6 +1791,7 @@ stage4-hack-gcc/hack-gcc-$(HACK_GCC_VERSION)-binary.tar.gz:
 	cd stage4-hack-gcc/tmp-gcc/build-x/riscv64-unknown-linux-gnu/libatomic && \
 	make clean
 	cd stage4-hack-gcc/tmp-gcc/build-x/riscv64-unknown-linux-gnu/libatomic && \
+	gcc_cv_as_leb128=no \
 	$(MAKE)
 	cd stage4-hack-gcc/tmp-gcc/build-x/riscv64-unknown-linux-gnu/libatomic && \
 	make install DESTDIR=$(ROOT)/stage4-hack-gcc/tmp-tree
