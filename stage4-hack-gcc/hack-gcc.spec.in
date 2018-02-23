@@ -13,6 +13,9 @@ Source0:        hack-gcc-%{version}-binary.tar.gz
 # For /etc/profile.d
 Requires:       setup
 
+Requires:       binutils
+Requires:       glibc-devel
+
 # Make it look like the real GCC package.
 Provides:       gcc = %{version}
 Provides:       gcc(major) = %{major_version}
