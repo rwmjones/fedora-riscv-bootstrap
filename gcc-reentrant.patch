@@ -1,0 +1,13 @@
+diff --git a/gcc/config/riscv/linux.h b/gcc/config/riscv/linux.h
+index 1da1b0a74e..ad03654e8d 100644
+--- a/gcc/config/riscv/linux.h
++++ b/gcc/config/riscv/linux.h
+@@ -47,6 +47,8 @@ along with GCC; see the file COPYING3.  If not see
+ 
+ #define ICACHE_FLUSH_FUNC "__riscv_flush_icache"
+ 
++#define CPP_SPEC "%{pthread:-D_REENTRANT}"
++
+ #define LINK_SPEC "\
+ -melf" XLEN_SPEC "lriscv \
+ %{shared} \

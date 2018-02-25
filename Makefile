@@ -1616,7 +1616,7 @@ STAGE4_KOJI_NOARCH_BINARY_NAMES = \
 STAGE4_KOJI_FEDORA_RELEASE = f27
 
 HACK_GCC_VERSION = 7.3.1
-HACK_GCC_RELEASE = 0.4
+HACK_GCC_RELEASE = 0.5
 
 stage4: stage4-disk.img
 
@@ -1719,6 +1719,8 @@ stage4-hack-gcc/hack-gcc-$(HACK_GCC_VERSION)-binary.tar.gz:
 	cp -a stage2-cross-tools/gcc stage4-hack-gcc/tmp-gcc
 	cd stage4-hack-gcc/tmp-gcc && \
 	patch -p1 < ../../0001-HACKS-TO-GET-GCC-TO-COMPILE.patch
+	cd stage4-hack-gcc/tmp-gcc && \
+	patch -p1 < ../../gcc-reentrant.patch
 	rm -rf stage4-hack-gcc/tmp-gcc/build-x
 	mkdir stage4-hack-gcc/tmp-gcc/build-x
 	cd stage4-hack-gcc/tmp-gcc/build-x && \
