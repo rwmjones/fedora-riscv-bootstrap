@@ -13,6 +13,11 @@ Source0:        https://github.com/riscv/%{name}/archive/@COMMIT@/%{name}-@SHORT
 # https://git.qemu.org/?p=keycodemapdb.git;a=snapshot;h=a8bc2f6ec822491c2b816314352a9ae459456ec9;sf=tgz
 Source1:        keycodemapdb.tar.gz
 
+# Fix for
+# fpu/softfloat.c:1374:round_to_int_and_pack: code should not be reached
+# https://github.com/sorear/riscv-qemu/commit/fix-softfloat
+Patch1:         fix-softfloat.patch
+
 # These were just copied from qemu.spec, they are probably not
 # all required.
 BuildRequires: texi2html
@@ -81,6 +86,7 @@ This is the RISC-V fork of QEMU.
 
 %prep
 %setup -q -n %{name}-@COMMIT@
+%patch1 -p1
 pushd ui
 zcat %{SOURCE1} | tar xf -
 rm -rf keycodemapdb

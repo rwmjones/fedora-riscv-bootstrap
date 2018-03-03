@@ -1,0 +1,32 @@
+From b5cccc249cc070b5c811ead0fbbd8697f0ae20ba Mon Sep 17 00:00:00 2001
+From: Stef O'Rear <sorear2@gmail.com>
+Date: Sat, 3 Mar 2018 03:46:00 -0800
+Subject: [PATCH] softfloat: fix crash on int conversion of SNaN
+
+Signed-off-by: Stef O'Rear <sorear2@gmail.com>
+---
+ fpu/softfloat.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/fpu/softfloat.c b/fpu/softfloat.c
+index e7fb0d357a..1da1db377e 100644
+--- a/fpu/softfloat.c
++++ b/fpu/softfloat.c
+@@ -1342,6 +1342,8 @@ static int64_t round_to_int_and_pack(FloatParts in, int rmode,
+     switch (p.cls) {
+     case float_class_snan:
+     case float_class_qnan:
++    case float_class_dnan:
++    case float_class_msnan:
+         return max;
+     case float_class_inf:
+         return p.sign ? min : max;
+@@ -1430,6 +1432,8 @@ static uint64_t round_to_uint_and_pack(FloatParts in, int rmode, uint64_t max,
+     switch (p.cls) {
+     case float_class_snan:
+     case float_class_qnan:
++    case float_class_dnan:
++    case float_class_msnan:
+         s->float_exception_flags = orig_flags | float_flag_invalid;
+         return max;
+     case float_class_inf:
