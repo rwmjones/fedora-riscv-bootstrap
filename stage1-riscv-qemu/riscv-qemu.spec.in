@@ -16,7 +16,7 @@ Source1:        keycodemapdb.tar.gz
 # Fix for
 # fpu/softfloat.c:1374:round_to_int_and_pack: code should not be reached
 # https://github.com/sorear/riscv-qemu/commit/fix-softfloat
-Patch1:         fix-softfloat.patch
+Patch1:         0001-softfloat-fix-crash-on-int-conversion-of-SNaN.patch
 
 # These were just copied from qemu.spec, they are probably not
 # all required.
