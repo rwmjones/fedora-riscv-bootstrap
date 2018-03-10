@@ -1,10 +1,9 @@
-diff --git a/target/riscv/op_helper.c b/target/riscv/op_helper.c
-index 8912fea..08af864 100644
---- a/target/riscv/op_helper.c
-+++ b/target/riscv/op_helper.c
-@@ -133,6 +133,7 @@ void csr_write_helper(CPURISCVState *env, target_ulong val_to_write,
-                 MSTATUS_MPP | MSTATUS_MXR;
+diff -ur riscv-qemu-b6e0a38a922005d4015e2fdb42e8a783b3cc8e41.old/target/riscv/op_helper.c riscv-qemu-b6e0a38a922005d4015e2fdb42e8a783b3cc8e41/target/riscv/op_helper.c
+--- riscv-qemu-b6e0a38a922005d4015e2fdb42e8a783b3cc8e41.old/target/riscv/op_helper.c	2018-03-02 13:29:21.000000000 +0000
++++ riscv-qemu-b6e0a38a922005d4015e2fdb42e8a783b3cc8e41/target/riscv/op_helper.c	2018-03-10 21:21:48.999120773 +0000
+@@ -144,6 +144,7 @@
          }
+ 
          mstatus = (mstatus & ~mask) | (val_to_write & mask);
 +        if (mstatus & MSTATUS_FS) mstatus |= MSTATUS_FS; /* FP is always dirty if enabled */
          int dirty = (mstatus & MSTATUS_FS) == MSTATUS_FS;
