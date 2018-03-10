@@ -25,7 +25,7 @@ clean:
 RISCV_QEMU_COMMIT      = b6e0a38a922005d4015e2fdb42e8a783b3cc8e41
 RISCV_QEMU_SHORTCOMMIT = b6e0a38a
 RISCV_QEMU_VERSION     = 2.11.50
-RISCV_QEMU_RELEASE     = 0.9
+RISCV_QEMU_RELEASE     = 0.10
 
 stage1: stage1-riscv-qemu/riscv-qemu-$(RISCV_QEMU_SHORTCOMMIT).tar.gz \
 	stage1-riscv-qemu/keycodemapdb.tar.gz \

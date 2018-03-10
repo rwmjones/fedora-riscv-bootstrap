@@ -17,6 +17,10 @@ Source1:        keycodemapdb.tar.gz
 # fpu/softfloat.c:1374:round_to_int_and_pack: code should not be reached
 # https://github.com/sorear/riscv-qemu/commit/fix-softfloat
 Patch1:         0001-softfloat-fix-crash-on-int-conversion-of-SNaN.patch
+# This forces the FPU state to be saved and reloaded on every context
+# switch.  Fixes serious problem in FPU state demonstrated by:
+# http://oirase.annexia.org/tmp/sched.c
+Patch2:         force-float-save.patch
 
 # These were just copied from qemu.spec, they are probably not
 # all required.
@@ -87,6 +91,7 @@ This is the RISC-V fork of QEMU.
 %prep
 %setup -q -n %{name}-@COMMIT@
 %patch1 -p1
+%patch2 -p1
 pushd ui
 zcat %{SOURCE1} | tar xf -
 rm -rf keycodemapdb
